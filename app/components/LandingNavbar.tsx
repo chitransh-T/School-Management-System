@@ -7,7 +7,7 @@ export const LandingNavbar: React.FC = () => {
   const router = useRouter();
 
   return (
-    <header className="bg-white text-white shadow-md w-full fixed top-0 left-0">
+    <header className="bg-white text-white shadow-md w-full fixed top-0 left-0 right-0 z-50">
       <div className="flex justify-between items-center py-4 px-6 max-w-screen-xl mx-auto">
         {/* Logo */}
         <div className="text-2xl font-bold">

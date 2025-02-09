@@ -1,54 +1,3 @@
-// "use client";
-
-// import React from "react";
-
-// const Footer: React.FC = () => {
-//   return (
-//     <footer className="w-full bg-gray-800 text-white py-6 mt-auto">
-//       <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
-//         {/* Logo or Brand Name */}
-//         <div className="mb-4 md:mb-0">
-//           {/* Add your logo or brand name here */}
-//         </div>
-
-//         {/* Navigation Links */}
-//         <nav className="mb-4 md:mb-0">
-//           <ul className="flex space-x-4">
-//             <li>
-//               <a href="#about" className="hover:underline">
-//                 About Us
-//               </a>
-//             </li>
-//             <li>
-//               <a href="#services" className="hover:underline">
-//                 Services
-//               </a>
-//             </li>
-//             <li>
-//               <a href="#contact" className="hover:underline">
-//                 Contact
-//               </a>
-//             </li>
-//           </ul>
-//         </nav>
-
-//         {/* Social Media Icons */}
-//         <div className="flex space-x-4">
-//           {/* Social media icons remain the same */}
-//         </div>
-//       </div>
-
-//       {/* Copyright Section */}
-//       <div className="text-center mt-4 text-sm text-gray-400">
-//         &copy; {new Date().getFullYear()} Almanet Website. All rights reserved.
-//       </div>
-//     </footer>
-//   );
-// };
-
-// export default Footer;
-
-
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -61,6 +10,7 @@ const Footer = () => {
           {/* Quick Links Section */}
           <div>
             <ul className="space-y-1">
+            <li><Link href="/FAQ" className="hover:text-gray-400 text-sm">FAQ</Link></li>
               <li><Link href="/privacy-policy" className="hover:text-gray-400 text-sm">Privacy Policy</Link></li>
               <li><Link href="/about-us" className="hover:text-gray-400 text-sm">About Us</Link></li>
               <li><Link href="/contact-us" className="hover:text-gray-400 text-sm">Contact Us</Link></li>
@@ -80,7 +30,7 @@ const Footer = () => {
                 rel="noopener noreferrer" 
                 className="hover:opacity-75 transition-opacity"
               >
-                <Image src="/facebook-logo.png" alt="Facebook" width={24} height={24} />
+                <Image src="/facebook.webp" alt="Facebook" width={24} height={24} />
               </a>
               <a 
                 href="https://twitter.com/YourHandle" 
@@ -88,7 +38,7 @@ const Footer = () => {
                 rel="noopener noreferrer" 
                 className="hover:opacity-75 transition-opacity"
               >
-                <Image src="/twitter-logo.png" alt="Twitter" width={24} height={24} />
+                <Image src="/X.png" alt="Twitter" width={24} height={24} />
               </a>
               <a 
                 href="https://www.instagram.com/YourHandle" 
@@ -96,7 +46,7 @@ const Footer = () => {
                 rel="noopener noreferrer" 
                 className="hover:opacity-75 transition-opacity"
               >
-                <Image src="/insta.png" alt="Instagram" width={24} height={24} />
+                <Image src="/insta.jpeg" alt="Instagram" width={24} height={24} />
               </a>
             </div>
           </div>
