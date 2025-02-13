@@ -36,7 +36,7 @@ const Sidebar = () => {
             </Link>
           </li>
           <li className="mb-4">
-            <Link href="#" className="hover:text-gray-600 flex items-center">
+            <Link href="/teacher" className="hover:text-gray-600 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
               </svg>
@@ -44,7 +44,7 @@ const Sidebar = () => {
             </Link>
           </li>
           <li className="mb-4">
-            <Link href="#" className="hover:text-gray-600 flex items-center">
+            <Link href="/parents" className="hover:text-gray-600 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
               </svg>
@@ -52,7 +52,7 @@ const Sidebar = () => {
             </Link>
           </li>
           <li className="mb-4">
-            <Link href="#" className="hover:text-gray-600 flex items-center">
+            <Link href="/notice" className="hover:text-gray-600 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
               </svg>
