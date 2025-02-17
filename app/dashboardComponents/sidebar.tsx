@@ -1,16 +1,24 @@
 "use client"
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
+  const [isStudentOpen, setIsStudentOpen] = useState(true);
+  const pathname = usePathname();
+
+  const isStudentRoute = pathname?.includes('student');
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
+    if (!isOpen) {
+      setIsStudentOpen(true);
+    }
   };
 
   return (
-    <div className={`${isOpen ? 'w-64' : 'w-16'} bg-gray-100 text-gray-800 p-4 transition-all duration-300 ease-in-out shadow-lg border-r border-gray-200`}>
+    <div className={`${isOpen ? 'w-64' : 'w-16'} bg-gray-100 text-gray-800 p-4 transition-all duration-300 ease-in-out shadow-lg border-r border-gray-200 min-h-screen`}>
       <div className="flex justify-between items-center mb-6">
         {isOpen && <div className="text-lg font-bold">Admin Dashboard</div>}
         <button onClick={toggleSidebar} className="p-2 hover:bg-gray-200 rounded">
@@ -28,12 +36,58 @@ const Sidebar = () => {
       {isOpen && (
         <ul>
           <li className="mb-4">
-            <Link href="/student" className="hover:text-gray-600 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+            <button 
+              onClick={() => setIsStudentOpen(!isStudentOpen)}
+              className={`w-full hover:text-gray-600 flex items-center justify-between ${isStudentRoute ? 'text-blue-600 font-medium' : ''}`}
+            >
+              <div className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                </svg>
+                Students
+              </div>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className={`h-4 w-4 transition-transform duration-200 ${isStudentOpen ? 'transform rotate-180' : ''}`}
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
-              Students
-            </Link>
+            </button>
+            {isStudentOpen && (
+              <ul className="ml-6 mt-2 space-y-2">
+                <li>
+                  <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/addstudent' ? 'bg-gray-200' : ''}`}>
+                    <Link href="/addstudent" className="hover:text-gray-600 flex items-center w-full">
+                      <span className="text-sm">Add New Student</span>
+                    </Link>
+                  </div>
+                </li>
+                <li>
+                  <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/studentdetails' ? 'bg-gray-200' : ''}`}>
+                    <Link href="/studentdetails" className="hover:text-gray-600 flex items-center w-full">
+                      <span className="text-sm">View Student Details</span>
+                    </Link>
+                  </div>
+                </li>
+                <li>
+                  <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/student/attendance' ? 'bg-gray-200' : ''}`}>
+                    <Link href="/student/attendance" className="hover:text-gray-600 flex items-center w-full">
+                      <span className="text-sm">Student Attendance</span>
+                    </Link>
+                  </div>
+                </li>
+                <li>
+                  <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/student/reports' ? 'bg-gray-200' : ''}`}>
+                    <Link href="/student/reports" className="hover:text-gray-600 flex items-center w-full">
+                      <span className="text-sm">Student Reports</span>
+                    </Link>
+                  </div>
+                </li>
+              </ul>
+            )}
           </li>
           <li className="mb-4">
             <Link href="/teacher" className="hover:text-gray-600 flex items-center">
