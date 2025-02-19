@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Bell, Home, Settings, User, LogOut, ChevronDown } from 'lucide-react';
+import { Bell, Home, Settings, User, LogOut, ChevronDown, Menu, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import Link from 'next/link'; // Import Link from next/link
@@ -30,12 +30,17 @@ const navLinks: NavLink[] = [
 
 const DashboardNavbar: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false); // State for dropdown visibility
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const { logout } = useAuth();
   const router = useRouter();
 
   // Toggle dropdown visibility
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   // Handle logout
@@ -61,12 +66,12 @@ const DashboardNavbar: React.FC = () => {
             <img
               src="https://almanet.in/wp-content/uploads/2022/03/Almanet-logo-220x47-1.png" // Update this path to your logo's location
               alt="Logo"
-              className="h-8 w-auto" // Adjust height and width as needed
+              className="h-6 sm:h-7 md:h-8 w-auto" // Adjust height and width as needed
             />
           </Link>
 
-          {/* Navigation Links */}
-          <div className="flex items-center justify-center flex-1 space-x-8">
+          {/* Desktop Navigation Links */}
+          <div className="hidden md:flex items-center justify-center flex-1 space-x-8">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
@@ -80,8 +85,8 @@ const DashboardNavbar: React.FC = () => {
             ))}
           </div>
 
-          {/* Profile Dropdown */}
-          <div className="relative">
+          {/* Desktop Profile Dropdown */}
+          <div className="hidden md:block relative">
             <button
               onClick={toggleDropdown}
               className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 focus:outline-none"
@@ -116,11 +121,55 @@ const DashboardNavbar: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={toggleMobileMenu}
+            className="md:hidden p-2 text-gray-700 hover:text-blue-600 focus:outline-none"
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-gray-200">
+            {/* Mobile Navigation Links */}
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {link.icon && <link.icon className="w-5 h-5 mr-2" />}
+                  <span>{link.label}</span>
+                </Link>
+              ))}
+            </div>
+
+            {/* Mobile Profile Options */}
+            <div className="border-t border-gray-200 pt-4 pb-3">
+              {profileOptions.map((option) => (
+                <div
+                  key={option.label}
+                  onClick={() => {
+                    if (option.onClick) option.onClick();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="flex items-center px-5 py-3 text-gray-700 hover:bg-gray-100 cursor-pointer"
+                >
+                  <option.icon className="w-5 h-5 mr-3" />
+                  <span>{option.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
 };
 
 export default DashboardNavbar;
-
