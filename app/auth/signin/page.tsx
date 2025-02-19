@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useState } from "react";
@@ -68,6 +66,15 @@ const SignIn: React.FC = () => {
             value={password}
             onChange={handlePasswordChange}
           />
+          {/* Forgot Password Link */}
+          <div className="text-right mb-4">
+            <Link 
+              href="/auth/forgot-password" 
+              className="text-sm text-blue-500 hover:text-blue-400 transition-colors"
+            >
+              Forgot Password?
+            </Link>
+          </div>
         </div>
 
         {/* Error Message */}
