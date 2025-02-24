@@ -6,9 +6,11 @@ import { usePathname } from 'next/navigation';
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [isStudentOpen, setIsStudentOpen] = useState(true);
+  const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
   const pathname = usePathname();
 
   const isStudentRoute = pathname?.includes('student');
+  const isAttendanceRoute = pathname?.includes('attendance');
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
@@ -73,11 +75,25 @@ const Sidebar = () => {
                   </div>
                 </li>
                 <li>
-                  <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/student/attendance' ? 'bg-gray-200' : ''}`}>
-                    <Link href="/student/attendance" className="hover:text-gray-600 flex items-center w-full">
-                      <span className="text-sm">Student Attendance</span>
-                    </Link>
+                  <div className={`p-2 hover:bg-gray-200 rounded-md ${isAttendanceRoute ? 'bg-gray-200' : ''}`}>
+                    <span className="text-sm">Student Attendance</span>
                   </div>
+                  <ul className="ml-4 mt-2 space-y-2">
+                    <li>
+                      <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/studentattendance/markstudentattandence' ? 'bg-gray-200' : ''}`}>
+                        <Link href="/studentattendance/markstudentattandence" className="hover:text-gray-600 flex items-center w-full">
+                          <span className="text-sm"> - Mark Student Attendance</span>
+                        </Link>
+                      </div>
+                    </li>
+                    <li>
+                      <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/student/attendance-reports' ? 'bg-gray-200' : ''}`}>
+                        <Link href="/studentattendancereport" className="hover:text-gray-600 flex items-center w-full">
+                          <span className="text-sm"> - Student Attendance Reports</span>
+                        </Link>
+                      </div>
+                    </li>
+                  </ul>
                 </li>
                 <li>
                   <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/student/reports' ? 'bg-gray-200' : ''}`}>
