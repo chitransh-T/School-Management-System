@@ -93,16 +93,20 @@ const Sidebar = () => {
                         </Link>
                       </div>
                     </li>
+                    
                   </ul>
                 </li>
+                
                 <li>
                   <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/student/reports' ? 'bg-gray-200' : ''}`}>
-                    <Link href="/student/reports" className="hover:text-gray-600 flex items-center w-full">
-                      <span className="text-sm">Student Reports</span>
+                    <Link href="/transfercertificate" className="hover:text-gray-600 flex items-center w-full">
+                      <span className="text-sm">Transfer Certificate</span>
                     </Link>
                   </div>
                 </li>
+
               </ul>
+              
             )}
           </li>
           <li className="mb-4">
