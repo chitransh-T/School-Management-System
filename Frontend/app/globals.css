@@ -5,6 +5,11 @@
 :root {
   --background: #ffffff;
   --foreground: #000000;
+  --max-width: 1400px;
+  --border-radius: 8px;
+  --font-mono: ui-monospace, Menlo, Monaco, 'Cascadia Mono', 'Segoe UI Mono',
+    'Roboto Mono', 'Oxygen Mono', 'Ubuntu Monospace', 'Source Code Pro',
+    'Fira Mono', 'Droid Sans Mono', 'Courier New', monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -18,4 +23,53 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Responsive container */
+.container-responsive {
+  width: 100%;
+  padding-right: 1rem;
+  padding-left: 1rem;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 640px) {
+  .container-responsive {
+    padding-right: 1.5rem;
+    padding-left: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .container-responsive {
+    padding-right: 2rem;
+    padding-left: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-responsive {
+    padding-right: 2.5rem;
+    padding-left: 2.5rem;
+    max-width: var(--max-width);
+  }
+}
+
+/* Responsive text utilities */
+.text-responsive {
+  font-size: 0.875rem; /* 14px for mobile */
+}
+
+@media (min-width: 640px) {
+  .text-responsive {
+    font-size: 1rem; /* 16px for tablet */
+  }
+}
+
+@media (min-width: 1024px) {
+  .text-responsive {
+    font-size: 1.125rem; /* 18px for desktop */
+  }
 }

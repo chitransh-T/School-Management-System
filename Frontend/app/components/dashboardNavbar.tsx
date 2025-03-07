@@ -58,8 +58,8 @@ const DashboardNavbar: React.FC = () => {
 
   return (
     <nav className="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+        <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             {/* Replace the text with your logo image */}
@@ -71,15 +71,15 @@ const DashboardNavbar: React.FC = () => {
           </Link>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center justify-center flex-1 space-x-8">
+          <div className="hidden md:flex items-center justify-center flex-1 space-x-4 lg:space-x-8">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
-                className="flex items-center text-gray-700 hover:text-blue-600 transition-colors"
+                className="flex items-center text-gray-700 hover:text-blue-600 transition-colors text-sm lg:text-base"
               >
                 {/* Render the icon if it exists */}
-                {link.icon && <link.icon className="w-5 h-5 mr-1" />}
+                {link.icon && <link.icon className="w-4 h-4 lg:w-5 lg:h-5 mr-1" />}
                 <span>{link.label}</span>
               </Link>
             ))}
@@ -89,21 +89,21 @@ const DashboardNavbar: React.FC = () => {
           <div className="hidden md:block relative">
             <button
               onClick={toggleDropdown}
-              className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 focus:outline-none"
+              className="flex items-center space-x-1 lg:space-x-2 text-gray-700 hover:text-blue-600 focus:outline-none"
               aria-expanded={isDropdownOpen}
               aria-haspopup="true"
             >
               {/* User avatar */}
-              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                <User className="w-5 h-5" />
+              <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                <User className="w-4 h-4 lg:w-5 lg:h-5" />
               </div>
-              <ChevronDown className="w-4 h-4" />
+              <ChevronDown className="w-3 h-3 lg:w-4 lg:h-4" />
             </button>
 
             {/* Dropdown menu */}
             {isDropdownOpen && (
               <div
-                className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10"
+                className="absolute right-0 mt-2 w-40 sm:w-48 bg-white rounded-md shadow-lg py-1 z-10"
                 role="menu"
                 aria-orientation="vertical"
               >
@@ -111,10 +111,10 @@ const DashboardNavbar: React.FC = () => {
                   <div
                     key={option.label}
                     onClick={option.onClick} // Handle click events
-                    className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                    className="flex items-center px-3 sm:px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
                     role="menuitem"
                   >
-                    <option.icon className="w-4 h-4 mr-2" />
+                    <option.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
                     <span>{option.label}</span>
                   </div>
                 ))}
@@ -125,9 +125,10 @@ const DashboardNavbar: React.FC = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={toggleMobileMenu}
-            className="md:hidden p-2 text-gray-700 hover:text-blue-600 focus:outline-none"
+            className="md:hidden p-1.5 sm:p-2 text-gray-700 hover:text-blue-600 focus:outline-none"
+            aria-label="Toggle mobile menu"
           >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMobileMenuOpen ? <X size={20} className="sm:w-5 sm:h-5" /> : <Menu size={20} className="sm:w-5 sm:h-5" />}
           </button>
         </div>
 
@@ -140,17 +141,17 @@ const DashboardNavbar: React.FC = () => {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                  className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  {link.icon && <link.icon className="w-5 h-5 mr-2" />}
+                  {link.icon && <link.icon className="w-4 h-4 mr-2" />}
                   <span>{link.label}</span>
                 </Link>
               ))}
             </div>
 
             {/* Mobile Profile Options */}
-            <div className="border-t border-gray-200 pt-4 pb-3">
+            <div className="border-t border-gray-200 pt-3 pb-3">
               {profileOptions.map((option) => (
                 <div
                   key={option.label}
@@ -158,9 +159,9 @@ const DashboardNavbar: React.FC = () => {
                     if (option.onClick) option.onClick();
                     setIsMobileMenuOpen(false);
                   }}
-                  className="flex items-center px-5 py-3 text-gray-700 hover:bg-gray-100 cursor-pointer"
+                  className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                 >
-                  <option.icon className="w-5 h-5 mr-3" />
+                  <option.icon className="w-4 h-4 mr-3" />
                   <span>{option.label}</span>
                 </div>
               ))}
