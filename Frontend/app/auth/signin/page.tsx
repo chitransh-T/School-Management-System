@@ -20,14 +20,43 @@ const SignIn: React.FC = () => {
       setError("Please fill in all fields.");
       return;
     }
+    
     setAuthing(true);
+    setError("");
+    
     try {
-      // Simulate authentication (replace this with your actual API call)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      login();
+      // Call the login API endpoint
+      const apiUrl = 'http://localhost:1000/login'; // Adjust URL as needed
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password
+        }),
+      });
+
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("API did not return JSON. Endpoint might be incorrect.");
+      }
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      // Login successful
+      login(); // Update auth context
       router.push("/Admindashboard");
     } catch (err) {
-      setError("Failed to sign in. Please try again.");
+      console.error("Login error:", err);
+      setError(err instanceof Error ? err.message : "Failed to sign in. Please try again.");
     } finally {
       setAuthing(false);
     }
@@ -98,6 +127,11 @@ const SignIn: React.FC = () => {
                 className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    signInWithEmail();
+                  }
+                }}
               />
               <button
                 type="button"

@@ -10,33 +10,63 @@ const Signup: React.FC = () => {
   const [authing, setAuthing] = useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [confirmpassword, setConfirmPassword] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
 
   const signUpWithEmail = async () => {
-    if (!email || !password || !confirmPassword || !phone) {
+    if (!email || !password || !confirmpassword || !phone) {
       setError("All fields are required.");
       return;
     }
-
-    if (password !== confirmPassword) {
+  
+    if (password !== confirmpassword) {
       setError("Passwords do not match.");
       return;
     }
-
+  
     setAuthing(true);
     setError("");
-
+  
     try {
-      // Simulate API call (replace with actual logic)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Update the URL to point to your API server
+      // Replace with your actual API URL
+      const apiUrl = 'http://localhost:1000/register'; // Adjust port as needed
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          phone,
+          password,
+          confirmpassword: confirmpassword
+        }),
+      });
+  
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("API did not return JSON. Endpoint might be incorrect.");
+      }
+  
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+  
+      // Success
       alert("Signed up successfully!");
       router.push("/auth/signin");
     } catch (err) {
-      setError("Failed to sign up. Please try again.");
+      console.error("Registration error:", err);
+      // Display specific error message from API if available
+      setError(err instanceof Error ? err.message : "Failed to sign up. Please try again.");
     } finally {
       setAuthing(false);
     }
@@ -144,7 +174,7 @@ const Signup: React.FC = () => {
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder="Confirm password"
                 className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors"
-                value={confirmPassword}
+                value={confirmpassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
               <button

@@ -1,5 +1,5 @@
-'use client'
-import React, { useState } from 'react';
+'use client';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '@/app/dashboardComponents/sidebar';
 import { useRouter } from 'next/navigation';
 import { FaEdit, FaTrash } from 'react-icons/fa';
@@ -7,53 +7,78 @@ import Link from 'next/link';
 
 interface Student {
   id: number;
-  name: string;
-  rollNo: string;
-  class: string;
-  section: string;
-  contactNo: string;
+  student_name: string;
+  registration_number: string;
+  assigned_class: string;
+  assigned_section: string;
+  phone: string;
   email: string;
   address: string;
+  student_photo: string;
+  birth_certificate: string;
 }
 
 const StudentDetails = () => {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Dummy student data
-  const students = [
-    {
-      id: 1,
-      name: "John Doe",
-      rollNo: "2024001",
-      class: "10th",
-      section: "A",
-      contactNo: "+1 234-567-8900",
-      email: "john.doe@example.com",
-      address: "123 School Street, City"
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      rollNo: "2024002",
-      class: "10th",
-      section: "B",
-      contactNo: "+1 234-567-8901",
-      email: "jane.smith@example.com",
-      address: "456 Education Ave, City"
-    }
-    
-  ];
+  // Fetch student data from the API
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const response = await fetch('http://localhost:1000/students');
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Fetched data:', data); // Debugging
+        setStudents(data);
+      } catch (err) {
+        setError('Failed to load student data. Please try again later.');
+        console.error('Error fetching students:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudents();
+  }, []);
 
   // Filter students based on search term
-  const filteredStudents = students.filter(student =>
-    student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.rollNo.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredStudents = students.filter(
+    (student) =>
+      student.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.registration_number.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddStudent = () => {
     router.push('/addstudent');
   };
+
+  if (loading) {
+    return (
+      <div className="flex">
+        <Sidebar />
+        <div className="flex-1 p-6 max-w-6xl mx-auto my-12">
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex">
+        <Sidebar />
+        <div className="flex-1 p-6 max-w-6xl mx-auto my-12">
+          <p className="text-red-500">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex">
@@ -64,7 +89,12 @@ const StudentDetails = () => {
             <h1 className="text-2xl font-bold text-gray-800">Student Details</h1>
             <p className="text-gray-600 mt-1">Total Students: {students.length}</p>
           </div>
-          
+          <button
+            onClick={handleAddStudent}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Add Student
+          </button>
         </div>
 
         {/* Search Bar */}
@@ -82,8 +112,11 @@ const StudentDetails = () => {
           <div>No students found</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredStudents.map((student: Student) => (
-              <div key={student.id} className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 p-6 relative">
+            {filteredStudents.map((student) => (
+              <div
+                key={student.id}
+                className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 p-6 relative"
+              >
                 {/* Action buttons */}
                 <div className="absolute top-4 right-4 flex space-x-2">
                   <Link
@@ -105,21 +138,33 @@ const StudentDetails = () => {
                   </button>
                 </div>
 
-                {/* Existing student card content */}
+                {/* Student card content */}
                 <div className="flex items-center mb-4">
                   <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mr-4">
-                    <span className="text-xl font-bold text-gray-600">
-                      {student.name.charAt(0)}
-                    </span>
+                    {student.student_photo ? (
+                      <img
+                        src={`http://localhost:1000/uploads/${student.student_photo}`}
+                        alt={student.student_name}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-xl font-bold text-gray-600">
+                        {student.student_name.charAt(0)}
+                      </span>
+                    )}
                   </div>
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">{student.name}</h3>
-                    <p className="text-gray-500">Roll No: {student.rollNo}</p>
+                    <h3 className="text-lg font-medium text-gray-900">
+                      {student.student_name}
+                    </h3>
+                    <p className="text-gray-500">Roll No: {student.registration_number}</p>
                   </div>
                 </div>
                 <div className="space-y-2 text-sm text-gray-600">
-                  <p>Class: {student.class} | Section: {student.section}</p>
-                  <p>Contact: {student.contactNo}</p>
+                  <p>
+                    Class: {student.assigned_class} | Section: {student.assigned_section}
+                  </p>
+                  <p>Contact: {student.phone}</p>
                   <p>Email: {student.email}</p>
                   <p>Address: {student.address}</p>
                 </div>
