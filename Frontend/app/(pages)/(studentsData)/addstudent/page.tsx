@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useRef } from 'react';
 import Sidebar from '@/app/dashboardComponents/sidebar';
+import { useAuth } from '@/app/context/AuthContext';
 
 const PreviewPage = () => {
   const countries = [
@@ -22,6 +23,8 @@ const PreviewPage = () => {
   ];
 
   const sections = ["A", "B", "C"];
+
+  const { user } = useAuth(); // Get the current admin's data
 
   const [birthCertFileName, setBirthCertFileName] = useState('');
   const [photoFileName, setPhotoFileName] = useState('');
@@ -68,6 +71,14 @@ const PreviewPage = () => {
       return;
     }
 
+    if (!user?.id) {
+      setError('You must be logged in to register a student.');
+      return;
+    }
+
+    // Add admin_id to form data
+    formData.append('admin_id', user.id.toString());
+
     setIsSubmitting(true);
     setError('');
 
@@ -91,6 +102,7 @@ const PreviewPage = () => {
       setPhotoFileName('');
     } catch (err) {
       setError('Failed to register student. Please try again.');
+      console.error('Error:', err);
     } finally {
       setIsSubmitting(false);
     }

@@ -148,15 +148,15 @@ const Sidebar = () => {
                     </div>
                     <ul className="ml-4 mt-2 space-y-2">
                       <li>
-                        <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/studentattendance/markstudentattandence' ? 'bg-gray-200' : ''}`}>
-                          <Link href="/studentattendance/markstudentattandence" className="hover:text-gray-600 flex items-center w-full">
+                        <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/studentattendance/markattendance' ? 'bg-gray-200' : ''}`}>
+                          <Link href="/studentattendance/markattendance" className="hover:text-gray-600 flex items-center w-full">
                             <span className="text-sm"> - Mark Student Attendance</span>
                           </Link>
                         </div>
                       </li>
                       <li>
-                        <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/student/attendance-reports' ? 'bg-gray-200' : ''}`}>
-                          <Link href="/studentattendancereport" className="hover:text-gray-600 flex items-center w-full">
+                        <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/studentattendance/attendancereport' ? 'bg-gray-200' : ''}`}>
+                          <Link href="/studentattendance/attendancereport" className="hover:text-gray-600 flex items-center w-full">
                             <span className="text-sm"> - Student Attendance Reports</span>
                           </Link>
                         </div>

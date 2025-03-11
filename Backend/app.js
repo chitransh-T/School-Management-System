@@ -14,21 +14,26 @@ app.use(bodyparser.json());
 app.get('/', (req,res)=>{
     res.send("Welcome")
 })
-// app.get('/login', (req,res)=>{
-//     res.send("Welcome to login page")
-// })
+
 app.post('/login', (req, res) => {
     const { email, password } = req.body;
 
-    const query = 'select * from signup where email = ? and password = ?';
-    // const user = users.find((user)=> user.email === email && user.password === password);
+    const query = 'SELECT id, email FROM signup WHERE email = ? AND password = ?';
     connection.query(query, [email, password], (err, results) => {
         if (err) {
             console.error(err);
             return res.status(500).json({ success: false, message: 'Server error' });
         }
         if (results.length > 0) {
-            return res.json({ success: true, message: 'Login successful' });
+            const user = results[0];
+            return res.json({ 
+                success: true, 
+                message: 'Login successful',
+                user: {
+                    id: user.id,
+                    email: user.email
+                }
+            });
         }
         else {
             return res.status(400).json({ success: false, message: 'Invalid Credentials' });
@@ -36,6 +41,29 @@ app.post('/login', (req, res) => {
     });
 });
 
+// Get dashboard data for specific user
+app.get('/dashboard/:userId', (req, res) => {
+    const userId = req.params.userId;
+    
+    // Get user-specific dashboard data
+    const query = `
+        SELECT 
+            (SELECT COUNT(*) FROM students WHERE created_by = ?) as total_students,
+            (SELECT COUNT(*) FROM attendance WHERE marked_by = ?) as total_attendance_records
+        FROM dual`;
+    
+    connection.query(query, [userId, userId], (err, results) => {
+        if (err) {
+            console.error('Error fetching dashboard data:', err);
+            return res.status(500).json({ success: false, message: 'Server error' });
+        }
+        
+        res.json({
+            success: true,
+            data: results[0]
+        });
+    });
+});
 
 app.post('/register', (req, res) => {
     const { email, phone, password, confirmpassword } = req.body;
@@ -75,6 +103,7 @@ app.post('/register', (req, res) => {
         });
     });
 });
+
 // Set up multer for file uploads
 const upload = multer({
     dest: 'uploads/', // Files will be uploaded to this directory
@@ -103,6 +132,7 @@ app.post('/registerstudent', upload, (req, res) => {
         phone,
         username,
         password,
+        admin_id // Add admin_id to track who created the student
     } = req.body;
 
     // Validate date_of_birth
@@ -143,8 +173,9 @@ app.post('/registerstudent', upload, (req, res) => {
         birth_certificate,
         student_photo,
         username,
-        password
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        password,
+        created_by
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     // Insert data into the database
     connection.query(sql, [
@@ -160,10 +191,11 @@ app.post('/registerstudent', upload, (req, res) => {
         mother_name,
         email,
         phone,
-        birthCertificate,  // Path to the birth certificate file
-        studentPhoto,      // Path to the student photo file
+        birthCertificate,
+        studentPhoto,
         username,
         password,
+        admin_id // Add admin_id to the query parameters
     ], (err, results) => {
         if (err) {
             console.error(err);
@@ -173,9 +205,26 @@ app.post('/registerstudent', upload, (req, res) => {
     });
 });
 
+// Update the students endpoint to filter by admin_id
 app.get('/students', (req, res) => {
-    const query = 'SELECT * FROM students';
-    connection.query(query, (err, results) => {
+    const { class: assignedClass, section, admin_id } = req.query;
+    
+    let query = 'SELECT * FROM students WHERE created_by = ?';
+    let params = [admin_id];
+    
+    // Filter by class if provided
+    if (assignedClass) {
+        query += ' AND assigned_class = ?';
+        params.push(assignedClass);
+    }
+    
+    // Filter by section if provided
+    if (section) {
+        query += ' AND assigned_section = ?';
+        params.push(section);
+    }
+    
+    connection.query(query, params, (err, results) => {
         if (err) {
             console.error('Error fetching students:', err);
             return res.status(500).json({ message: 'Internal server error' });
@@ -194,78 +243,211 @@ app.get('/students', (req, res) => {
     });
 });
 
-
-// API to update student details
+// Update the PUT endpoint for student updates
 app.put('/students/:id', upload, (req, res) => {
     const studentId = req.params.id;
+    
+    // Validate required fields
+    if (!req.body.student_name || !req.body.registration_number) {
+        return res.status(400).json({
+            success: false,
+            message: 'Student name and registration number are required'
+        });
+    }
+
     const {
-      student_name,
-      registration_number,
-      date_of_birth,
-      gender,
-      country,
-      address,
-      assigned_class,
-      assigned_section,
-      father_name,
-      mother_name,
-      email,
-      phone,
-      birth_certificate,
+        student_name,
+        registration_number,
+        date_of_birth,
+        gender,
+        country,
+        address,
+        assigned_class,
+        assigned_section,
+        father_name,
+        mother_name,
+        email,
+        phone,
+        username,
+        password
     } = req.body;
 
-    // Handle photo upload
-    let studentPhoto = req.body.student_photo; // Keep existing photo if not updated
-    if (req.files && req.files['student_photo']) {
-      studentPhoto = path.basename(req.files['student_photo'][0].path);
+    // Get file paths if new files were uploaded
+    const studentPhoto = req.files?.['student_photo']?.[0]?.path;
+    const birthCertificate = req.files?.['birth_certificate']?.[0]?.path;
+
+    // Build the SQL query dynamically based on what fields are being updated
+    let updateFields = [
+        'student_name = ?',
+        'registration_number = ?',
+        'gender = ?',
+        'country = ?',
+        'address = ?',
+        'assigned_class = ?',
+        'assigned_section = ?',
+        'father_name = ?',
+        'mother_name = ?',
+        'email = ?',
+        'phone = ?',
+        'username = ?',
+        'password = ?'
+    ];
+    
+    let values = [
+        student_name,
+        registration_number,
+        gender,
+        country,
+        address,
+        assigned_class,
+        assigned_section,
+        father_name,
+        mother_name,
+        email,
+        phone,
+        username,
+        password
+    ];
+
+    // Handle date_of_birth separately to avoid invalid date issues
+    if (date_of_birth && date_of_birth !== 'null' && date_of_birth !== 'undefined') {
+        updateFields.push('date_of_birth = ?');
+        values.push(date_of_birth);
     }
-  
-    const updateQuery = `
-      UPDATE students SET
-        student_name = ?, 
-        registration_number = ?, 
-        date_of_birth = ?, 
-        gender = ?, 
-        country = ?,
-        address = ?, 
-        assigned_class = ?, 
-        assigned_section = ?, 
-        father_name = ?, 
-        mother_name = ?, 
-        email = ?, 
-        phone = ?, 
-        birth_certificate = ?, 
-        student_photo = ?
-      WHERE id = ?
-    `;
-  
-    connection.query(updateQuery, [
-      student_name,
-      registration_number,
-      date_of_birth,
-      gender,
-      country,
-      address,
-      assigned_class,
-      assigned_section,
-      father_name,
-      mother_name,
-      email,
-      phone,
-      birth_certificate,
-      studentPhoto,
-      studentId,
-    ], (err, results) => {
-      if (err) {
-        console.error('Error updating student:', err);
-        return res.status(500).json({ error: 'Failed to update student' });
-      }
-      res.status(200).json({ message: 'Student updated successfully' });
+
+    // Add file fields if new files were uploaded
+    if (studentPhoto) {
+        updateFields.push('student_photo = ?');
+        values.push(studentPhoto);
+    }
+    if (birthCertificate) {
+        updateFields.push('birth_certificate = ?');
+        values.push(birthCertificate);
+    }
+
+    // Add the WHERE clause parameter
+    values.push(studentId);
+
+    const sql = `UPDATE students SET ${updateFields.join(', ')} WHERE id = ?`;
+
+    connection.query(sql, values, (err, result) => {
+        if (err) {
+            console.error('Error updating student:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to update student',
+                error: err.message
+            });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Student not found'
+            });
+        }
+
+        // Get the updated student data to return
+        connection.query('SELECT * FROM students WHERE id = ?', [studentId], (err, students) => {
+            if (err) {
+                console.error('Error fetching updated student:', err);
+                return res.json({
+                    success: true,
+                    message: 'Student updated successfully',
+                    // No student data due to error
+                });
+            }
+
+            res.json({
+                success: true,
+                message: 'Student updated successfully',
+                student: students[0] || null
+            });
+        });
     });
-  });
+});
 
+// Get a single student by ID
+app.get('/students/:id', (req, res) => {
+    const studentId = req.params.id;
+    
+    const query = 'SELECT * FROM students WHERE id = ?';
+    connection.query(query, [studentId], (err, results) => {
+        if (err) {
+            console.error('Error fetching student:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to fetch student data',
+                error: err.message
+            });
+        }
+        
+        if (results.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Student not found'
+            });
+        }
+        
+        // Return a consistent response format with success and student properties
+        res.json({
+            success: true,
+            student: results[0]
+        });
+    });
+});
 
+// Update attendance endpoint to include admin tracking
+app.post('/attendance', (req, res) => {
+    const { attendanceData, admin_id } = req.body;
+    
+    // Validate attendance data
+    if (!Array.isArray(attendanceData) || attendanceData.length === 0) {
+        return res.status(400).json({ success: false, message: 'Invalid attendance data' });
+    }
 
+    // Create values for bulk insert with admin_id
+    const values = attendanceData.map(record => [
+        record.date,
+        record.class,
+        record.section,
+        record.student_id,
+        record.is_present,
+        admin_id // Add admin_id to each attendance record
+    ]);
+
+    const sql = `INSERT INTO attendance (date, class, section, student_id, is_present, marked_by) VALUES ?`;
+
+    connection.query(sql, [values], (err, results) => {
+        if (err) {
+            console.error('Error marking attendance:', err);
+            return res.status(500).json({ success: false, message: 'Error marking attendance' });
+        }
+        res.json({ success: true, message: 'Attendance marked successfully' });
+    });
+});
+
+// Get attendance by date, class and section
+app.get('/attendance', (req, res) => {
+    const { date, class: assignedClass, section } = req.query;
+    
+    const query = `
+        SELECT a.*, s.student_name, s.registration_number 
+        FROM attendance a
+        JOIN students s ON a.student_id = s.id
+        WHERE s.assigned_class = ? 
+        AND s.assigned_section = ?
+        AND a.date = ?
+    `;
+    
+    connection.query(query, [assignedClass, section, date], (err, results) => {
+        if (err) {
+            console.error('Error fetching attendance:', err);
+            return res.status(500).json({ message: 'Server error' });
+        }
+        res.json(results);
+    });
+});
 
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);

@@ -1,86 +1,211 @@
-'use client'
+'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import Sidebar from '@/app/dashboardComponents/sidebar';
 
 interface Student {
   id: number;
-  name: string;
-  rollNo: string;
-  class: string;
-  section: string;
-  contactNo: string;
+  student_name: string;
+  registration_number: string;
+  assigned_class: string;
+  assigned_section: string;
+  gender: string;
+  phone: string;
   email: string;
   address: string;
+  date_of_birth: string;
+  country: string;
+  father_name: string;
+  mother_name: string;
+  username: string;
+  password: string;
+  student_photo?: string;
+  birth_certificate?: string;
 }
 
-const EditStudent = ({ params }: { params: Promise<{ id: string }> }) => {
+interface ApiResponse {
+  success: boolean;
+  student?: Student;
+  message?: string;
+}
+
+export default function EditStudent() {
+  // Use useParams hook instead of directly accessing params
+  const params = useParams();
+  const id = params.id as string;
+  
   const router = useRouter();
-  const resolvedParams = React.use(params);
-  const [student, setStudent] = useState<Student | null>(null);
+  const [studentData, setStudentData] = useState<Student>({
+    id: 0,
+    student_name: '',
+    registration_number: '',
+    assigned_class: '',
+    assigned_section: '',
+    gender: '',
+    phone: '',
+    email: '',
+    address: '',
+    date_of_birth: '',
+    country: '',
+    father_name: '',
+    mother_name: '',
+    username: '',
+    password: '',
+    student_photo: '',
+    birth_certificate: ''
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Dummy student data array - this should come from your API/database
-  const students = [
-    {
-      id: 1,
-      name: "John Doe",
-      rollNo: "2024001",
-      class: "10th",
-      section: "A",
-      contactNo: "+1 234-567-8900",
-      email: "john.doe@example.com",
-      address: "123 School Street, City"
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      rollNo: "2024002",
-      class: "10th",
-      section: "B",
-      contactNo: "+1 234-567-8901",
-      email: "jane.smith@example.com",
-      address: "456 Education Ave, City"
-    }
-  ];
-
   useEffect(() => {
-    // Find the student with matching ID
-    const studentId = parseInt(resolvedParams.id);
-    const foundStudent = students.find(s => s.id === studentId);
-    
-    if (foundStudent) {
-      setStudent(foundStudent);
-    } else {
-      setError('Student not found');
+    const fetchStudent = async () => {
+      try {
+        const res = await fetch(`http://localhost:1000/students/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        
+        const data: ApiResponse = await res.json();
+        
+        if (!data?.student) throw new Error('Student data not found');
+        
+        const formattedStudent = {
+          ...data.student,
+          date_of_birth: data.student.date_of_birth 
+            ? new Date(data.student.date_of_birth).toISOString().split('T')[0]
+            : ''
+        };
+        
+        setStudentData(formattedStudent);
+      } catch (err) {
+        console.error('Fetch error:', err);
+        setError(err instanceof Error ? err.message : 'Fetch failed');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchStudent();
     }
-    setLoading(false);
-  }, [resolvedParams.id]);
+  }, [id]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    if (!studentData) return;
+
+    setStudentData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        [name]: value
+      };
+    });
+  };
+
+  const validateForm = () => {
+    // Implement proper validation
+    if (!studentData.student_name.trim()) {
+      setError('Student name is required');
+      return false;
+    }
+    if (!studentData.registration_number.trim()) {
+      setError('Registration number is required');
+      return false;
+    }
+    if (!studentData.assigned_class.trim()) {
+      setError('Class is required');
+      return false;
+    }
+    if (!studentData.phone.trim()) {
+      setError('Phone number is required');
+      return false;
+    }
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
+    
     try {
-      // Add your API call here to update student
-      console.log('Updating student:', student);
+      setLoading(true);
+      
+      // Create FormData for file uploads
+      const formData = new FormData();
+      
+      // Append all student data
+      Object.entries(studentData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && key !== 'id') {
+          formData.append(key, value.toString());
+        }
+      });
+
+      // Append files if they were selected
+      const studentPhotoInput = document.querySelector<HTMLInputElement>('input[name="student_photo"]');
+      const birthCertInput = document.querySelector<HTMLInputElement>('input[name="birth_certificate"]');
+
+      if (studentPhotoInput?.files?.[0]) {
+        formData.append('student_photo', studentPhotoInput.files[0]);
+      }
+      if (birthCertInput?.files?.[0]) {
+        formData.append('birth_certificate', birthCertInput.files[0]);
+      }
+
+      const response = await fetch(`http://localhost:1000/students/${id}`, {
+        method: 'PUT',
+        body: formData,
+        // Don't set Content-Type header when sending FormData
+        // The browser will set it automatically with the correct boundary
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to update student');
+      }
+
+      // Show success message
+      alert('Student updated successfully');
       router.push('/studentdetails');
     } catch (err) {
-      setError('Failed to update student');
+      console.error('Error updating student:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update student');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setStudent(prev => prev ? ({
-      ...prev,
-      [name]: value
-    }) : null);
-  };
+  if (loading) {
+    return (
+      <div className="flex">
+        <Sidebar />
+        <div className="flex-1 p-6">Loading...</div>
+      </div>
+    );
+  }
 
-  if (loading) return <div>Loading...</div>;
-  if (!student) return <div>Student not found</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (error) {
+    return (
+      <div className="flex">
+        <Sidebar />
+        <div className="flex-1 p-6 text-red-500">{error}</div>
+      </div>
+    );
+  }
+
+  if (!studentData) {
+    return (
+      <div className="flex">
+        <Sidebar />
+        <div className="flex-1 p-6">Student not found</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex">
@@ -94,22 +219,22 @@ const EditStudent = ({ params }: { params: Promise<{ id: string }> }) => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
               <input
                 type="text"
-                name="name"
-                value={student.name}
+                name="student_name"
+                value={studentData.student_name}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 font-medium"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 required
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Roll Number</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Registration Number</label>
               <input
                 type="text"
-                name="rollNo"
-                value={student.rollNo}
+                name="registration_number"
+                value={studentData.registration_number}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 font-medium"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 required
               />
             </div>
@@ -118,10 +243,10 @@ const EditStudent = ({ params }: { params: Promise<{ id: string }> }) => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
               <input
                 type="text"
-                name="class"
-                value={student.class}
+                name="assigned_class"
+                value={studentData.assigned_class}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 font-medium"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 required
               />
             </div>
@@ -130,10 +255,10 @@ const EditStudent = ({ params }: { params: Promise<{ id: string }> }) => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
               <input
                 type="text"
-                name="section"
-                value={student.section}
+                name="assigned_section"
+                value={studentData.assigned_section}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 font-medium"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 required
               />
             </div>
@@ -142,10 +267,10 @@ const EditStudent = ({ params }: { params: Promise<{ id: string }> }) => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
               <input
                 type="tel"
-                name="contactNo"
-                value={student.contactNo}
+                name="phone"
+                value={studentData.phone}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 font-medium"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 required
               />
             </div>
@@ -155,11 +280,129 @@ const EditStudent = ({ params }: { params: Promise<{ id: string }> }) => {
               <input
                 type="email"
                 name="email"
-                value={student.email}
+                value={studentData.email}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 font-medium"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 required
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+              <input
+                type="date"
+                name="date_of_birth"
+                value={studentData.date_of_birth}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+              <select
+                name="gender"
+                value={studentData.gender}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                required
+              >
+                <option value="">Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+              <input
+                type="text"
+                name="country"
+                value={studentData.country}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Father's Name</label>
+              <input
+                type="text"
+                name="father_name"
+                value={studentData.father_name}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Mother's Name</label>
+              <input
+                type="text"
+                name="mother_name"
+                value={studentData.mother_name}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <input
+                type="text"
+                name="username"
+                value={studentData.username}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <input
+                type="password"
+                name="password"
+                value={studentData.password}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Student Photo</label>
+              <input
+                type="file"
+                name="student_photo"
+                accept="image/*"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              />
+              {studentData.student_photo && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">Current photo: {studentData.student_photo}</p>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Birth Certificate</label>
+              <input
+                type="file"
+                name="birth_certificate"
+                accept=".pdf,.jpg,.jpeg,.png"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              />
+              {studentData.birth_certificate && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">Current file: {studentData.birth_certificate}</p>
+                </div>
+              )}
             </div>
 
             <div className="md:col-span-2">
@@ -167,9 +410,9 @@ const EditStudent = ({ params }: { params: Promise<{ id: string }> }) => {
               <input
                 type="text"
                 name="address"
-                value={student.address}
+                value={studentData.address}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 font-medium"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 required
               />
             </div>
@@ -194,6 +437,4 @@ const EditStudent = ({ params }: { params: Promise<{ id: string }> }) => {
       </div>
     </div>
   );
-};
-
-export default EditStudent; 
+}

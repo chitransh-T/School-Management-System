@@ -25,10 +25,7 @@ const SignIn: React.FC = () => {
     setError("");
     
     try {
-      // Call the login API endpoint
-      const apiUrl = 'http://localhost:1000/login'; // Adjust URL as needed
-      
-      const response = await fetch(apiUrl, {
+      const response = await fetch('http://localhost:1000/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -39,7 +36,6 @@ const SignIn: React.FC = () => {
         }),
       });
 
-      // Check if response is JSON
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         throw new Error("API did not return JSON. Endpoint might be incorrect.");
@@ -51,8 +47,12 @@ const SignIn: React.FC = () => {
         throw new Error(data.message || 'Login failed');
       }
 
-      // Login successful
-      login(); // Update auth context
+      if (!data.user?.id) {
+        throw new Error('Invalid user data received');
+      }
+
+      // Login successful with user data
+      login(data.user);
       router.push("/Admindashboard");
     } catch (err) {
       console.error("Login error:", err);
@@ -66,7 +66,11 @@ const SignIn: React.FC = () => {
     setAuthing(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      login();
+      // Provide mock user data when logging in with Google
+      login({
+        id: 1, // You might want to replace this with actual user ID from Google auth
+        email: "user@example.com" // You might want to replace this with actual email from Google auth
+      });
       router.push("/Admindashboard");
     } catch (err) {
       setError("Failed to sign in with Google.");
