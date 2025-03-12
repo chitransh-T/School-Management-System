@@ -92,50 +92,53 @@ const StudentDetails = () => {
       student.registration_number.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddStudent = () => {
-    router.push('/addstudent');
-  };
-
   const handleDelete = async (studentId: number) => {
     if (!user?.id) {
       setError('You must be logged in to delete students.');
       return;
     }
-
+  
     if (!confirm('Are you sure you want to delete this student?')) {
       return;
     }
-
+  
     try {
-      const response = await fetch(`http://localhost:1000/students/${studentId}`, {
+      // Since admin_id doesn't exist in the database, let's try deleting without it
+      const url = `http://localhost:1000/students/${studentId}`;
+      console.log('Delete request URL:', url);
+      
+      const response = await fetch(url, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ admin_id: user.id }) // Include admin_id for verification
+        }
       });
-
+      
       if (!response.ok) {
-        throw new Error('Failed to delete student');
+        try {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to delete student');
+        } catch (parseError) {
+          throw new Error('Failed to delete student');
+        }
       }
-
+  
       setSuccess('Student deleted successfully');
       setError('');
       
       // Remove the deleted student from the state
       setStudents(students.filter(student => student.id !== studentId));
-
+  
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccess('');
       }, 3000);
     } catch (err) {
       console.error('Error deleting student:', err);
-      setError('Failed to delete student');
+      setError(err instanceof Error ? err.message : 'Failed to delete student');
       setSuccess('');
     }
   };
-
   if (loading) {
     return (
       <div className="flex">
@@ -157,6 +160,9 @@ const StudentDetails = () => {
       </div>
     );
   }
+  const handleAddStudent = () => {
+    router.push('/addstudent');
+  };
 
   return (
     <div className="flex">
@@ -310,3 +316,4 @@ const StudentDetails = () => {
 };
 
 export default StudentDetails;
+

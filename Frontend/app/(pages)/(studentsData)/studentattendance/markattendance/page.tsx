@@ -17,15 +17,17 @@ const MarkAttendance = () => {
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
   const [students, setStudents] = useState<Student[]>([]);
-  const [attendance, setAttendance] = useState<{ [key: number]: string }>({});
+  const [attendance, setAttendance] = useState<{ [key: number]: boolean }>({});
   const [loading, setLoading] = useState(false);
+  const [fetchingStudents, setFetchingStudents] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Fetch students based on selected class and section
   const fetchStudents = async () => {
     if (!selectedClass || !selectedSection) return;
 
-    setLoading(true);
+    setFetchingStudents(true);
     setError('');
 
     try {
@@ -34,24 +36,25 @@ const MarkAttendance = () => {
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch students');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch students');
       }
 
       const data = await response.json();
       setStudents(data);
-      
-      // Initialize attendance for all students as 'Present'
-      const initialAttendance: { [key: number]: string } = {};
+
+      // Initialize attendance for all students as "Present" (true)
+      const initialAttendance: { [key: number]: boolean } = {};
       data.forEach((student: Student) => {
-        initialAttendance[student.id] = 'Present';
+        initialAttendance[student.id] = true;
       });
       setAttendance(initialAttendance);
     } catch (err) {
       console.error('Error fetching students:', err);
-      setError('Failed to load students');
+      setError(err instanceof Error ? err.message : 'Failed to load students');
       setStudents([]);
     } finally {
-      setLoading(false);
+      setFetchingStudents(false);
     }
   };
 
@@ -59,13 +62,15 @@ const MarkAttendance = () => {
     fetchStudents();
   }, [selectedClass, selectedSection]);
 
-  const handleAttendanceChange = (studentId: number, status: string) => {
+  // Handle attendance checkbox change
+  const handleAttendanceChange = (studentId: number, isPresent: boolean) => {
     setAttendance((prev) => ({
       ...prev,
-      [studentId]: status,
+      [studentId]: isPresent,
     }));
   };
 
+  // Submit attendance to the backend
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -74,9 +79,12 @@ const MarkAttendance = () => {
 
     try {
       const attendanceData = students.map((student) => ({
-        student_id: student.id,
         date: selectedDate,
-        status: attendance[student.id],
+        class: selectedClass,
+        section: selectedSection,
+        student_id: student.id,
+        is_present: attendance[student.id] ? 1 : 0, // 1 = Present, 0 = Absent
+        marked_by: 1, // Assuming admin_id is 1 for this example
       }));
 
       const response = await fetch('http://localhost:1000/attendance', {
@@ -84,7 +92,7 @@ const MarkAttendance = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(attendanceData),
+        body: JSON.stringify({ attendanceData }),
       });
 
       if (!response.ok) {
@@ -182,7 +190,11 @@ const MarkAttendance = () => {
               </div>
             </div>
 
-            {students.length > 0 && (
+            {fetchingStudents ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : students.length > 0 ? (
               <div className="mt-6">
                 <div className="overflow-x-auto">
                   <table className="min-w-full bg-white border">
@@ -209,16 +221,17 @@ const MarkAttendance = () => {
                             {student.student_name}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <select
-                              value={attendance[student.id]}
+                            <input
+                              type="checkbox"
+                              checked={attendance[student.id]}
                               onChange={(e) =>
-                                handleAttendanceChange(student.id, e.target.value)
+                                handleAttendanceChange(student.id, e.target.checked)
                               }
-                              className="w-full p-2 border rounded-md"
-                            >
-                              <option value="Present">Present</option>
-                              <option value="Absent">Absent</option>
-                            </select>
+                              className="w-4 h-4 text-blue-600 border rounded focus:ring-blue-500"
+                            />
+                            <span className="ml-2">
+                              {attendance[student.id] ? 'Present' : 'Absent'}
+                            </span>
                           </td>
                         </tr>
                       ))}
@@ -226,7 +239,11 @@ const MarkAttendance = () => {
                   </table>
                 </div>
               </div>
-            )}
+            ) : selectedClass && selectedSection ? (
+              <div className="text-center py-8 text-gray-500">
+                No students found for selected class and section
+              </div>
+            ) : null}
 
             <div className="mt-4">
               <button

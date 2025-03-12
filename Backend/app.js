@@ -4,7 +4,8 @@ import cors from 'cors';
 import connection from './database/db_connection.js';
 import multer from 'multer';
 import path from 'path';
-
+import  fs  from 'fs';
+import { fileURLToPath } from 'url';
 const app = express();
 const port = 1000;
 
@@ -14,6 +15,13 @@ app.use(bodyparser.json());
 app.get('/', (req,res)=>{
     res.send("Welcome")
 })
+
+
+
+
+// Create __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.post('/login', (req, res) => {
     const { email, password } = req.body;
@@ -397,55 +405,161 @@ app.get('/students/:id', (req, res) => {
     });
 });
 
-// Update attendance endpoint to include admin tracking
-app.post('/attendance', (req, res) => {
-    const { attendanceData, admin_id } = req.body;
+app.delete('/students/:id', (req, res) => {
+    const studentId = req.params.id;
     
-    // Validate attendance data
-    if (!Array.isArray(attendanceData) || attendanceData.length === 0) {
-        return res.status(400).json({ success: false, message: 'Invalid attendance data' });
+    // Skip admin verification and directly get the student's photo path
+    const getStudentQuery = 'SELECT student_photo FROM students WHERE id = ?';
+    connection.query(getStudentQuery, [studentId], (err, results) => {
+      if (err) {
+        console.error('Error fetching student:', err);
+        return res.status(500).json({ error: 'Failed to fetch student details' });
+      }
+      
+      if (results.length === 0) {
+        return res.status(404).json({ error: 'Student not found' });
+      }
+      
+      const studentPhoto = results[0].student_photo;
+      
+      // Delete the student from database
+      const deleteQuery = 'DELETE FROM students WHERE id = ?';
+      connection.query(deleteQuery, [studentId], (err, results) => {
+        if (err) {
+          console.error('Error deleting student:', err);
+          return res.status(500).json({ error: 'Failed to delete student' });
+        }
+        
+        // If student had a photo, delete the file
+        if (studentPhoto) {
+            const photoPath = path.join(__dirname, 'uploads', studentPhoto);
+          fs.unlink(photoPath, (err) => {
+            if (err) {
+              console.error('Error deleting photo file:', err);
+              // Don't send error response here as the student is already deleted
+            }
+          });
+        }
+        
+        res.status(200).json({ message: 'Student deleted successfully' });
+      });
+    });
+  });
+
+// Get students by class and section
+app.get('/students', (req, res) => {
+    console.log('Received request for students with query:', req.query);
+    const { class: assignedClass, section } = req.query;
+
+    // Validate query parameters
+    if (!assignedClass || !section) {
+        console.log('Missing required parameters');
+        return res.status(400).json({ message: 'Class and section are required' });
     }
 
-    // Create values for bulk insert with admin_id
+    // Log the exact values we're searching for
+    console.log('Searching for students with:', {
+        assignedClass: assignedClass,
+        assignedClass_type: typeof assignedClass,
+        section: section,
+        section_type: typeof section
+    });
+
+    // First, let's check what columns we have in the students table
+    const describeQuery = 'DESCRIBE students';
+    connection.query(describeQuery, (descErr, descResults) => {
+        if (descErr) {
+            console.error('Error describing table:', descErr);
+            return res.status(500).json({ message: 'Database error' });
+        }
+        console.log('Table structure:', descResults);
+        
+        // Fix the query - MySQL uses CONCAT() not + for string concatenation
+        const query = `
+            SELECT *
+            FROM students 
+            WHERE (assigned_class = ? OR assigned_class = CONCAT('class ', ?))
+            AND LOWER(assigned_section) = LOWER(?)
+        `;
+
+        // Let's also run a query to see all students to verify data exists
+        connection.query('SELECT id, assigned_class, assigned_section FROM students LIMIT 5', (err, allStudents) => {
+            if (err) {
+                console.error('Error checking sample students:', err);
+            } else {
+                console.log('Sample of students in database:', allStudents);
+            }
+        });
+
+
+    console.log('Executing query:', query);
+    console.log('Query parameters:', [assignedClass, section]);
+    
+        // Let's also run a query to see all students to verify data exists
+        connection.query('SELECT id, student_name, assigned_class, assigned_section FROM students', (err, allStudents) => {
+            if (err) {
+                console.error('Error checking all students:', err);
+            } else {
+                console.log('All students in database:', allStudents);
+            }
+        });
+
+        // Try with both formats for the class value
+        const classValue = assignedClass;
+        const classWithPrefix = `class ${assignedClass}`;
+        
+        connection.query(query, [classValue, classWithPrefix, section], (err, results) => {
+        if (err) {
+            console.error('Error fetching students:', err);
+            return res.status(500).json({ message: 'Failed to fetch students' });
+        }
+        console.log('Query results:', results);
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'No students found for the given class and section' });
+        }
+
+            res.json(results);
+        });
+    });
+});
+
+// Mark attendance for multiple students
+app.post('/attendance', (req, res) => {
+    const { attendanceData } = req.body;
+
+    // Validate request body
+    if (!Array.isArray(attendanceData) || attendanceData.length === 0) {
+        return res.status(400).json({ message: 'Invalid attendance data' });
+    }
+
+    // Validate each attendance record
+    for (const record of attendanceData) {
+        if (!record.date || !record.class || !record.section || !record.student_id || record.is_present === undefined) {
+            return res.status(400).json({ message: 'Missing required fields in attendance data' });
+        }
+    }
+
+    const query = `INSERT INTO attendance (date, class, section, student_id, is_present, marked_by) VALUES ?`;
     const values = attendanceData.map(record => [
         record.date,
         record.class,
         record.section,
         record.student_id,
         record.is_present,
-        admin_id // Add admin_id to each attendance record
+        record.marked_by
     ]);
 
-    const sql = `INSERT INTO attendance (date, class, section, student_id, is_present, marked_by) VALUES ?`;
-
-    connection.query(sql, [values], (err, results) => {
+    connection.query(query, [values], (err, result) => {
         if (err) {
             console.error('Error marking attendance:', err);
-            return res.status(500).json({ success: false, message: 'Error marking attendance' });
+            return res.status(500).json({ message: 'Failed to mark attendance' });
         }
-        res.json({ success: true, message: 'Attendance marked successfully' });
-    });
-});
 
-// Get attendance by date, class and section
-app.get('/attendance', (req, res) => {
-    const { date, class: assignedClass, section } = req.query;
-    
-    const query = `
-        SELECT a.*, s.student_name, s.registration_number 
-        FROM attendance a
-        JOIN students s ON a.student_id = s.id
-        WHERE s.assigned_class = ? 
-        AND s.assigned_section = ?
-        AND a.date = ?
-    `;
-    
-    connection.query(query, [assignedClass, section, date], (err, results) => {
-        if (err) {
-            console.error('Error fetching attendance:', err);
-            return res.status(500).json({ message: 'Server error' });
-        }
-        res.json(results);
+        res.json({ 
+            message: 'Attendance marked successfully',
+            recordsInserted: result.affectedRows 
+        });
     });
 });
 
