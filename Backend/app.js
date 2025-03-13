@@ -578,6 +578,69 @@ app.post('/attendance', (req, res) => {
     });
 });
 
+// Get attendance records
+app.get('/attendance', (req, res) => {
+    const { date, class: assignedClass, section } = req.query;
+
+    // Validate required parameters
+    if (!date || !assignedClass || !section) {
+        return res.status(400).json({ message: 'Date, class, and section are required' });
+    }
+
+    console.log('Fetching attendance with params:', { date, class: assignedClass, section });
+
+    const query = `
+        SELECT 
+            s.id,
+            s.student_name,
+            s.registration_number,
+            s.assigned_class,
+            s.assigned_section,
+            a.is_present,
+            a.date,
+            CASE WHEN a.is_present = 1 THEN 'Present' ELSE 'Absent' END as status
+        FROM 
+            students s
+            LEFT JOIN attendance a ON s.id = a.student_id 
+            AND a.date = ? 
+            AND a.class = ?
+            AND a.section = ?
+        WHERE 
+            s.assigned_class = ?
+            AND s.assigned_section = ?
+        ORDER BY 
+            s.student_name
+    `;
+
+    console.log('Executing query:', query);
+    console.log('Query parameters:', [date, assignedClass, section, assignedClass, section]);
+
+    connection.query(
+        query,
+        [date, assignedClass, section, assignedClass, section],
+        (err, results) => {
+            if (err) {
+                console.error('Error fetching attendance:', err);
+                return res.status(500).json({ message: 'Failed to fetch attendance records' });
+            }
+
+            console.log('Query results:', results);
+
+            if (results.length === 0) {
+                return res.status(404).json({ message: 'No attendance records found' });
+            }
+
+            // Format the results
+            const formattedResults = results.map(record => ({
+                ...record,
+                status: record.is_present === null ? 'Not Marked' : record.status
+            }));
+
+            res.json(formattedResults);
+        }
+    );
+});
+
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 })

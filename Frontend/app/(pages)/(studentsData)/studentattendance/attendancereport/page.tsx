@@ -15,12 +15,15 @@ interface Student {
 }
 
 const AttendanceReport = () => {
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
   const [attendanceData, setAttendanceData] = useState<Student[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const classes = Array.from({ length: 12 }, (_, i) => `class ${i + 1}`);
+  const sections = ['a', 'b', 'c'];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,19 +31,32 @@ const AttendanceReport = () => {
     setError('');
 
     try {
-      const response = await fetch(
-        `http://localhost:1000/attendance?date=${selectedDate}&class=${selectedClass}&section=${selectedSection}`
-      );
+      console.log('Fetching attendance with params:', { selectedDate, selectedClass, selectedSection });
+      const url = `http://localhost:1000/attendance?date=${encodeURIComponent(selectedDate)}&class=${encodeURIComponent(selectedClass)}&section=${encodeURIComponent(selectedSection)}`;
+      console.log('Request URL:', url);
+
+      const response = await fetch(url);
+      console.log('Response status:', response.status);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch attendance data');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch attendance data');
       }
 
       const data = await response.json();
-      setAttendanceData(data);
+      console.log('Response data:', data);
+
+      if (Array.isArray(data) && data.length === 0) {
+        setError('No attendance records found for the selected criteria');
+        setAttendanceData([]);
+      } else if (Array.isArray(data)) {
+        setAttendanceData(data);
+      } else {
+        throw new Error('Invalid response format from server');
+      }
     } catch (err) {
       console.error('Error fetching attendance:', err);
-      setError('Failed to load attendance data');
+      setError(err instanceof Error ? err.message : 'Failed to load attendance data');
       setAttendanceData([]);
     } finally {
       setLoading(false);
@@ -86,9 +102,9 @@ const AttendanceReport = () => {
                   required
                 >
                   <option value="">Select Class</option>
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((cls) => (
-                    <option key={cls} value={cls.toString()}>
-                      {cls}
+                  {classes.map((cls) => (
+                    <option key={cls} value={cls}>
+                      {cls.replace('class', 'Class')}
                     </option>
                   ))}
                 </select>
@@ -105,9 +121,9 @@ const AttendanceReport = () => {
                   required
                 >
                   <option value="">Select Section</option>
-                  {['A', 'B', 'C'].map((section) => (
+                  {sections.map((section) => (
                     <option key={section} value={section}>
-                      {section}
+                      {section.toUpperCase()}
                     </option>
                   ))}
                 </select>
@@ -118,14 +134,19 @@ const AttendanceReport = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 {loading ? 'Loading...' : 'View Report'}
               </button>
             </div>
           </form>
 
-          {attendanceData.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+              <p className="mt-2 text-gray-600">Loading attendance data...</p>
+            </div>
+          ) : attendanceData.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full bg-white border">
                 <thead>
@@ -152,22 +173,22 @@ const AttendanceReport = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {attendanceData.map((student) => (
-                    <tr key={student.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <tr key={student.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">
                         {student.registration_number}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">
                         {student.student_name}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {student.assigned_class}
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">
+                        {student.assigned_class.replace('class', 'Class')}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {student.assigned_section}
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">
+                        {student.assigned_section.toUpperCase()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                             student.status === 'Present'
                               ? 'bg-green-100 text-green-800'
                               : 'bg-red-100 text-red-800'
@@ -176,7 +197,7 @@ const AttendanceReport = () => {
                           {student.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">
                         {format(new Date(student.date), 'dd/MM/yyyy')}
                       </td>
                     </tr>
@@ -185,11 +206,10 @@ const AttendanceReport = () => {
               </table>
             </div>
           ) : (
-            !loading && (
-              <div className="text-center text-gray-500 mt-4">
-                No attendance data found for the selected criteria
-              </div>
-            )
+            <div className="text-center text-gray-500 mt-4 p-8 bg-gray-50 rounded-lg">
+              <p>No attendance data found for the selected criteria</p>
+              <p className="text-sm mt-2">Try selecting a different date, class, or section</p>
+            </div>
           )}
         </div>
       </div>
