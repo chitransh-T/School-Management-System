@@ -76,13 +76,13 @@ const PreviewPage = () => {
       return;
     }
 
-    // Add admin_id to form data
-    formData.append('admin_id', user.id.toString());
-
     setIsSubmitting(true);
     setError('');
 
     try {
+      // Add admin_id to form data
+      formData.append('admin_id', user.id.toString());
+
       // Send form data to the backend
       const response = await fetch('http://localhost:1000/registerstudent', {
         method: 'POST',

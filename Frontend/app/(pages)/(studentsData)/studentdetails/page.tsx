@@ -43,6 +43,11 @@ const StudentDetails = () => {
         let url = 'http://localhost:1000/students';
         const params = new URLSearchParams();
         
+        // Add admin_id to filter students by the current admin
+        if (user?.id) {
+          params.append('admin_id', user.id.toString());
+        }
+        
         if (selectedClass) {
           params.append('class', selectedClass);
         }
@@ -79,7 +84,7 @@ const StudentDetails = () => {
     };
 
     fetchStudents();
-  }, [selectedClass, selectedSection]); // Re-fetch when filters change
+  }, [selectedClass, selectedSection, user?.id]); // Re-fetch when filters change or user changes
 
   // Reset section when class changes
   useEffect(() => {
