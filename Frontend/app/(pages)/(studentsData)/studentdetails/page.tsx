@@ -38,44 +38,48 @@ const StudentDetails = () => {
   // Fetch student data from the API
   useEffect(() => {
     const fetchStudents = async () => {
-      if (!user?.id) {
-        setError('You must be logged in to view students.');
-        setLoading(false);
-        return;
-      }
-
       try {
-        // Build query parameters including class and section filters
-        let url = `http://localhost:1000/students?admin_id=${user.id}`;
+        // Build query parameters for class and section filters
+        let url = 'http://localhost:1000/students';
+        const params = new URLSearchParams();
+        
         if (selectedClass) {
-          url += `&class=${encodeURIComponent(selectedClass)}`;
+          params.append('class', selectedClass);
         }
         if (selectedSection) {
-          url += `&section=${encodeURIComponent(selectedSection)}`;
+          params.append('section', selectedSection);
         }
 
+        // Add params to URL if any exist
+        if (params.toString()) {
+          url += `?${params.toString()}`;
+        }
+
+        console.log('Fetching students from:', url);
         const response = await fetch(url);
         if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+          const errorData = await response.json();
+          throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
         }
         const data = await response.json();
+        console.log('Fetched students:', data);
         setStudents(data);
 
-        // Extract unique classes and sections for filters
+        // Extract unique classes for filters
         if (!selectedClass && !selectedSection) {
           const classes = [...new Set(data.map((student: Student) => student.assigned_class))].filter(Boolean) as string[];
           setAvailableClasses(classes);
         }
       } catch (err) {
-        setError('Failed to load student data. Please try again later.');
         console.error('Error fetching students:', err);
+        setError('Failed to load student data. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchStudents();
-  }, [user?.id, selectedClass, selectedSection]); // Re-fetch when filters change
+  }, [selectedClass, selectedSection]); // Re-fetch when filters change
 
   // Reset section when class changes
   useEffect(() => {
@@ -103,9 +107,8 @@ const StudentDetails = () => {
     }
   
     try {
-      // Since admin_id doesn't exist in the database, let's try deleting without it
       const url = `http://localhost:1000/students/${studentId}`;
-      console.log('Delete request URL:', url);
+      console.log('Attempting to delete student:', studentId);
       
       const response = await fetch(url, {
         method: 'DELETE',
@@ -114,21 +117,19 @@ const StudentDetails = () => {
         }
       });
       
-      if (!response.ok) {
-        try {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to delete student');
-        } catch (parseError) {
-          throw new Error('Failed to delete student');
-        }
+      const data = await response.json();
+      console.log('Delete response:', data);
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || data.message || 'Failed to delete student');
       }
-  
-      setSuccess('Student deleted successfully');
+
+      setSuccess(data.message || 'Student deleted successfully');
       setError('');
       
       // Remove the deleted student from the state
       setStudents(students.filter(student => student.id !== studentId));
-  
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccess('');
@@ -287,7 +288,7 @@ const StudentDetails = () => {
                       />
                     ) : (
                       <span className="text-xl font-bold text-gray-600">
-                        {student.student_name.charAt(0)}
+                        {student.student_name?.trim().charAt(0).toUpperCase() || '?'}
                       </span>
                     )}
                   </div>
@@ -316,4 +317,3 @@ const StudentDetails = () => {
 };
 
 export default StudentDetails;
-

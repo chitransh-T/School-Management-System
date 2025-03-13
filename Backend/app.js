@@ -4,25 +4,51 @@ import cors from 'cors';
 import connection from './database/db_connection.js';
 import multer from 'multer';
 import path from 'path';
-import  fs  from 'fs';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
-const app = express();
-const port = 1000;
-
-app.use(cors());
-app.use(bodyparser.json());
-
-app.get('/', (req,res)=>{
-    res.send("Welcome")
-})
-
-
-
 
 // Create __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const app = express();
+const port = 1000;
+
+// Configure middleware
+app.use(cors());
+app.use(bodyparser.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Set up multer for file uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadsDir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB size limit per file
+}).fields([
+    { name: 'student_photo', maxCount: 1 },
+    { name: 'birth_certificate', maxCount: 1 },
+]);
+
+app.get('/', (req,res) => {
+    res.send("Welcome")
+})
+
+// Login API
 app.post('/login', (req, res) => {
     const { email, password } = req.body;
 
@@ -112,16 +138,6 @@ app.post('/register', (req, res) => {
     });
 });
 
-// Set up multer for file uploads
-const upload = multer({
-    dest: 'uploads/', // Files will be uploaded to this directory
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB size limit per file
-}).fields([
-    { name: 'student_photo', maxCount: 1 },
-    { name: 'birth_certificate', maxCount: 1 },
-]);
-
-// POST API for student registration
 // POST API for student registration
 app.post('/registerstudent', upload, (req, res) => {
     // Destructure fields from the request body
@@ -152,8 +168,8 @@ app.post('/registerstudent', upload, (req, res) => {
     }
 
     // Ensure files exist and get file paths
-    const studentPhoto = req.files['student_photo'] ? req.files['student_photo'][0].path : null;
-    const birthCertificate = req.files['birth_certificate'] ? req.files['birth_certificate'][0].path : null;
+    const studentPhoto = req.files['student_photo'] ? path.basename(req.files['student_photo'][0].path) : null;
+    const birthCertificate = req.files['birth_certificate'] ? path.basename(req.files['birth_certificate'][0].path) : null;
 
     // Check if both files are provided
     if (!studentPhoto || !birthCertificate) {
@@ -185,6 +201,10 @@ app.post('/registerstudent', upload, (req, res) => {
         created_by
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
+    // Log the file paths being saved
+    console.log('Saving student photo:', studentPhoto);
+    console.log('Saving birth certificate:', birthCertificate);
+
     // Insert data into the database
     connection.query(sql, [
         student_name,
@@ -215,53 +235,54 @@ app.post('/registerstudent', upload, (req, res) => {
 
 // Update the students endpoint to filter by admin_id
 app.get('/students', (req, res) => {
-    console.log('Received query params:', req.query);
+    console.log('Received request for students with query:', req.query);
     const { class: assignedClass, section } = req.query;
-    
+
     let query = 'SELECT * FROM students';
     let params = [];
     let conditions = [];
-    
-    // Filter by class if provided
+
+    // Add filters if provided
     if (assignedClass) {
-        // Convert class to string to match database
-        conditions.push('assigned_class = ?');
-        params.push(assignedClass.toString());
-        console.log('Added class condition:', assignedClass.toString());
+        conditions.push('(assigned_class = ? OR assigned_class = CONCAT("class ", ?))');
+        params.push(assignedClass, assignedClass);
+        console.log('Added class filter:', assignedClass);
     }
-    
-    // Filter by section if provided
+
     if (section) {
-        conditions.push('assigned_section = ?');
+        conditions.push('LOWER(assigned_section) = LOWER(?)');
         params.push(section);
-        console.log('Added section condition:', section);
+        console.log('Added section filter:', section);
     }
 
     // Add WHERE clause if there are conditions
     if (conditions.length > 0) {
         query += ' WHERE ' + conditions.join(' AND ');
     }
-    
-    console.log('Final SQL query:', query);
-    console.log('Query parameters:', params);
-    
+
+    console.log('Executing query:', query);
+    console.log('With parameters:', params);
+
     connection.query(query, params, (err, results) => {
         if (err) {
             console.error('Error fetching students:', err);
-            return res.status(500).json({ message: 'Internal server error' });
+            return res.status(500).json({ 
+                success: false,
+                message: 'Failed to fetch students',
+                error: err.message 
+            });
         }
 
-        console.log('Query results:', results);
-
-        // Normalize paths in the results
+        // Normalize file paths in the results
         const normalizedResults = results.map(student => ({
             ...student,
             student_photo: student.student_photo ? 
-                path.basename(student.student_photo.replace(/\\/g, '/')) : null,
+                path.basename(student.student_photo) : null,
             birth_certificate: student.birth_certificate ? 
-                path.basename(student.birth_certificate.replace(/\\/g, '/')) : null
+                path.basename(student.birth_certificate) : null
         }));
 
+        console.log(`Found ${normalizedResults.length} students`);
         res.json(normalizedResults);
     });
 });
@@ -341,11 +362,11 @@ app.put('/students/:id', upload, (req, res) => {
     // Add file fields if new files were uploaded
     if (studentPhoto) {
         updateFields.push('student_photo = ?');
-        values.push(studentPhoto);
+        values.push(path.basename(studentPhoto));
     }
     if (birthCertificate) {
         updateFields.push('birth_certificate = ?');
-        values.push(birthCertificate);
+        values.push(path.basename(birthCertificate));
     }
 
     // Add the WHERE clause parameter
@@ -422,119 +443,87 @@ app.get('/students/:id', (req, res) => {
 
 app.delete('/students/:id', (req, res) => {
     const studentId = req.params.id;
+    console.log('Delete request received for student ID:', studentId);
     
-    // Skip admin verification and directly get the student's photo path
-    const getStudentQuery = 'SELECT student_photo FROM students WHERE id = ?';
-    connection.query(getStudentQuery, [studentId], (err, results) => {
-      if (err) {
-        console.error('Error fetching student:', err);
-        return res.status(500).json({ error: 'Failed to fetch student details' });
-      }
-      
-      if (results.length === 0) {
-        return res.status(404).json({ error: 'Student not found' });
-      }
-      
-      const studentPhoto = results[0].student_photo;
-      
-      // Delete the student from database
-      const deleteQuery = 'DELETE FROM students WHERE id = ?';
-      connection.query(deleteQuery, [studentId], (err, results) => {
+    // First delete attendance records
+    const deleteAttendanceQuery = 'DELETE FROM attendance WHERE student_id = ?';
+    connection.query(deleteAttendanceQuery, [studentId], (err) => {
         if (err) {
-          console.error('Error deleting student:', err);
-          return res.status(500).json({ error: 'Failed to delete student' });
+            console.error('Error deleting attendance records:', err);
+            return res.status(500).json({ 
+                success: false,
+                error: 'Failed to delete attendance records',
+                message: err.message 
+            });
         }
         
-        // If student had a photo, delete the file
-        if (studentPhoto) {
-            const photoPath = path.join(__dirname, 'uploads', studentPhoto);
-          fs.unlink(photoPath, (err) => {
+        console.log('Successfully deleted attendance records for student:', studentId);
+        
+        // Now get student details for file deletion
+        const getStudentQuery = 'SELECT student_photo, birth_certificate FROM students WHERE id = ?';
+        connection.query(getStudentQuery, [studentId], (err, results) => {
             if (err) {
-              console.error('Error deleting photo file:', err);
-              // Don't send error response here as the student is already deleted
+                console.error('Error fetching student:', err);
+                return res.status(500).json({ 
+                    success: false,
+                    error: 'Failed to fetch student details',
+                    message: err.message 
+                });
             }
-          });
-        }
-        
-        res.status(200).json({ message: 'Student deleted successfully' });
-      });
-    });
-  });
+            
+            const files = results.length > 0 ? {
+                student_photo: results[0].student_photo,
+                birth_certificate: results[0].birth_certificate
+            } : {};
+            
+            // Delete the student record
+            const deleteStudentQuery = 'DELETE FROM students WHERE id = ?';
+            connection.query(deleteStudentQuery, [studentId], (err, deleteResult) => {
+                if (err) {
+                    console.error('Error deleting student:', err);
+                    return res.status(500).json({ 
+                        success: false,
+                        error: 'Failed to delete student',
+                        message: err.message 
+                    });
+                }
 
-// Get students by class and section
-app.get('/students', (req, res) => {
-    console.log('Received request for students with query:', req.query);
-    const { class: assignedClass, section } = req.query;
-
-    // Validate query parameters
-    if (!assignedClass || !section) {
-        console.log('Missing required parameters');
-        return res.status(400).json({ message: 'Class and section are required' });
-    }
-
-    // Log the exact values we're searching for
-    console.log('Searching for students with:', {
-        assignedClass: assignedClass,
-        assignedClass_type: typeof assignedClass,
-        section: section,
-        section_type: typeof section
-    });
-
-    // First, let's check what columns we have in the students table
-    const describeQuery = 'DESCRIBE students';
-    connection.query(describeQuery, (descErr, descResults) => {
-        if (descErr) {
-            console.error('Error describing table:', descErr);
-            return res.status(500).json({ message: 'Database error' });
-        }
-        console.log('Table structure:', descResults);
-        
-        // Fix the query - MySQL uses CONCAT() not + for string concatenation
-        const query = `
-            SELECT *
-            FROM students 
-            WHERE (assigned_class = ? OR assigned_class = CONCAT('class ', ?))
-            AND LOWER(assigned_section) = LOWER(?)
-        `;
-
-        // Let's also run a query to see all students to verify data exists
-        connection.query('SELECT id, assigned_class, assigned_section FROM students LIMIT 5', (err, allStudents) => {
-            if (err) {
-                console.error('Error checking sample students:', err);
-            } else {
-                console.log('Sample of students in database:', allStudents);
-            }
-        });
-
-
-    console.log('Executing query:', query);
-    console.log('Query parameters:', [assignedClass, section]);
-    
-        // Let's also run a query to see all students to verify data exists
-        connection.query('SELECT id, student_name, assigned_class, assigned_section FROM students', (err, allStudents) => {
-            if (err) {
-                console.error('Error checking all students:', err);
-            } else {
-                console.log('All students in database:', allStudents);
-            }
-        });
-
-        // Try with both formats for the class value
-        const classValue = assignedClass;
-        const classWithPrefix = `class ${assignedClass}`;
-        
-        connection.query(query, [classValue, classWithPrefix, section], (err, results) => {
-        if (err) {
-            console.error('Error fetching students:', err);
-            return res.status(500).json({ message: 'Failed to fetch students' });
-        }
-        console.log('Query results:', results);
-
-        if (results.length === 0) {
-            return res.status(404).json({ message: 'No students found for the given class and section' });
-        }
-
-            res.json(results);
+                if (deleteResult.affectedRows === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Student not found'
+                    });
+                }
+                
+                // Delete associated files
+                const filesToDelete = Object.values(files).filter(Boolean);
+                let deletedFiles = 0;
+                let fileErrors = [];
+                
+                filesToDelete.forEach(filename => {
+                    const filepath = path.join(__dirname, 'uploads', filename);
+                    if (fs.existsSync(filepath)) {
+                        try {
+                            fs.unlinkSync(filepath);
+                            deletedFiles++;
+                        } catch (error) {
+                            fileErrors.push({ file: filename, error: error.message });
+                        }
+                    }
+                });
+                
+                res.json({ 
+                    success: true,
+                    message: 'Student deleted successfully',
+                    details: {
+                        attendanceDeleted: true,
+                        studentDeleted: true,
+                        filesDeleted: deletedFiles,
+                        totalFiles: filesToDelete.length,
+                        fileErrors: fileErrors.length > 0 ? fileErrors : undefined
+                    }
+                });
+            });
         });
     });
 });
