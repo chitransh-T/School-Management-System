@@ -215,28 +215,43 @@ app.post('/registerstudent', upload, (req, res) => {
 
 // Update the students endpoint to filter by admin_id
 app.get('/students', (req, res) => {
-    const { class: assignedClass, section, admin_id } = req.query;
+    console.log('Received query params:', req.query);
+    const { class: assignedClass, section } = req.query;
     
-    let query = 'SELECT * FROM students WHERE created_by = ?';
-    let params = [admin_id];
+    let query = 'SELECT * FROM students';
+    let params = [];
+    let conditions = [];
     
     // Filter by class if provided
     if (assignedClass) {
-        query += ' AND assigned_class = ?';
-        params.push(assignedClass);
+        // Convert class to string to match database
+        conditions.push('assigned_class = ?');
+        params.push(assignedClass.toString());
+        console.log('Added class condition:', assignedClass.toString());
     }
     
     // Filter by section if provided
     if (section) {
-        query += ' AND assigned_section = ?';
+        conditions.push('assigned_section = ?');
         params.push(section);
+        console.log('Added section condition:', section);
     }
+
+    // Add WHERE clause if there are conditions
+    if (conditions.length > 0) {
+        query += ' WHERE ' + conditions.join(' AND ');
+    }
+    
+    console.log('Final SQL query:', query);
+    console.log('Query parameters:', params);
     
     connection.query(query, params, (err, results) => {
         if (err) {
             console.error('Error fetching students:', err);
             return res.status(500).json({ message: 'Internal server error' });
         }
+
+        console.log('Query results:', results);
 
         // Normalize paths in the results
         const normalizedResults = results.map(student => ({

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '@/app/dashboardComponents/sidebar';
 import { format } from 'date-fns';
+import { useAuth } from '@/app/context/AuthContext';
 
 interface Student {
   id: number;
@@ -13,6 +14,7 @@ interface Student {
 }
 
 const MarkAttendance = () => {
+  const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
@@ -23,32 +25,46 @@ const MarkAttendance = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const classes = Array.from({ length: 12 }, (_, i) => `class ${i + 1}`);
+  const sections = ['a', 'b', 'c'];
+
   // Fetch students based on selected class and section
   const fetchStudents = async () => {
     if (!selectedClass || !selectedSection) return;
 
     setFetchingStudents(true);
     setError('');
-
+    
+    console.log('Fetching students with params:', { selectedClass, selectedSection });
+    
     try {
-      const response = await fetch(
-        `http://localhost:1000/students?class=${selectedClass}&section=${selectedSection}`
-      );
+      const url = `http://localhost:1000/students?class=${encodeURIComponent(selectedClass)}&section=${encodeURIComponent(selectedSection)}`;
+      console.log('Request URL:', url);
+      
+      const response = await fetch(url);
+      console.log('Response status:', response.status);
+      
+      const data = await response.json();
+      console.log('Response data:', data);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch students');
+        throw new Error(data.message || 'Failed to fetch students');
       }
 
-      const data = await response.json();
-      setStudents(data);
-
-      // Initialize attendance for all students as "Present" (true)
-      const initialAttendance: { [key: number]: boolean } = {};
-      data.forEach((student: Student) => {
-        initialAttendance[student.id] = true;
-      });
-      setAttendance(initialAttendance);
+      if (Array.isArray(data) && data.length === 0) {
+        setError('No students found for the selected class and section');
+        setStudents([]);
+      } else if (Array.isArray(data)) {
+        setStudents(data);
+        // Initialize attendance for all students as "Present" (true)
+        const initialAttendance: { [key: number]: boolean } = {};
+        data.forEach((student: Student) => {
+          initialAttendance[student.id] = true;
+        });
+        setAttendance(initialAttendance);
+      } else {
+        throw new Error('Invalid response format from server');
+      }
     } catch (err) {
       console.error('Error fetching students:', err);
       setError(err instanceof Error ? err.message : 'Failed to load students');
@@ -59,7 +75,10 @@ const MarkAttendance = () => {
   };
 
   useEffect(() => {
-    fetchStudents();
+    if (selectedClass && selectedSection) {
+      console.log('Class or section changed:', { selectedClass, selectedSection });
+      fetchStudents();
+    }
   }, [selectedClass, selectedSection]);
 
   // Handle attendance checkbox change
@@ -77,26 +96,40 @@ const MarkAttendance = () => {
     setError('');
     setSuccess('');
 
+    if (!user?.id) {
+      setError('Authentication failed. Please try again.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const attendanceData = students.map((student) => ({
         date: selectedDate,
         class: selectedClass,
         section: selectedSection,
         student_id: student.id,
-        is_present: attendance[student.id] ? 1 : 0, // 1 = Present, 0 = Absent
-        marked_by: 1, // Assuming admin_id is 1 for this example
+        is_present: attendance[student.id] ? 1 : 0,
+        marked_by: user.id,
       }));
 
-      const response = await fetch('http://localhost:1000/attendance', {
+      const url = 'http://localhost:1000/attendance';
+      console.log('Request URL:', url);
+      console.log('Request data:', attendanceData);
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ attendanceData }),
       });
+      console.log('Response status:', response.status);
+
+      const data = await response.json();
+      console.log('Response data:', data);
 
       if (!response.ok) {
-        throw new Error('Failed to submit attendance');
+        throw new Error(data.message || 'Failed to submit attendance');
       }
 
       setSuccess('Attendance marked successfully');
@@ -162,9 +195,9 @@ const MarkAttendance = () => {
                   required
                 >
                   <option value="">Select Class</option>
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((cls) => (
-                    <option key={cls} value={cls.toString()}>
-                      {cls}
+                  {classes.map((cls) => (
+                    <option key={cls} value={cls}>
+                      {cls.replace('class', 'Class')}
                     </option>
                   ))}
                 </select>
@@ -181,9 +214,9 @@ const MarkAttendance = () => {
                   required
                 >
                   <option value="">Select Section</option>
-                  {['A', 'B', 'C'].map((section) => (
+                  {sections.map((section) => (
                     <option key={section} value={section}>
-                      {section}
+                      {section.toUpperCase()}
                     </option>
                   ))}
                 </select>
@@ -214,13 +247,13 @@ const MarkAttendance = () => {
                     <tbody className="divide-y divide-gray-200">
                       {students.map((student) => (
                         <tr key={student.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-6 py-4 whitespace-nowrap text-gray-700">
                             {student.registration_number}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-6 py-4 whitespace-nowrap text-gray-700">
                             {student.student_name}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-6 py-4 whitespace-nowrap text-gray-700">
                             <input
                               type="checkbox"
                               checked={attendance[student.id]}
