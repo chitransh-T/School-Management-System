@@ -114,7 +114,7 @@ const SignIn: React.FC = () => {
               <input
                 type="email"
                 placeholder="Email address"
-                className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors"
+                className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm   text-gray-700 transition-colors"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -128,7 +128,7 @@ const SignIn: React.FC = () => {
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
-                className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors"
+                className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 text-gray-700   rounded-lg bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={(e) => {
