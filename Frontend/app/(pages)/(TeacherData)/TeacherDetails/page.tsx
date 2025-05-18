@@ -59,13 +59,13 @@ const TeacherDashboard = () => {
   }, []);
 
   const handleAddTeacher = () => {
-    router.push('/addteacher');
+    router.push('/addTeacher');
   };
 
   return (
     <div className="flex">
       <Sidebar />
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-8">
         {/* Stats Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 my-12">
           <div className="bg-white p-4 rounded-lg shadow">
