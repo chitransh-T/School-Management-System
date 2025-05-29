@@ -21,12 +21,7 @@ interface ProfileOption {
 }
 
 // Navigation links array
-const navLinks: NavLink[] = [
-  { href: '/Admindashboard', label: 'Home', icon: Home },
-  { href: '/notifications', label: 'Notifications', icon: Bell },
-  { href: '/services', label: 'Services' },
-  { href: '/about', label: 'About Us' },
-];
+
 
 const DashboardNavbar: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false); // State for dropdown visibility
@@ -71,19 +66,10 @@ const DashboardNavbar: React.FC = () => {
           </Link>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center justify-center flex-1 space-x-4 lg:space-x-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                className="flex items-center text-gray-700 hover:text-blue-600 transition-colors text-sm lg:text-base"
-              >
+          
                 {/* Render the icon if it exists */}
-                {link.icon && <link.icon className="w-4 h-4 lg:w-5 lg:h-5 mr-1" />}
-                <span>{link.label}</span>
-              </Link>
-            ))}
-          </div>
+               
+          
 
           {/* Desktop Profile Dropdown */}
           <div className="hidden md:block relative">
@@ -136,19 +122,7 @@ const DashboardNavbar: React.FC = () => {
         {isMobileMenuOpen && (
           <div className="md:hidden bg-white border-t border-gray-200">
             {/* Mobile Navigation Links */}
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {link.icon && <link.icon className="w-4 h-4 mr-2" />}
-                  <span>{link.label}</span>
-                </Link>
-              ))}
-            </div>
+           
 
             {/* Mobile Profile Options */}
             <div className="border-t border-gray-200 pt-3 pb-3">

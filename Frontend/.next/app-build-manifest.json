@@ -1,0 +1,50 @@
+{
+  "pages": {
+    "/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/layout.css",
+      "static/chunks/app/layout.js"
+    ],
+    "/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/page.js"
+    ],
+    "/auth/signin/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/auth/signin/page.js"
+    ],
+    "/Admindashboard/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/Admindashboard/page.js"
+    ],
+    "/(pages)/notice/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/notice/page.js"
+    ],
+    "/(pages)/addnotice/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/addnotice/page.js"
+    ],
+    "/(pages)/(TeacherData)/TeacherAttendance/markteacherattendance/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(TeacherData)/TeacherAttendance/markteacherattendance/page.js"
+    ],
+    "/(pages)/(TeacherData)/TeacherAttendance/TeacherAttendanceReport/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(TeacherData)/TeacherAttendance/TeacherAttendanceReport/page.js"
+    ],
+    "/(pages)/(studentsData)/addstudent/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(studentsData)/addstudent/page.js"
+    ]
+  }
+}

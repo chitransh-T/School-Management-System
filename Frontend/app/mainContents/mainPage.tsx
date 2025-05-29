@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { CheckCircle } from 'lucide-react';
 import { memo } from 'react';
-
+import Footer from '../components/footer';
 // Lazy load the slider component with a loading placeholder
 const ImageSlider = dynamic(() => import("../components/sliderComponent"), {
   loading: () => (
@@ -133,7 +133,9 @@ function MainPage() {
           </button>
         </div>
       </section>
+      <Footer />
     </div>
+   
   );
 }
 

@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import Sidebar from '@/app/dashboardComponents/sidebar';
+import DashboardLayout from '@/app/dashboardComponents/DashboardLayout';
 import { useRouter } from 'next/navigation';
 import { FaEdit, FaTrash, FaFilter } from 'react-icons/fa';
 import Link from 'next/link';
@@ -19,6 +19,15 @@ interface Student {
   birth_certificate: string;
 }
 
+interface ClassData {
+  id: number;
+  class_name: string;
+  section: string;
+  tuition_fees: number;
+  teacher_name: string;
+  user_email: string;
+}
+
 const StudentDetails = () => {
   const router = useRouter();
   const { user } = useAuth(); // Get current admin's data
@@ -27,26 +36,96 @@ const StudentDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+  const [loadingClasses, setLoadingClasses] = useState(false);
+  const [classError, setClassError] = useState('');
   // Add state for class and section filters
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
   const [availableClasses, setAvailableClasses] = useState<string[]>([]);
-  // Define fixed section options
-  const fixedSections = ['A', 'B', 'C'];
+  const [availableSections, setAvailableSections] = useState<string[]>([]);
+  const [classes, setClasses] = useState<ClassData[]>([]);
 
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        setLoadingClasses(true);
+        setClassError('');
+        
+        // Get token from localStorage
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          setClassError('Authentication token not found');
+          setLoadingClasses(false);
+          return;
+        }
+        
+        const response = await fetch('http://localhost:1000/api/classes', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch classes: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Classes data received:', data);
+        
+        // Set the classes
+        setClasses(data);
+        
+        // Extract unique class names
+        const uniqueClasses = Array.from(new Set(data.map((cls: ClassData) => cls.class_name))) as string[];
+        setAvailableClasses(uniqueClasses);
+        
+        // Extract unique sections from all classes
+        const uniqueSections = Array.from(new Set(data.map((cls: ClassData) => cls.section))) as string[];
+        setAvailableSections(uniqueSections);
+      } catch (err) {
+        console.error('Error fetching classes:', err);
+        setClassError('Failed to load classes. Please try again.');
+      } finally {
+        setLoadingClasses(false);
+      }
+    };
+    
+    fetchClasses();
+  }, []);
+  
+  // Update available sections when a class is selected
+  const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedClassName = e.target.value;
+    setSelectedClass(selectedClassName);
+    
+    // Filter sections based on the selected class
+    if (selectedClassName) {
+      const classData = classes.filter(cls => cls.class_name === selectedClassName);
+      const availableSections = classData.map(cls => cls.section);
+      setAvailableSections(availableSections);
+    } else {
+      // If no class is selected, show all available sections
+      const allSections = Array.from(new Set(classes.map(cls => cls.section))) as string[];
+      setAvailableSections(allSections);
+    }
+  };
+  
+  const handleSectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedSection(e.target.value);
+  };
   // Fetch student data from the API
   useEffect(() => {
     const fetchStudents = async () => {
       try {
         // Build query parameters for class and section filters
-        let url = 'http://localhost:1000/students';
+        let url = 'http://localhost:1000/api/students';
         const params = new URLSearchParams();
         
-        // Add admin_id to filter students by the current admin
-        if (user?.id) {
-          params.append('admin_id', user.id.toString());
-        }
+        // We don't need to add admin_id as the backend uses the JWT token
+        // to identify the user and return their students
         
         if (selectedClass) {
           params.append('class', selectedClass);
@@ -61,14 +140,38 @@ const StudentDetails = () => {
         }
 
         console.log('Fetching students from:', url);
-        const response = await fetch(url);
+        
+        // Get the token from localStorage
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          throw new Error('Authentication token not found');
+        }
+        
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
         }
         const data = await response.json();
         console.log('Fetched students:', data);
-        setStudents(data);
+        
+        // Check if the response is an array (as expected)
+        if (Array.isArray(data)) {
+          setStudents(data);
+        } else {
+          // If the API returns an object with a data property (common pattern)
+          if (data.data && Array.isArray(data.data)) {
+            setStudents(data.data);
+          } else {
+            console.error('Unexpected API response format:', data);
+            setStudents([]);
+          }
+        }
 
         // Extract unique classes for filters
         if (!selectedClass && !selectedSection) {
@@ -88,18 +191,45 @@ const StudentDetails = () => {
 
   // Reset section when class changes
   useEffect(() => {
-    if (selectedClass) {
-      // We're no longer filtering sections based on class since we're using fixed sections
-    }
     setSelectedSection('');
   }, [selectedClass]);
 
-  // Filter students based on search term
-  const filteredStudents = students.filter(
-    (student) =>
+  // Add debugging logs for section values
+  useEffect(() => {
+    if (selectedSection) {
+      console.log('Selected section:', selectedSection);
+      console.log('Student sections:', students.map(s => ({ 
+        name: s.student_name, 
+        section: s.assigned_section,
+        sectionType: typeof s.assigned_section
+      })));
+    }
+  }, [selectedSection, students]);
+
+  // Filter students based on search term, class, and section
+  const filteredStudents = students.filter((student) => {
+    // Search term filter
+    const matchesSearch = 
       student.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.registration_number.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      student.registration_number.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Class filter
+    const matchesClass = !selectedClass || 
+      (student.assigned_class && student.assigned_class.toLowerCase() === selectedClass.toLowerCase());
+    
+    // Section filter - Fix: trim whitespace and handle case sensitivity
+    const studentSection = student.assigned_section ? student.assigned_section.trim() : '';
+    const selectedSectionValue = selectedSection ? selectedSection.trim() : '';
+    
+    // Log each comparison for debugging
+    if (selectedSection && studentSection) {
+      console.log(`Comparing: '${studentSection}' with '${selectedSectionValue}', equal: ${studentSection === selectedSectionValue}`);
+    }
+    
+    const matchesSection = !selectedSection || studentSection === selectedSectionValue;
+    
+    return matchesSearch && matchesClass && matchesSection;
+  });
 
   const handleDelete = async (studentId: number) => {
     if (!user?.id) {
@@ -112,20 +242,27 @@ const StudentDetails = () => {
     }
   
     try {
-      const url = `http://localhost:1000/students/${studentId}`;
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Authentication token not found');
+        return;
+      }
+
+      const url = `http://localhost:1000/api/students/${studentId}`;
       console.log('Attempting to delete student:', studentId);
       
       const response = await fetch(url, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
       });
       
       const data = await response.json();
       console.log('Delete response:', data);
       
-      if (!response.ok || !data.success) {
+      if (!response.ok) {
         throw new Error(data.error || data.message || 'Failed to delete student');
       }
 
@@ -147,23 +284,21 @@ const StudentDetails = () => {
   };
   if (loading) {
     return (
-      <div className="flex">
-        <Sidebar />
-        <div className="flex-1 p-6 max-w-6xl mx-auto my-12">
-          <p>Loading...</p>
+      <DashboardLayout>
+        <div className="w-full flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="flex">
-        <Sidebar />
-        <div className="flex-1 p-6 max-w-6xl mx-auto my-12">
+      <DashboardLayout>
+        <div className="w-full p-4">
           <p className="text-red-500">{error}</p>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
   const handleAddStudent = () => {
@@ -171,9 +306,8 @@ const StudentDetails = () => {
   };
 
   return (
-    <div className="flex">
-      <Sidebar />
-      <div className="flex-1 p-6 max-w-6xl mx-auto my-12">
+    <DashboardLayout>
+      <div className="w-full">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Student Details</h1>
@@ -199,7 +333,7 @@ const StudentDetails = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Class</label>
             <select
               value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
+              onChange={handleClassChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
             >
               <option value="">All Classes</option>
@@ -215,12 +349,12 @@ const StudentDetails = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Section</label>
             <select
               value={selectedSection}
-              onChange={(e) => setSelectedSection(e.target.value)}
+              onChange={handleSectionChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              disabled={!selectedClass} // Only enable if class is selected
+              disabled={!availableSections.length} // Only enable if sections are available
             >
               <option value="">All Sections</option>
-              {fixedSections.map((section) => (
+              {availableSections.map((section) => (
                 <option key={section} value={section}>
                   {section}
                 </option>
@@ -269,8 +403,9 @@ const StudentDetails = () => {
                 {/* Action buttons */}
                 <div className="absolute top-4 right-4 flex space-x-2">
                   <Link
-                    href={`/editstudent/${student.id}`}
+                    href={`/editstudent?id=${student.id}`}
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                    title="Edit Student"
                   >
                     <FaEdit className="w-4 h-4" />
                   </Link>
@@ -317,8 +452,9 @@ const StudentDetails = () => {
           </div>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 
 export default StudentDetails;
+

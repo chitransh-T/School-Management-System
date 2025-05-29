@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import Sidebar from '@/app/dashboardComponents/sidebar';
-
+import DashboardLayout from '@/app/dashboardComponents/DashboardLayout';
 export default function StudentLeaveCertificatePage() {
     const studentName = "User";
     
@@ -11,8 +11,7 @@ export default function StudentLeaveCertificatePage() {
     };
 
     return (
-        <div className="flex h-screen">
-            <Sidebar />
+            <DashboardLayout>
             <div className="flex-1 bg-gray-50">
                 <div className="w-full h-full flex my-12 justify-center">
                     {/* Remove max-w-xl and px-4 to allow full width */}
@@ -62,6 +61,6 @@ export default function StudentLeaveCertificatePage() {
                     </div>
                 </div>
             </div>
-        </div>
+        </DashboardLayout>
     );
 }

@@ -48,6 +48,14 @@ export const LandingNavbar: React.FC = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
+          <Link 
+              href="/" 
+              className={`text-sm font-semibold tracking-wide transition-colors ${
+                isScrolled ? 'text-gray-600 hover:text-blue-600' : 'text-gray-800 hover:text-blue-500'
+              }`}
+            >
+              Home
+            </Link>
             <Link 
               href="/about-us" 
               className={`text-sm font-semibold tracking-wide transition-colors ${

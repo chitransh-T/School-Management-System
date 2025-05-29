@@ -8,6 +8,7 @@ import { LandingNavbar } from "./components/LandingNavbar";
 import DashboardNavbar from "./components/dashboardNavbar";
 import Footer from "./components/footer";
 import { useAuth } from "./context/AuthContext";
+import ProtectedRouteWrapper from "./components/ProtectedRouteWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,12 +52,14 @@ export default function RootLayout({
         }}
       >
         <AuthProvider>
-          <NavbarWrapper />
-          <main className="flex-grow w-full max-w-screen-2xl mx-auto">
-            {children}
-          </main>
-          <Footer />
+          <ProtectedRouteWrapper>
+            <NavbarWrapper />
+            <main className="flex-grow w-full max-w-screen-2xl mx-auto">
+              {children}
+            </main>
+          </ProtectedRouteWrapper>
         </AuthProvider>
+        {/* <Footer /> */}
       </body>
     </html>
   );

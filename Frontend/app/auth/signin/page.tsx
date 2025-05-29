@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/app/context/AuthContext";
@@ -13,7 +13,23 @@ const SignIn: React.FC = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
+  
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      // Determine which dashboard to redirect to based on role
+      let redirectPath = '/Admindashboard'; // Default
+      
+      if (user.role === 'teacher') {
+        redirectPath = '/Teacherdashboard';
+      } else if (user.role === 'student') {
+        redirectPath = '/Studentdashboard';
+      }
+      
+      router.push(redirectPath);
+    }
+  }, [isAuthenticated, user, router]);
 
   const signInWithEmail = async () => {
     if (!email || !password) {
@@ -25,7 +41,7 @@ const SignIn: React.FC = () => {
     setError("");
     
     try {
-      const response = await fetch('http://localhost:1000/login', {
+      const response = await fetch('http://localhost:1000/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -47,13 +63,39 @@ const SignIn: React.FC = () => {
         throw new Error(data.message || 'Login failed');
       }
 
-      if (!data.user?.id) {
-        throw new Error('Invalid user data received');
+      // Check if we have success and token in the response
+      if (!data.success || !data.token) {
+        throw new Error('Invalid response from server');
       }
 
+      // Store the token in localStorage
+      localStorage.setItem('token', data.token);
+      
+      // Store token and role in cookies for middleware access
+      document.cookie = `token=${data.token}; path=/; max-age=${60*60}`; // 1 hour expiry
+      document.cookie = `userRole=${data.role}; path=/; max-age=${60*60}`; // 1 hour expiry
+      
+      // Create a user object with the token information
+      const userData = {
+        id: Date.now(), // Generate a temporary ID
+        email: email,
+        role: data.role,
+        token: data.token
+      };
+
       // Login successful with user data
-      login(data.user);
-      router.push("/Admindashboard");
+      login(userData);
+      
+      // Redirect based on role
+      if (data.role === 'admin') {
+        router.push("/Admindashboard");
+      } else if (data.role === 'teacher') {
+        router.push("/Teacherdashboard");
+      } else if (data.role === 'student') {
+        router.push("/Studentdashboard");
+      } else {
+        router.push("/Admindashboard"); // Default fallback
+      }
     } catch (err) {
       console.error("Login error:", err);
       setError(err instanceof Error ? err.message : "Failed to sign in. Please try again.");
@@ -62,22 +104,6 @@ const SignIn: React.FC = () => {
     }
   };
 
-  const signInWithGoogle = async () => {
-    setAuthing(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      // Provide mock user data when logging in with Google
-      login({
-        id: 1, // You might want to replace this with actual user ID from Google auth
-        email: "user@example.com" // You might want to replace this with actual email from Google auth
-      });
-      router.push("/Admindashboard");
-    } catch (err) {
-      setError("Failed to sign in with Google.");
-    } finally {
-      setAuthing(false);
-    }
-  };
 
   return (
     <div className="w-full min-h-screen pt-20 pb-8 flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
@@ -181,31 +207,9 @@ const SignIn: React.FC = () => {
               )}
             </button>
 
-            {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
-              </div>
-            </div>
-
+            
             {/* Google Sign In Button */}
-            <button
-              onClick={signInWithGoogle}
-              disabled={authing}
-              className={`w-full flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors ${
-                authing ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
-              <img
-                className="h-5 w-5 mr-2"
-                src="https://www.svgrepo.com/show/475656/google-color.svg"
-                alt="Google logo"
-              />
-              <span>Sign in with Google</span>
-            </button>
+         
           </div>
 
           {/* Sign Up Link */}

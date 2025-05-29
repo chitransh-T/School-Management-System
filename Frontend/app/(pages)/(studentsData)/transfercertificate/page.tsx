@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import Sidebar from '@/app/dashboardComponents/sidebar';
 import { useRouter } from 'next/navigation';
+import DashboardLayout from '@/app/dashboardComponents/DashboardLayout';
 export default function SchoolLeavePage() {
     const [date, setDate] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
@@ -13,8 +14,7 @@ export default function SchoolLeavePage() {
         router.push('/printcertificate');
       };
     return (
-        <div className="flex h-screen">
-            <Sidebar />
+            <DashboardLayout>
             <div className="flex-1 flex items-center justify-center bg-gray-50">
                 <main className="w-full max-w-md px-4">
                     <div className="w-full p-6 bg-white rounded-lg shadow-md">
@@ -77,6 +77,6 @@ export default function SchoolLeavePage() {
                     </div>
                 </main>
             </div>
-        </div>
+        </DashboardLayout>
     );
 }

@@ -1,28 +1,29 @@
 "use client";
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Sidebar from '@/app/dashboardComponents/sidebar';
 import { useAuth } from '@/app/context/AuthContext';
+import { fetchWithAuth } from '@/app/utils/api';
+import DashboardLayout from '@/app/dashboardComponents/DashboardLayout';
+import { useRouter } from 'next/navigation';
+interface ClassData {
+  id: string;
+  class_name: string;
+  section: string;
+  tuition_fees: number;
+  teacher_name: string;
+}
 
 const PreviewPage = () => {
-  const countries = [
-    "Afghanistan", "Albania", "Algeria", "Argentina", "Australia", "Austria",
-    "Bangladesh", "Belgium", "Brazil", "Canada", "China", "Colombia",
-    "Denmark", "Egypt", "Finland", "France", "Germany", "Greece",
-    "India", "Indonesia", "Iran", "Iraq", "Ireland", "Italy", "Japan",
-    "Kenya", "Korea, South", "Malaysia", "Mexico", "Netherlands",
-    "New Zealand", "Nigeria", "Norway", "Pakistan", "Philippines",
-    "Poland", "Portugal", "Russia", "Saudi Arabia", "Singapore",
-    "South Africa", "Spain", "Sweden", "Switzerland", "Thailand",
-    "Turkey", "Ukraine", "United Arab Emirates", "United Kingdom",
-    "United States", "Vietnam"
-  ];
-
-  const classes = [
-    "Class 1", "Class 2", "Class 3", "Class 4", "Class 5",
-    "Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12"
-  ];
-
-  const sections = ["A", "B", "C"];
+  const router = useRouter();
+  // State for classes and sections fetched from backend
+  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [sections, setSections] = useState<string[]>([]);
+  const [loadingClasses, setLoadingClasses] = useState<boolean>(false);
+  const [classError, setClassError] = useState<string>('');  
+  
+  // State for selected class and its available sections
+  const [selectedClass, setSelectedClass] = useState<string>('');
+  const [availableSections, setAvailableSections] = useState<string[]>([]);
 
   const { user } = useAuth(); // Get the current admin's data
 
@@ -30,6 +31,69 @@ const PreviewPage = () => {
   const [photoFileName, setPhotoFileName] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Fetch classes from backend
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        setLoadingClasses(true);
+        setClassError('');
+        
+        // Get token from localStorage
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          setClassError('Authentication token not found');
+          setLoadingClasses(false);
+          return;
+        }
+        
+        const response = await fetch('http://localhost:1000/api/classes', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch classes: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Classes data received:', data);
+        
+        // Set the classes
+        setClasses(data as ClassData[]);
+        
+        // Extract unique sections from all classes
+        const uniqueSections = Array.from(new Set(data.map((cls: ClassData) => cls.section))) as string[];
+        setSections(uniqueSections);
+      } catch (err) {
+        console.error('Error fetching classes:', err);
+        setClassError('Failed to load classes. Please try again.');
+      } finally {
+        setLoadingClasses(false);
+      }
+    };
+    
+    fetchClasses();
+  }, []);
+  
+  // Update available sections when a class is selected
+  const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedClassName = e.target.value;
+    setSelectedClass(selectedClassName);
+    
+    // Filter sections based on the selected class
+    if (selectedClassName) {
+      const classData = classes.filter(cls => cls.class_name === selectedClassName);
+      const availableSections = classData.map(cls => cls.section);
+      setAvailableSections(availableSections);
+    } else {
+      setAvailableSections([]);
+    }
+  };
 
   const birthCertInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -71,7 +135,7 @@ const PreviewPage = () => {
       return;
     }
 
-    if (!user?.id) {
+    if (!user?.email) {
       setError('You must be logged in to register a student.');
       return;
     }
@@ -80,13 +144,19 @@ const PreviewPage = () => {
     setError('');
 
     try {
-      // Add admin_id to form data
-      formData.append('admin_id', user.id.toString());
+      // Get the authentication token without Bearer prefix (backend will handle this)
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
 
       // Send form data to the backend
-      const response = await fetch('http://localhost:1000/registerstudent', {
+      const response = await fetch('http://localhost:1000/api/registerstudent', {
         method: 'POST',
         body: formData,
+        headers: {
+          'Authorization': token // Send token without Bearer prefix
+        }
       });
 
       const result = await response.json();
@@ -95,13 +165,13 @@ const PreviewPage = () => {
         throw new Error(result.message || 'Failed to register student');
       }
 
-      alert('Student registered successfully!');
-      // Optionally, reset the form
+      router.push('/Admindashboard');
+      // Reset the form
       (e.target as HTMLFormElement).reset();
       setBirthCertFileName('');
       setPhotoFileName('');
-    } catch (err) {
-      setError('Failed to register student. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to register student. Please try again.');
       console.error('Error:', err);
     } finally {
       setIsSubmitting(false);
@@ -114,11 +184,10 @@ const PreviewPage = () => {
   );
 
   return (
-    <div className="flex h-screen">
-      <Sidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="min-h-screen bg-gray-50 p-8 m-12">
-          <div className="max-w-6xl mx-auto">
+    <DashboardLayout>
+      <div className="flex-1 bg-gray-50 overflow-auto">
+        <div className="container mx-auto px-4 py-8 max-w-6xl">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="mb-8">
               <p className="text-3xl font-bold text-gray-900">Student Registration Portal</p>
             </div>
@@ -139,10 +208,10 @@ const PreviewPage = () => {
                   <p className="text-sm text-red-500 mb-4">Fields marked with an asterisk (*) are mandatory</p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Student Information Section */}
+                    {/* Student Info */}
                     <div className="space-y-4">
                       <h3 className="font-semibold text-lg text-gray-700 border-b pb-2">Student Information</h3>
-                      
+
                       <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">
                           Student Name<RequiredField />
@@ -151,7 +220,7 @@ const PreviewPage = () => {
                           type="text"
                           name="student_name"
                           required
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 hover:border-blue-300 text-gray-900"
+                          className="w-full p-2 border rounded-md"
                           placeholder="Enter student's full name"
                         />
                       </div>
@@ -164,12 +233,12 @@ const PreviewPage = () => {
                           type="text"
                           name="registration_number"
                           required
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 hover:border-blue-300 text-gray-900"
+                          className="w-full p-2 border rounded-md"
                           placeholder="e.g., REG2024001"
                         />
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-gray-500">
                         <label className="block text-sm font-medium text-gray-700">
                           Date of Birth<RequiredField />
                         </label>
@@ -177,18 +246,18 @@ const PreviewPage = () => {
                           type="date"
                           name="date_of_birth"
                           required
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 hover:border-blue-300 text-gray-900"
+                          className="w-full p-2 border rounded-md"
                         />
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-gray-500">
                         <label className="block text-sm font-medium text-gray-700">
                           Gender<RequiredField />
                         </label>
                         <select 
                           name="gender"
                           required
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 hover:border-blue-300 text-gray-900 bg-white"
+                          className="w-full p-2 border rounded-md"
                         >
                           <option value="">Select Gender</option>
                           <option value="male">Male</option>
@@ -199,73 +268,71 @@ const PreviewPage = () => {
 
                       <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">
-                          Country<RequiredField />
-                        </label>
-                        <select 
-                          name="country"
-                          required
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 hover:border-blue-300 text-gray-900 bg-white"
-                        >
-                          <option value="">Select Country</option>
-                          {countries.map((country) => (
-                            <option key={country} value={country.toLowerCase()}>{country}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
                           Address<RequiredField />
                         </label>
                         <textarea 
                           name="address"
                           required
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 hover:border-blue-300 text-gray-900"
+                          className="w-full p-2 border rounded-md"
                           rows={3}
                           placeholder="Enter full address"
                         />
                       </div>
 
-                      {/* Class and Section in a grid */}
+                      <h3 className="font-semibold text-lg text-gray-700 border-b pb-2 mt-6">Class & Section</h3>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                        <div className="space-y-2 text-gray-500">
                           <label className="block text-sm font-medium text-gray-700">
                             Assigned Class<RequiredField />
                           </label>
                           <select 
                             name="assigned_class"
                             required
-                            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 hover:border-blue-300 text-gray-900 bg-white"
+                            className="w-full p-2 border rounded-md"
+                            onChange={handleClassChange}
+                            value={selectedClass}
+                            disabled={loadingClasses}
                           >
-                            <option value="">Select Class</option>
-                            {classes.map((className) => (
-                              <option key={className} value={className.toLowerCase()}>{className}</option>
+                            <option value="">{loadingClasses ? "Loading classes..." : "Select Class"}</option>
+                            {classes.map((cls) => (
+                              <option key={cls.id} value={cls.class_name}>{cls.class_name}</option>
                             ))}
                           </select>
+                          {classError && <p className="text-red-500 text-xs mt-1">{classError}</p>}
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-2 text-gray-500">
                           <label className="block text-sm font-medium text-gray-700">
                             Section<RequiredField />
                           </label>
                           <select 
                             name="assigned_section"
                             required
-                            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 hover:border-blue-300 text-gray-900 bg-white"
+                            className="w-full p-2 border rounded-md"
+                            disabled={!selectedClass || loadingClasses}
                           >
-                            <option value="">Select Section</option>
-                            {sections.map((section) => (
-                              <option key={section} value={section.toLowerCase()}>{section}</option>
-                            ))}
+                            <option value="">{!selectedClass ? "Select Class First" : "Select Section"}</option>
+                            {selectedClass ? (
+                              availableSections.length > 0 ? (
+                                availableSections.map((section) => (
+                                  <option key={section} value={section}>{section}</option>
+                                ))
+                              ) : (
+                                <option value="" disabled>No sections available for this class</option>
+                              )
+                            ) : null}
                           </select>
+                          {selectedClass && availableSections.length === 0 && !loadingClasses && (
+                            <p className="text-yellow-500 text-xs mt-1">No sections found for this class</p>
+                          )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Parent Information Section */}
+                    {/* Parent Info */}
                     <div className="space-y-4">
                       <h3 className="font-semibold text-lg text-gray-700 border-b pb-2">Parent Information</h3>
-                      
+
                       <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">
                           Father's Name<RequiredField />
@@ -274,7 +341,7 @@ const PreviewPage = () => {
                           type="text"
                           name="father_name"
                           required
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 hover:border-blue-300 text-gray-900"
+                          className="w-full p-2 border rounded-md"
                           placeholder="Enter father's full name"
                         />
                       </div>
@@ -287,7 +354,7 @@ const PreviewPage = () => {
                           type="text"
                           name="mother_name"
                           required
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 hover:border-blue-300 text-gray-900"
+                          className="w-full p-2 border rounded-md"
                           placeholder="Enter mother's full name"
                         />
                       </div>
@@ -300,7 +367,7 @@ const PreviewPage = () => {
                           type="email"
                           name="email"
                           required
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 hover:border-blue-300 text-gray-900"
+                          className="w-full p-2 border rounded-md"
                           placeholder="Enter parent's email"
                         />
                       </div>
@@ -313,14 +380,13 @@ const PreviewPage = () => {
                           type="tel"
                           name="phone"
                           required
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 hover:border-blue-300 text-gray-900"
+                          className="w-full p-2 border rounded-md"
                           placeholder="Enter contact number"
                         />
                       </div>
 
-                      {/* Documents Section */}
                       <h3 className="font-semibold text-lg text-gray-700 border-b pb-2 mt-6">Documents</h3>
-                      
+
                       <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">
                           Birth Certificate<RequiredField />
@@ -332,17 +398,12 @@ const PreviewPage = () => {
                           required
                           onChange={(e) => handleFileChange(e, setBirthCertFileName)}
                           accept=".pdf,.jpg,.jpeg,.png"
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 hover:border-blue-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 text-gray-900"
+                          className="w-full p-2 border rounded-md"
                         />
                         {birthCertFileName && (
                           <div className="mt-1">
                             <p className="text-sm text-gray-500">Selected: {birthCertFileName}</p>
-                            <button 
-                              onClick={handleRemoveBirthCert}
-                              className="text-sm text-red-500 hover:text-red-700"
-                            >
-                              Remove
-                            </button>
+                            <button onClick={handleRemoveBirthCert} className="text-sm text-red-500 hover:text-red-700">Remove</button>
                           </div>
                         )}
                       </div>
@@ -358,55 +419,23 @@ const PreviewPage = () => {
                           required
                           onChange={(e) => handleFileChange(e, setPhotoFileName)}
                           accept="image/*"
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 hover:border-blue-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 text-gray-900"
+                          className="w-full p-2 border rounded-md"
                         />
                         {photoFileName && (
                           <div className="mt-1">
                             <p className="text-sm text-gray-500">Selected: {photoFileName}</p>
-                            <button 
-                              onClick={handleRemovePhoto}
-                              className="text-sm text-red-500 hover:text-red-700"
-                            >
-                              Remove
-                            </button>
+                            <button onClick={handleRemovePhoto} className="text-sm text-red-500 hover:text-red-700">Remove</button>
                           </div>
                         )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Username<RequiredField />
-                        </label>
-                        <input 
-                          type="text"
-                          name="username"
-                          required
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 hover:border-blue-300 text-gray-900"
-                          placeholder="Enter username"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Password<RequiredField />
-                        </label>
-                        <input 
-                          type="password"
-                          name="password"
-                          required
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 hover:border-blue-300 text-gray-900"
-                          placeholder="Enter password"
-                        />
                       </div>
                     </div>
                   </div>
 
-                  {/* Submit Button */}
                   <div className="mt-8">
                     <button 
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-semibold shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50"
                     >
                       {isSubmitting ? 'Registering...' : 'Register Student'}
                     </button>
@@ -417,8 +446,7 @@ const PreviewPage = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
+    </DashboardLayout>
+  )
+}
 export default PreviewPage;

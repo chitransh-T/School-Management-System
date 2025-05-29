@@ -1,0 +1,8 @@
+{
+  "/Admindashboard/page": "app/Admindashboard/page.js",
+  "/(pages)/notice/page": "app/(pages)/notice/page.js",
+  "/(pages)/addnotice/page": "app/(pages)/addnotice/page.js",
+  "/(pages)/(TeacherData)/TeacherAttendance/markteacherattendance/page": "app/(pages)/(TeacherData)/TeacherAttendance/markteacherattendance/page.js",
+  "/(pages)/(TeacherData)/TeacherAttendance/TeacherAttendanceReport/page": "app/(pages)/(TeacherData)/TeacherAttendance/TeacherAttendanceReport/page.js",
+  "/(pages)/(studentsData)/addstudent/page": "app/(pages)/(studentsData)/addstudent/page.js"
+}
