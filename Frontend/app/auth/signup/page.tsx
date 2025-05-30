@@ -57,7 +57,7 @@ const Signup: React.FC = () => {
     try {
       // Connect to the backend API register endpoint
       const apiUrl = 'http://localhost:1000/api/auth/register'; // API endpoint for user registration
-      
+      // const apiUrl = 'https://school-management-system-4ddi.onrender.com/api/auth/register';
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
