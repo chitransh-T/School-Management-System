@@ -32,6 +32,7 @@ interface SectionOption {
 
 export default function EditClassSubjectsPage() {
   const router = useRouter();
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const searchParams = useSearchParams();
   const { user } = useAuth();
 
@@ -70,13 +71,13 @@ export default function EditClassSubjectsPage() {
 
         // Fetch classes and sections
         const [classesRes, sectionsRes] = await Promise.all([
-          fetch('/api/classes', {
+          fetch(`${baseUrl}/api/classes`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           }),
-          fetch('/api/sections', {
+          fetch(`${baseUrl}/api/sections`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
@@ -123,7 +124,7 @@ export default function EditClassSubjectsPage() {
         // If we have class and section parameters but no stored data, fetch from API
         if (classParam && sectionParam) {
           const classSubjectsRes = await fetch(
-            `/api/classes/subjects?class=${encodeURIComponent(classParam)}&section=${encodeURIComponent(sectionParam)}`,
+            `${baseUrl}/api/classes/subjects?class=${encodeURIComponent(classParam)}&section=${encodeURIComponent(sectionParam)}`,
             {
               headers: {
                 'Authorization': `Bearer ${token}`,
@@ -219,7 +220,7 @@ export default function EditClassSubjectsPage() {
       }));
 
       // Call the backend API to update subjects
-      const response = await fetch('http://localhost:1000/api/updatesubject', {
+      const response = await fetch(`${baseUrl}/api/updatesubject`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

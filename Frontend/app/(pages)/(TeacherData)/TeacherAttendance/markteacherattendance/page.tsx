@@ -15,6 +15,7 @@ const MarkAttendance = () => {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [attendance, setAttendance] = useState<{ [key: number]: boolean }>({});
   const [loading, setLoading] = useState(false);
   const [fetchingTeachers, setFetchingTeachers] = useState(false);
@@ -40,7 +41,7 @@ const MarkAttendance = () => {
         throw new Error('Authentication token not found');
       }
 
-      const url = `http://localhost:1000/api/teachers`;
+      const url = `${baseUrl}/api/teachers`;
       console.log('Request URL:', url);
       
       const response = await fetch(url, {
@@ -113,7 +114,7 @@ const MarkAttendance = () => {
         is_present: attendance[teacher.id] ? 1 : 0
       }));
 
-      const url = 'http://localhost:1000/api/attendance';
+      const url = `${baseUrl}/api/attendance`;
       console.log('Request URL:', url);
       console.log('Request data:', { date: selectedDate, teachers: teachersData });
 

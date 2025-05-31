@@ -94,8 +94,9 @@ const ClassCard: React.FC<ClassCardProps> = ({
   );
 };
 
-const ClassesPage: React.FC = () => {
+const AllClassesPage: React.FC = () => {
   const router = useRouter();
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
@@ -115,7 +116,7 @@ const ClassesPage: React.FC = () => {
       }
 
       // Fetch classes
-      const classesResponse = await fetch('http://localhost:1000/api/classes', {
+      const classesResponse = await fetch(`${baseUrl}/api/classes`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -136,7 +137,7 @@ const ClassesPage: React.FC = () => {
       console.log('Classes data received:', classesData);
       
       // Fetch student counts by class
-      const studentCountResponse = await fetch('http://localhost:1000/api/api/students/count-by-class', {
+      const studentCountResponse = await fetch(`${baseUrl}/api/students/count-by-class`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -250,7 +251,7 @@ const ClassesPage: React.FC = () => {
         return;
       }
 
-      const response = await fetch(`http://localhost:1000/api/classes/${classId}`, {
+      const response = await fetch(`${baseUrl}/api/classes/${classId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -371,4 +372,4 @@ const ClassesPage: React.FC = () => {
   );
 };
 
-export default ClassesPage;
+export default AllClassesPage;

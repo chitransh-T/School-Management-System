@@ -25,6 +25,7 @@ const MarkAttendance = () => {
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
   const [students, setStudents] = useState<Student[]>([]);
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [attendance, setAttendance] = useState<{ [key: number]: boolean }>({});
   const [loading, setLoading] = useState(false);
   const [fetchingStudents, setFetchingStudents] = useState(false);
@@ -54,7 +55,7 @@ const MarkAttendance = () => {
             return;
           }
           
-          const response = await fetch('http://localhost:1000/api/classes', {
+          const response = await fetch(`${baseUrl}/api/classes`, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -122,7 +123,7 @@ const MarkAttendance = () => {
       }
       
       // Fetch attendance records for the selected date and class
-      const url = `http://localhost:1000/api/attendance/${encodeURIComponent(selectedClass)}/${encodeURIComponent(selectedDate)}?section=${encodeURIComponent(selectedSection)}`;
+      const url = `${baseUrl}/api/attendance/${encodeURIComponent(selectedClass)}/${encodeURIComponent(selectedDate)}?section=${encodeURIComponent(selectedSection)}`;
       console.log('Checking existing attendance:', url);
       
       const response = await fetch(url, {
@@ -185,7 +186,7 @@ const MarkAttendance = () => {
 
       // Make sure we're using the correct query parameters based on your backend API
       // Some APIs might use class_name and section instead of class and section
-      const url = `http://localhost:1000/api/students?class=${encodeURIComponent(selectedClass)}&section=${encodeURIComponent(selectedSection)}`;
+      const url = `${baseUrl}/api/students?class=${encodeURIComponent(selectedClass)}&section=${encodeURIComponent(selectedSection)}`;
       console.log('Request URL:', url);
       
       const response = await fetch(url, {
@@ -316,7 +317,7 @@ const MarkAttendance = () => {
         class_name: selectedClass
       }));
 
-      const url = 'http://localhost:1000/api/attendance';
+      const url = `${baseUrl}/api/attendance`;
       console.log('Request URL:', url);
       console.log('Request data:', { date: selectedDate, students: studentsData });
 

@@ -19,6 +19,7 @@ const ParentsPage = () => {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [parents, setParents] = useState<Parent[]>([]);
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const handleAddParent = () => {
     router.push('/addparents');

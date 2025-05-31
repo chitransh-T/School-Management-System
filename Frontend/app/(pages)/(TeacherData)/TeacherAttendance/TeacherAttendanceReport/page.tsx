@@ -30,7 +30,8 @@ const AttendanceReport = () => {
       }
       
       console.log('Fetching attendance with params:', { selectedDate });
-    const url = `http://localhost:1000/api/attendance/${encodeURIComponent(selectedDate)}`;
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const url = `${baseUrl}/api/attendance/${encodeURIComponent(selectedDate)}`;
       console.log('Request URL:', url);
 
       const response = await fetch(url, {

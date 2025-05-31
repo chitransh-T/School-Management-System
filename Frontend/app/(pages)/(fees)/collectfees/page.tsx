@@ -30,6 +30,7 @@ interface Student {
 const FeesStudentSearchPage: React.FC = () => {
   // Initialize router
   const router = useRouter();
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -90,7 +91,7 @@ const FeesStudentSearchPage: React.FC = () => {
         return;
       }
       
-      const response = await fetch('http://localhost:1000/api/classes', {
+      const response = await fetch(`${baseUrl}/api/classes`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -132,7 +133,7 @@ const FeesStudentSearchPage: React.FC = () => {
         setError(null);
         
         // Build query parameters for class and section filters
-        let url = 'http://localhost:1000/api/students';
+        let url = `${baseUrl}/api/students`;
         const params = new URLSearchParams();
         
         if (selectedClass) {
@@ -258,7 +259,7 @@ const FeesStudentSearchPage: React.FC = () => {
     
     const imageUrl = photoPath.startsWith('http') 
       ? photoPath 
-      : `http://localhost:1000/uploads/${photoPath}`;
+      : `${baseUrl}/uploads/${photoPath}`;
     
     return (
       <img

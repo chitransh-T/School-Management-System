@@ -26,6 +26,7 @@ interface ClassWithSubjects {
 // Main Page Component
 export default function ClassesWithSubjectsPage() {
   const router = useRouter();
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const { user } = useAuth();
   
   // State management
@@ -46,7 +47,7 @@ export default function ClassesWithSubjectsPage() {
           return;
         }
         
-        const response = await fetch('http://localhost:1000/api/getallsubjects', {
+        const response = await fetch(`${baseUrl}/api/getallsubjects`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,

@@ -55,12 +55,13 @@ const NoticePage = () => {
       setLoading(true);
       setError('');
       const token = localStorage.getItem('token');
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
       if (!token) {
         setError('Authentication token not found. Please login again.');
         router.push('/auth/signin');
         return;
       }
-      const response = await fetch('http://localhost:1000/api/notices', {
+      const response = await fetch(`${baseUrl}/api/notices`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -108,11 +109,12 @@ const NoticePage = () => {
     try {
       setDeleteLoading(id);
       const token = localStorage.getItem('token');
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
       if (!token) {
         setError('Authentication token not found. Please login again.');
         return;
       }
-      const response = await fetch(`http://localhost:1000/api/notices/${id}`, {
+      const response = await fetch(`${baseUrl}/api/notices/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

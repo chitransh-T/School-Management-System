@@ -22,6 +22,7 @@ interface Subject {
 
 const AssignSubjects = () => {
   const router = useRouter();
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const { user } = useAuth();
   
   // Form states
@@ -55,7 +56,7 @@ const AssignSubjects = () => {
           return;
         }
         
-        const response = await fetch('http://localhost:1000/api/classes', {
+        const response = await fetch(`${baseUrl}/api/classes`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -185,7 +186,7 @@ const AssignSubjects = () => {
 
       console.log('Submitting combined subjects:', payload);
 
-      const response = await fetch('http://localhost:1000/api/registersubject', {
+      const response = await fetch(`${baseUrl}/api/registersubject`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

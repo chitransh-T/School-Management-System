@@ -40,6 +40,7 @@ export default function EditStudent() {
   const { user } = useAuth();
   
   const router = useRouter();
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [studentData, setStudentData] = useState<Student>({
     id: 0,
     student_name: '',
@@ -77,7 +78,7 @@ export default function EditStudent() {
         }
 
         // First try to get all students and filter by ID
-        const res = await fetch(`http://localhost:1000/api/students`, {
+        const res = await fetch(`${baseUrl}/api/students`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -199,7 +200,7 @@ export default function EditStudent() {
       }
 
       // Use the correct API endpoint format
-      const response = await fetch(`http://localhost:1000/api/students/${id}`, {
+      const response = await fetch(`${baseUrl}/api/students/${id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`

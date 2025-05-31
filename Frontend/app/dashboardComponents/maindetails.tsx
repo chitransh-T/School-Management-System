@@ -61,6 +61,7 @@ const dataCache = {
 
 const Stats = () => {
   const { user } = useAuth();
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [stats, setStats] = useState<DashboardStats>({
     totalStudents: dataCache.totalStudents || 0,
     totalTeachers: dataCache.totalTeachers || 0,
@@ -97,19 +98,19 @@ const Stats = () => {
         
         // Fetch student count - matching Flutter API endpoint
         const studentCountResponse = await fetch(
-          `http://localhost:1000/api/api/students/count?user_email=${encodeURIComponent(user.email)}`,
+          `${baseUrl}/api/api/students/count?user_email=${encodeURIComponent(user.email)}`,
           { headers }
         );
         
         // Fetch teacher count - matching Flutter API endpoint
         const teacherCountResponse = await fetch(
-          `http://localhost:1000/api/api/teachers/count?user_email=${encodeURIComponent(user.email)}`,
+          `${baseUrl}/api/api/teachers/count?user_email=${encodeURIComponent(user.email)}`,
           { headers }
         );
         
         // Fetch classes count (you might need to add this endpoint to your backend)
         const classesCountResponse = await fetch(
-          `http://localhost:1000/api/api/classes/count?user_email=${encodeURIComponent(user.email)}`,
+          `${baseUrl}/api/api/classes/count?user_email=${encodeURIComponent(user.email)}`,
           { headers }
         );
         
@@ -186,8 +187,8 @@ const Stats = () => {
       };
 
       const [studentResponse, teacherResponse] = await Promise.all([
-        fetch(`http://localhost:1000/api/api/students/count?user_email=${encodeURIComponent(user.email)}`, { headers }),
-        fetch(`http://localhost:1000/api/api/teachers/count?user_email=${encodeURIComponent(user.email)}`, { headers })
+        fetch(`${baseUrl}/api/api/students/count?user_email=${encodeURIComponent(user.email)}`, { headers }),
+        fetch(`${baseUrl}/api/api/teachers/count?user_email=${encodeURIComponent(user.email)}`, { headers })
       ]);
 
       if (studentResponse.ok && teacherResponse.ok) {
@@ -253,7 +254,7 @@ const Stats = () => {
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
       
       try {
-        const response = await fetch('http://localhost:1000/api/notices', {
+        const response = await fetch(`${baseUrl}/api/notices`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,

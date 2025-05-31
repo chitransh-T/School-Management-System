@@ -203,7 +203,8 @@ const handleSubmit = async (e: React.FormEvent) => {
         console.log(`${pair[0]}: ${pair[1]}`);
       }
       
-      const response = await fetch('http://localhost:1000/api/registerteacher', {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const response = await fetch(`${baseUrl}/api/registerteacher`, {
         method: 'POST',
         body: apiFormData,
         headers: {

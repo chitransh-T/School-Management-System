@@ -7,6 +7,7 @@ export default function SchoolLeavePage() {
     const [date, setDate] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const router= useRouter();
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         // Handle form submission logic here

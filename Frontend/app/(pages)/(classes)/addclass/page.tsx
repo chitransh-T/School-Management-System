@@ -11,6 +11,7 @@ interface Teacher {
 
 const AddNewClassPage: React.FC = () => {
   const router = useRouter();
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
@@ -39,7 +40,7 @@ const AddNewClassPage: React.FC = () => {
           return;
         }
         
-        const response = await fetch('http://localhost:1000/api/teachers', {
+        const response = await fetch(`${baseUrl}/api/teachers`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -176,7 +177,7 @@ const AddNewClassPage: React.FC = () => {
       console.log('Submitting class data:', classData);
       
       // Make the API call to register the class
-      const response = await fetch('http://localhost:1000/api/classes', {
+      const response = await fetch(`${baseUrl}/api/classes`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

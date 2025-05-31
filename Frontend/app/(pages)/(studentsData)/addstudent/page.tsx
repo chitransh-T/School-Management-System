@@ -15,6 +15,7 @@ interface ClassData {
 
 const PreviewPage = () => {
   const router = useRouter();
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   // State for classes and sections fetched from backend
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [sections, setSections] = useState<string[]>([]);
@@ -48,7 +49,7 @@ const PreviewPage = () => {
           return;
         }
         
-        const response = await fetch('http://localhost:1000/api/classes', {
+        const response = await fetch(`${baseUrl}/api/classes`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -151,7 +152,7 @@ const PreviewPage = () => {
       }
 
       // Send form data to the backend
-      const response = await fetch('http://localhost:1000/api/registerstudent', {
+      const response = await fetch(`${baseUrl}/api/registerstudent`, {
         method: 'POST',
         body: formData,
         headers: {

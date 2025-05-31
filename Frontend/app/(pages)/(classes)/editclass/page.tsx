@@ -18,6 +18,7 @@ interface Class {
 
 const EditClassPage: React.FC = () => {
   const router = useRouter();
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const searchParams = useSearchParams();
   const classId = searchParams.get('id');
   
@@ -62,7 +63,7 @@ const EditClassPage: React.FC = () => {
         }
         
         // Fetch all classes and find the one with matching ID
-        const classResponse = await fetch('http://localhost:1000/api/classes', {
+        const classResponse = await fetch(`${baseUrl}/api/classes`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -97,7 +98,7 @@ const EditClassPage: React.FC = () => {
         });
         
         // Fetch teachers list
-        const teachersResponse = await fetch('http://localhost:1000/api/teachers', {
+        const teachersResponse = await fetch(`${baseUrl}/api/teachers`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -218,7 +219,7 @@ const EditClassPage: React.FC = () => {
       console.log('Updating class data:', updateData);
       
       // Make the API call to update the class
-      const response = await fetch(`http://localhost:1000/api/classes/${classId}`, {
+      const response = await fetch(`${baseUrl}/api/classes/${classId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

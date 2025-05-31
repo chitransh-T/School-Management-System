@@ -53,6 +53,7 @@ const NewNoticePage = () => {
       
       // Get token from localStorage
       const token = localStorage.getItem('token');
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
       if (!token) {
         setError('You must be logged in to create a notice');
         setIsSubmitting(false);
@@ -60,7 +61,7 @@ const NewNoticePage = () => {
       }
       
       // Send data to backend API
-      const response = await fetch('http://localhost:1000/api/notices', {
+      const response = await fetch(`${baseUrl}/api/notices`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

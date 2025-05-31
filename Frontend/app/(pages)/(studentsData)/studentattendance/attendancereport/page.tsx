@@ -26,6 +26,7 @@ const AttendanceReport = () => {
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
   const [attendanceData, setAttendanceData] = useState<Student[]>([]);
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [loadingClasses, setLoadingClasses] = useState(false);
@@ -50,7 +51,7 @@ const AttendanceReport = () => {
           return;
         }
         
-        const response = await fetch('http://localhost:1000/api/classes', {
+        const response = await fetch(`${baseUrl}/api/classes`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -126,7 +127,7 @@ const AttendanceReport = () => {
       console.log('Fetching attendance with params:', { selectedClass, selectedSection, selectedDate });
       // Use the API endpoint format: /attendance/:class/:date
       // Add section as a query parameter if your API supports it
-      const url = `http://localhost:1000/api/attendance/${encodeURIComponent(selectedClass)}/${encodeURIComponent(selectedSection)}/${encodeURIComponent(selectedDate)}`;
+      const url = `${baseUrl}/api/attendance/${encodeURIComponent(selectedClass)}/${encodeURIComponent(selectedSection)}/${encodeURIComponent(selectedDate)}`;
       console.log('Request URL:', url);
 
       const response = await fetch(url, {

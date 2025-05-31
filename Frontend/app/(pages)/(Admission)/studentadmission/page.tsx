@@ -84,8 +84,9 @@ const Select: React.FC<SelectProps> = ({
 };
 
 // Main Component
-const AdmissionLetterPage: React.FC = () => {
+const StudentAdmissionPage: React.FC = () => {
   const router = useRouter();
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [students, setStudents] = useState<Student[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
@@ -126,7 +127,7 @@ const AdmissionLetterPage: React.FC = () => {
         return;
       }
       
-      const response = await fetch('http://localhost:1000/api/classes', {
+      const response = await fetch(`${baseUrl}/api/classes`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${storedToken}`,
@@ -202,7 +203,7 @@ const AdmissionLetterPage: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:1000/api/students?class=${encodeURIComponent(className)}`,
+        `${baseUrl}/api/students?class=${encodeURIComponent(className)}`,
         {
           headers: {
             'Accept': 'application/json',
@@ -274,7 +275,7 @@ const AdmissionLetterPage: React.FC = () => {
 
     const fullPhotoPath = photoPath.startsWith('http') 
       ? photoPath 
-      : `http://localhost:1000/uploads/${photoPath}`;
+      : `${baseUrl}/uploads/${photoPath}`;
 
     return (
       <div className="w-12 h-12 rounded-full overflow-hidden">
@@ -429,4 +430,4 @@ const AdmissionLetterPage: React.FC = () => {
   );
 };
 
-export default AdmissionLetterPage;
+export default StudentAdmissionPage;

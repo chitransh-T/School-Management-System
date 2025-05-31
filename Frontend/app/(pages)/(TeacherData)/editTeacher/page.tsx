@@ -37,6 +37,7 @@ export default function EditTeacher() {
   const { user } = useAuth();
   
   const router = useRouter();
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [teacherData, setTeacherData] = useState<Teacher>({
     id: 0,
     teacher_name: '',
@@ -81,7 +82,7 @@ export default function EditTeacher() {
         }
 
         // First try to get all teachers and filter by ID
-        const res = await fetch(`http://localhost:1000/api/teachers`, {
+        const res = await fetch(`${baseUrl}/api/teachers`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -197,7 +198,7 @@ export default function EditTeacher() {
         formData.append('qualification_certificate', teacherData.qualification_certificate);
       }
 
-      const response = await fetch(`http://localhost:1000/api/teachers/${id}`, {
+      const response = await fetch(`${baseUrl}/api/teachers/${id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Sidebar from '@/app/dashboardComponents/sidebar';
 import DashboardLayout from '@/app/dashboardComponents/DashboardLayout';
 export default function StudentLeaveCertificatePage() {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     const studentName = "User";
     
     const handlePrintCertificate = () => {

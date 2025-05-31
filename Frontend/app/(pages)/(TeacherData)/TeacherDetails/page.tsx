@@ -25,11 +25,12 @@ const TeacherDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
-        let url = 'http://localhost:1000/api/teachers';
+        let url = `${baseUrl}/api/teachers`;
         const params = new URLSearchParams();
 
         if (params.toString()) url += `?${params.toString()}`;
@@ -83,7 +84,8 @@ const TeacherDetails = () => {
 
       console.log(`Deleting teacher with ID: ${teacherId}`);
       
-      const res = await fetch(`http://localhost:1000/api/teachers/${teacherId}`, {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const res = await fetch(`${baseUrl}/api/teachers/${teacherId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -190,7 +192,7 @@ const TeacherDetails = () => {
                   <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mr-4">
                     {teacher.teacher_photo ? (
                       <img
-                        src={`http://localhost:1000/uploads/${teacher.teacher_photo}`}
+                        src={`${baseUrl}/uploads/${teacher.teacher_photo}`}
                         alt={teacher.teacher_name}
                         className="w-12 h-12 rounded-full object-cover"
                       />

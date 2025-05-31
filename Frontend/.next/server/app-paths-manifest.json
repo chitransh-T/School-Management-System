@@ -1,9 +1,8 @@
 {
+  "/(pages)/(fees)/feesdetailsofstudent/page": "app/(pages)/(fees)/feesdetailsofstudent/page.js",
   "/Admindashboard/page": "app/Admindashboard/page.js",
-  "/(pages)/(TeacherData)/TeacherAttendance/TeacherAttendanceReport/page": "app/(pages)/(TeacherData)/TeacherAttendance/TeacherAttendanceReport/page.js",
-  "/(pages)/(TeacherData)/TeacherDetails/page": "app/(pages)/(TeacherData)/TeacherDetails/page.js",
-  "/(pages)/(classes)/addclass/page": "app/(pages)/(classes)/addclass/page.js",
-  "/(pages)/(fees)/collectfees/page": "app/(pages)/(fees)/collectfees/page.js",
+  "/(pages)/notice/page": "app/(pages)/notice/page.js",
+  "/(pages)/addnotice/page": "app/(pages)/addnotice/page.js",
   "/(pages)/(studentsData)/studentdetails/page": "app/(pages)/(studentsData)/studentdetails/page.js",
-  "/(pages)/(studentsData)/editstudent/page": "app/(pages)/(studentsData)/editstudent/page.js"
+  "/page": "app/page.js"
 }

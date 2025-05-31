@@ -80,9 +80,10 @@ const AdmissionConfirmationPage: React.FC = () => {
     }
 
     // At this point we know student exists and has a studentPhoto
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     const fullPhotoPath = student.studentPhoto.startsWith('http') 
       ? student.studentPhoto 
-      : `http://localhost:1000/uploads/${student.studentPhoto}`;
+      : `${baseUrl}/uploads/${student.studentPhoto}`;
 
     return (
       <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-blue-200">

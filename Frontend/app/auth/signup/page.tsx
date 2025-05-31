@@ -45,7 +45,7 @@ const Signup: React.FC = () => {
       setError("All fields are required.");
       return;
     }
-  
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (password !== confirmpassword) {
       setError("Passwords do not match.");
       return;
@@ -56,7 +56,7 @@ const Signup: React.FC = () => {
   
     try {
       // Connect to the backend API register endpoint
-      const apiUrl = 'http://localhost:1000/api/auth/register'; // API endpoint for user registration
+      const apiUrl = `${baseUrl}/api/auth/register`;
       // const apiUrl = 'https://school-management-system-4ddi.onrender.com/api/auth/register';
       const response = await fetch(apiUrl, {
         method: 'POST',

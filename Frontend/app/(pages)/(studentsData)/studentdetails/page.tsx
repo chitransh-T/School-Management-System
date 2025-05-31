@@ -33,6 +33,7 @@ const StudentDetails = () => {
   const { user } = useAuth(); // Get current admin's data
   const [searchTerm, setSearchTerm] = useState('');
   const [students, setStudents] = useState<Student[]>([]);
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -60,7 +61,7 @@ const StudentDetails = () => {
           return;
         }
         
-        const response = await fetch('http://localhost:1000/api/classes', {
+        const response = await fetch(`${baseUrl}/api/classes`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -121,7 +122,7 @@ const StudentDetails = () => {
     const fetchStudents = async () => {
       try {
         // Build query parameters for class and section filters
-        let url = 'http://localhost:1000/api/students';
+        let url = `${baseUrl}/api/students`;
         const params = new URLSearchParams();
         
         // We don't need to add admin_id as the backend uses the JWT token
@@ -248,7 +249,7 @@ const StudentDetails = () => {
         return;
       }
 
-      const url = `http://localhost:1000/api/students/${studentId}`;
+      const url = `${baseUrl}/api/students/${studentId}`;
       console.log('Attempting to delete student:', studentId);
       
       const response = await fetch(url, {
@@ -422,7 +423,7 @@ const StudentDetails = () => {
                   <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mr-4">
                     {student.student_photo ? (
                       <img
-                        src={`http://localhost:1000/uploads/${student.student_photo}`}
+                        src={`${baseUrl}/uploads/${student.student_photo}`}
                         alt={student.student_name}
                         className="w-12 h-12 rounded-full object-cover"
                       />

@@ -53,6 +53,7 @@ const registrationFee = 500.0;
 const uniformFee = 1000.0;
 
 export default function FeesCollectionPage() {
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   // Get parameters from URL using searchParams
   const [searchParamsLoaded, setSearchParamsLoaded] = useState(false);
   const [studentId, setStudentId] = useState("");
@@ -168,13 +169,13 @@ export default function FeesCollectionPage() {
     try {
       // Make real API calls to fetch student fee data
       const [eligibilityRes, summaryRes, previousPaymentsRes] = await Promise.all([
-        fetch(`http://localhost:1000/api/eligibility/${studentId}`, {
+        fetch(`${baseUrl}/api/eligibility/${studentId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch(`http://localhost:1000/api/summary/${studentId}`, {
+        fetch(`${baseUrl}/api/summary/${studentId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch(`http://localhost:1000/api/previous-payments/${studentId}/${selectedMonth}`, {
+        fetch(`${baseUrl}/api/previous-payments/${studentId}/${selectedMonth}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
@@ -307,7 +308,7 @@ export default function FeesCollectionPage() {
       };
 
       // Make real API call to submit fee payment
-      const response = await fetch('http://localhost:1000/api/submit', {
+      const response = await fetch(`${baseUrl}/api/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
