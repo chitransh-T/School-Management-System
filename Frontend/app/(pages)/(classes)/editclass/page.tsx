@@ -317,29 +317,30 @@ const EditClassPage: React.FC = () => {
                   type="text"
                   name="class_name"
                   value={classData.class_name}
-                  onChange={handleInputChange}
-                  placeholder="Enter class name"
-                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
+                  readOnly
+                  className="w-full p-2 border rounded-md bg-gray-100 text-gray-700"
                 />
+                <p className="text-xs text-gray-500 mt-1">Class name cannot be changed</p>
+                {/* Hidden input to ensure the value is submitted with the form */}
+                <input type="hidden" name="class_name" value={classData.class_name} />
               </div>
               
               {/* Section */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Section</label>
-                <select
-                  name="section"
-                  value={classData.section}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="">Select Section</option>
-                  <option value="A">A</option>
-                  <option value="B">B</option>
-                  <option value="C">C</option>
-                  <option value="D">D</option>
-                </select>
+                <input
+                  type="text"
+                  name="section_display"
+                  value={classData.section === 'A' ? 'Section A' : 
+                         classData.section === 'B' ? 'Section B' : 
+                         classData.section === 'C' ? 'Section C' : 
+                         classData.section === 'D' ? 'Section D' : classData.section}
+                  readOnly
+                  className="w-full p-2 border rounded-md bg-gray-100 text-gray-700"
+                />
+                <p className="text-xs text-gray-500 mt-1">Section cannot be changed</p>
+                {/* Hidden input to ensure the value is submitted with the form */}
+                <input type="hidden" name="section" value={classData.section} />
               </div>
               
               {/* Tuition Fees */}

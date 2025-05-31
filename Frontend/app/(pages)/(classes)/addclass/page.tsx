@@ -250,20 +250,20 @@ const AddNewClassPage: React.FC = () => {
               >
                 <option value="">NAME OF CLASS</option>
                 <option value="Nursery">Nursery</option>
-                <option value="KG1">KG1</option>
-                <option value="KG2">KG2</option>
-                <option value="Class 1">Class 1</option>
-                <option value="Class 2">Class 2</option>
-                <option value="Class 3">Class 3</option>
-                <option value="Class 4">Class 4</option>
-                <option value="Class 5">Class 5</option>
-                <option value="Class 6">Class 6</option>
-                <option value="Class 7">Class 7</option>
-                <option value="Class 8">Class 8</option>
-                <option value="Class 9">Class 9</option>
-                <option value="Class 10">Class 10</option>
-                <option value="Class 11">Class 11</option>
-                <option value="Class 12">Class 12</option>
+                <option value="Lkg">Lkg</option>
+                <option value="Ukg">Ukg</option>
+                <option value="class 1">class 1</option>
+                <option value="class 2">class 2</option>
+                <option value="class 3">class 3</option>
+                <option value="class 4">class 4</option>
+                <option value="class 5">class 5</option>
+                <option value="class 6">class 6</option>
+                <option value="class 7">class 7</option>
+                <option value="class 8">class 8</option>
+                <option value="class 9">class 9</option>
+                <option value="class 10">class 10</option>
+                <option value="class 11">class 11</option>
+                <option value="class 12">class 12</option>
               </select>
             </div>
 

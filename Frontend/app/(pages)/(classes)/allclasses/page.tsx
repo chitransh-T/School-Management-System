@@ -137,7 +137,7 @@ const AllClassesPage: React.FC = () => {
       console.log('Classes data received:', classesData);
       
       // Fetch student counts by class
-      const studentCountResponse = await fetch(`${baseUrl}/api/students/count-by-class`, {
+      const studentCountResponse = await fetch(`${baseUrl}/api/api/students/count-by-class`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
