@@ -1,8 +1,6 @@
 {
-  "/Admindashboard/page": "app/Admindashboard/page.js",
-  "/(pages)/(classes)/allclasses/page": "app/(pages)/(classes)/allclasses/page.js",
-  "/(pages)/(classes)/addclass/page": "app/(pages)/(classes)/addclass/page.js",
-  "/(pages)/(studentsData)/studentdetails/page": "app/(pages)/(studentsData)/studentdetails/page.js",
-  "/(pages)/(classes)/editclass/page": "app/(pages)/(classes)/editclass/page.js",
-  "/(pages)/(studentsData)/addstudent/page": "app/(pages)/(studentsData)/addstudent/page.js"
+  "/page": "app/page.js",
+  "/auth/signin/page": "app/auth/signin/page.js",
+  "/principledashboard/page": "app/principledashboard/page.js",
+  "/profilepage/page": "app/profilepage/page.js"
 }

@@ -1,54 +1,99 @@
-"use client";
-import React, { useState } from 'react';
+
+'use client';
+import React, { useEffect, useState } from 'react';
 import { Bell, Home, Settings, User, LogOut, ChevronDown, Menu, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
-import Link from 'next/link'; // Import Link from next/link
+import Link from 'next/link';
+import Image from 'next/image';
 
-// Define the structure for navigation links
-interface NavLink {
-  href: string;
-  label: string;
-  icon?: React.ComponentType<{ className?: string }>; // Optional icon for the link
-}
-
-// Define the structure for profile dropdown options
 interface ProfileOption {
   label: string;
-  href?: string; // Make href optional since logout doesn't need it
-  icon: React.ComponentType<{ className?: string }>; // Icon for the dropdown option
-  onClick?: () => void; // Optional click handler
+  href?: string;
+  icon: React.ComponentType<{ className?: string }>;
+  onClick?: () => void;
 }
 
-// Navigation links array
-
+interface ProfileData {
+  institute_name: string;
+  address: string;
+  logo_url: string | null;
+}
 
 const DashboardNavbar: React.FC = () => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false); // State for dropdown visibility
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const { logout } = useAuth();
   const router = useRouter();
+  const { user } = useAuth();
 
-  // Toggle dropdown visibility
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
-  };
+  const defaultLogo = '/images/default-institute-logo.png';
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+  // Fetch profile data including logo from backend
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (typeof window === 'undefined') return;
+      
+      const token = localStorage.getItem('token');
+      
+      if (!token || !user?.email) {
+        setIsLoading(false);
+        return;
+      }
 
-  // Handle logout
+      try {
+        const response = await fetch(`${baseUrl}/api/profile/${encodeURIComponent(user.email)}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch profile: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+          setProfile(data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+        setError('Failed to load institute logo');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchProfileData();
+    } else {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+
   const handleLogout = () => {
-    logout(); // Update authentication state
-    router.push('/'); // Redirect to landing page
+    logout();
+    router.push('/');
   };
 
-  // Profile dropdown options array
+  const handleProfile = () => {
+    router.push('/profilepage');
+  };
+
   const profileOptions: ProfileOption[] = [
-    { label: 'Profile', href: '/profile', icon: User },
+    { label: 'Profile', onClick: handleProfile, icon: User },
     { label: 'Settings', href: '/settings', icon: Settings },
-    { label: 'Logout', icon: LogOut, onClick: handleLogout }, // Add onClick for logout
+    { label: 'Logout', icon: LogOut, onClick: handleLogout },
   ];
 
   return (
@@ -56,90 +101,129 @@ const DashboardNavbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
         <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo */}
-          <Link href="/" className="flex-shrink-0">
-            {/* Replace the text with your logo image */}
+          <Link href="/principledashboard" className="flex-shrink-0">
             <img
-              src="https://almanet.in/wp-content/uploads/2022/03/Almanet-logo-220x47-1.png" // Update this path to your logo's location
+              src="https://almanet.in/wp-content/uploads/2022/03/Almanet-logo-220x47-1.png"
               alt="Logo"
-              className="h-6 sm:h-7 md:h-8 w-auto" // Adjust height and width as needed
+              className="h-6 sm:h-7 md:h-8 w-auto"
             />
           </Link>
 
-          {/* Desktop Navigation Links */}
-          
-                {/* Render the icon if it exists */}
-               
-          
-
-          {/* Desktop Profile Dropdown */}
-          <div className="hidden md:block relative">
-            <button
-              onClick={toggleDropdown}
-              className="flex items-center space-x-1 lg:space-x-2 text-gray-700 hover:text-blue-600 focus:outline-none"
-              aria-expanded={isDropdownOpen}
-              aria-haspopup="true"
-            >
-              {/* User avatar */}
-              <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                <User className="w-4 h-4 lg:w-5 lg:h-5" />
-              </div>
-              <ChevronDown className="w-3 h-3 lg:w-4 lg:h-4" />
-            </button>
-
-            {/* Dropdown menu */}
-            {isDropdownOpen && (
-              <div
-                className="absolute right-0 mt-2 w-40 sm:w-48 bg-white rounded-md shadow-lg py-1 z-10"
-                role="menu"
-                aria-orientation="vertical"
+          {/* Right side with profile dropdown */}
+          <div className="flex items-center space-x-4">
+            {/* Notification icon can be added here if needed */}
+            
+            {/* Profile Dropdown */}
+            <div className="hidden md:block relative">
+              <button
+                onClick={toggleDropdown}
+                className="flex items-center space-x-1 lg:space-x-2 text-gray-700 hover:text-blue-600 focus:outline-none"
+                aria-expanded={isDropdownOpen}
+                aria-haspopup="true"
               >
-                {profileOptions.map((option) => (
-                  <div
-                    key={option.label}
-                    onClick={option.onClick} // Handle click events
-                    className="flex items-center px-3 sm:px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
-                    role="menuitem"
-                  >
-                    <option.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
-                    <span>{option.label}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+                {/* Institute logo */}
+                <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center border border-gray-200">
+                  {profile?.logo_url ? (
+                    <Image
+                      src={`${baseUrl}${profile.logo_url}`}
+                      alt="Institute Logo"
+                      width={32}
+                      height={32}
+                      className="object-cover w-full h-full"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = defaultLogo;
+                      }}
+                    />
+                  ) : (
+                    <User className="w-5 h-5 text-gray-400" />
+                  )}
+                </div>
+                <ChevronDown className="w-4 h-4" />
+              </button>
+
+              {isDropdownOpen && (
+                <div
+                  className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-100"
+                  role="menu"
+                  aria-orientation="vertical"
+                >
+                  {profileOptions.map((option) => (
+                    <div
+                      key={option.label}
+                      onClick={() => {
+                        option.onClick?.();
+                        setIsDropdownOpen(false);
+                      }}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                      role="menuitem"
+                    >
+                      <option.icon className="w-4 h-4 mr-3" />
+                      <span>{option.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Toggle */}
           <button
             onClick={toggleMobileMenu}
             className="md:hidden p-1.5 sm:p-2 text-gray-700 hover:text-blue-600 focus:outline-none"
             aria-label="Toggle mobile menu"
           >
-            {isMobileMenuOpen ? <X size={20} className="sm:w-5 sm:h-5" /> : <Menu size={20} className="sm:w-5 sm:h-5" />}
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu Content */}
         {isMobileMenuOpen && (
           <div className="md:hidden bg-white border-t border-gray-200">
-            {/* Mobile Navigation Links */}
-           
-
-            {/* Mobile Profile Options */}
-            <div className="border-t border-gray-200 pt-3 pb-3">
+            <div className="pt-2 pb-3 space-y-1">
               {profileOptions.map((option) => (
                 <div
                   key={option.label}
                   onClick={() => {
-                    if (option.onClick) option.onClick();
+                    option.onClick?.();
                     setIsMobileMenuOpen(false);
                   }}
-                  className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                  className="flex items-center px-4 py-3 text-base text-gray-700 hover:bg-gray-100 cursor-pointer"
                 >
-                  <option.icon className="w-4 h-4 mr-3" />
+                  <option.icon className="w-5 h-5 mr-3" />
                   <span>{option.label}</span>
                 </div>
               ))}
             </div>
+            
+            {/* Show institute info in mobile menu */}
+            {profile && (
+              <div className="px-4 py-3 border-t border-gray-200">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    {profile.logo_url ? (
+                      <Image
+                        src={`${baseUrl}${profile.logo_url}`}
+                        alt="Institute Logo"
+                        width={40}
+                        height={40}
+                        className="rounded-full"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = defaultLogo;
+                        }}
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                        <User className="w-5 h-5 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">{profile.institute_name}</p>
+                    <p className="text-xs text-gray-500 truncate">{profile.address}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

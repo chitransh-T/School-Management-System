@@ -2,7 +2,7 @@
 const nextConfig = {
   // Configure image domains and patterns
   images: {
-    domains: ['images.unsplash.com', 'almanet.in', 'picsum.photos', 'school-management-system-backend-i0ft.onrender.com'],
+    domains: ['images.unsplash.com', 'almanet.in', 'picsum.photos', 'school-management-system-backend-i0ft.onrender.com','localhost'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -38,5 +38,7 @@ const nextConfig = {
   // Output as a standalone build
   output: 'standalone',
 }
+
+
 
 module.exports = nextConfig

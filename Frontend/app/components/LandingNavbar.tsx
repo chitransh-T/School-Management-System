@@ -86,19 +86,9 @@ export const LandingNavbar: React.FC = () => {
           <div className="hidden md:flex items-center space-x-4">
             <button
               onClick={() => router.push('/auth/signin')}
-              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
-                isScrolled
-                  ? 'text-gray-600 hover:text-blue-600'
-                  : 'text-gray-800 hover:text-blue-500'
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => router.push('/auth/signup')}
               className="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Sign Up
+              Sign In
             </button>
           </div>
 

@@ -137,7 +137,7 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
                    shadow-lg border-r border-gray-200 z-20 overflow-y-auto overflow-x-hidden h-[calc(100vh-4rem)]`}
       >
         <div className="flex justify-between items-center mb-6">
-          {isOpen && <div className="text-lg font-bold">Admin Dashboard</div>}
+          {isOpen && <div className="text-lg font-bold">Principal Dashboard</div>}
           
           {/* Standard sidebar toggle/close button */}
           {isMobile ? (
@@ -174,89 +174,16 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
         {isOpen && (
           <ul>
             <li className="mb-4">
-              <Link href="/Admindashboard" className="hover:text-gray-600 flex items-center">
+              <Link href="/principledashboard" className="hover:text-gray-600 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
                 Dashboard
               </Link>
             </li>
-            {/* Student Section */}
-            <li className="mb-4">
-              <button 
-                onClick={() => setIsStudentOpen(!isStudentOpen)}
-                className={`w-full hover:text-gray-600 flex items-center justify-between ${isStudentRoute ? 'text-blue-600 font-medium' : ''}`}
-              >
-                <div className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-                  </svg>
-                  Students
-                </div>
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className={`h-4 w-4 transition-transform duration-200 ${isStudentOpen ? 'transform rotate-180' : ''}`}
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              
-              {isStudentOpen && (
-                <ul className="ml-6 mt-2 space-y-2">
-                  
-                  <li>
-                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/addstudent' ? 'bg-gray-200' : ''}`}>
-                      <Link href="/addstudent" className="hover:text-gray-600 flex items-center w-full" onClick={() => localStorage.setItem('sidebarScrollPosition', sidebarRef.current?.scrollTop?.toString() || '0')}>
-                        <span className="text-sm">Add New Student</span>
-                      </Link>
-                    </div>
-                  </li>
-                  <li>
-                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/studentdetails' ? 'bg-gray-200' : ''}`}>
-                      <Link href="/studentdetails" className="hover:text-gray-600 flex items-center w-full" onClick={() => localStorage.setItem('sidebarScrollPosition', sidebarRef.current?.scrollTop?.toString() || '0')}>
-                        <span className="text-sm">View Student Details</span>
-                      </Link>
-                    </div>
-                  </li>
-                  <li>
-                    <div className={`p-2 hover:bg-gray-200 rounded-md ${isAttendanceRoute ? 'bg-gray-200' : ''}`}>
-                      <span className="text-sm">Student Attendance</span>
-                    </div>
-                    <ul className="ml-4 mt-2 space-y-2">
-                      <li>
-                        <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/studentattendance/markattendance' ? 'bg-gray-200' : ''}`}>
-                          <Link href="/studentattendance/markattendance" className="hover:text-gray-600 flex items-center w-full">
-                            <span className="text-sm"> -  Mark  Attendance</span>
-                          </Link>
-                        </div>
-                      </li>
-                      <li>
-                        <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/studentattendance/attendancereport' ? 'bg-gray-200' : ''}`}>
-                          <Link href="/studentattendance/attendancereport" className="hover:text-gray-600 flex items-center w-full">
-                            <span className="text-sm"> - Attendance Reports</span>
-                          </Link>
-                        </div>
-                      </li>
-                    </ul>
-                  </li>
-                  <li>
-                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/studentadmission' ? 'bg-gray-200' : ''}`}>
-                      <Link href="/studentadmission" className="hover:text-gray-600 flex items-center w-full">
-                        <span className="text-sm">Student Admission</span>
-                      </Link>
-                    </div>
-                  </li>
-                 
-                 
-                </ul>
-              )}
-            </li>
 
-            {/* Teacher Section */}
-            <li className="mb-4">
+             {/* Teacher Section */}
+             <li className="mb-4">
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
@@ -321,8 +248,8 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
               )}
             </li>
 
-            {/* Other menu items */}
-            <li className="mb-4">
+              {/* Other menu items */}
+              <li className="mb-4">
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
@@ -415,8 +342,79 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
             </li>
 
 
-          
-
+            {/* Student Section */}
+            <li className="mb-4">
+              <button 
+                onClick={() => setIsStudentOpen(!isStudentOpen)}
+                className={`w-full hover:text-gray-600 flex items-center justify-between ${isStudentRoute ? 'text-blue-600 font-medium' : ''}`}
+              >
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                  </svg>
+                  Students
+                </div>
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className={`h-4 w-4 transition-transform duration-200 ${isStudentOpen ? 'transform rotate-180' : ''}`}
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {isStudentOpen && (
+                <ul className="ml-6 mt-2 space-y-2">
+                  
+                  <li>
+                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/addstudent' ? 'bg-gray-200' : ''}`}>
+                      <Link href="/addstudent" className="hover:text-gray-600 flex items-center w-full" onClick={() => localStorage.setItem('sidebarScrollPosition', sidebarRef.current?.scrollTop?.toString() || '0')}>
+                        <span className="text-sm">Add New Student</span>
+                      </Link>
+                    </div>
+                  </li>
+                  <li>
+                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/studentdetails' ? 'bg-gray-200' : ''}`}>
+                      <Link href="/studentdetails" className="hover:text-gray-600 flex items-center w-full" onClick={() => localStorage.setItem('sidebarScrollPosition', sidebarRef.current?.scrollTop?.toString() || '0')}>
+                        <span className="text-sm">View Student Details</span>
+                      </Link>
+                    </div>
+                  </li>
+                  <li>
+                    <div className={`p-2 hover:bg-gray-200 rounded-md ${isAttendanceRoute ? 'bg-gray-200' : ''}`}>
+                      <span className="text-sm">Student Attendance</span>
+                    </div>
+                    <ul className="ml-4 mt-2 space-y-2">
+                      <li>
+                        <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/studentattendance/markattendance' ? 'bg-gray-200' : ''}`}>
+                          <Link href="/studentattendance/markattendance" className="hover:text-gray-600 flex items-center w-full">
+                            <span className="text-sm"> -  Mark  Attendance</span>
+                          </Link>
+                        </div>
+                      </li>
+                      <li>
+                        <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/studentattendance/attendancereport' ? 'bg-gray-200' : ''}`}>
+                          <Link href="/studentattendance/attendancereport" className="hover:text-gray-600 flex items-center w-full">
+                            <span className="text-sm"> - Attendance Reports</span>
+                          </Link>
+                        </div>
+                      </li>
+                    </ul>
+                  </li>
+                  <li>
+                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/studentadmission' ? 'bg-gray-200' : ''}`}>
+                      <Link href="/studentadmission" className="hover:text-gray-600 flex items-center w-full">
+                        <span className="text-sm">Student Admission</span>
+                      </Link>
+                    </div>
+                  </li>
+                 
+                 
+                </ul>
+              )}
+            </li>
             <li className="mb-4">
               <button 
                 onClick={(e) => {
@@ -444,13 +442,19 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
               {isFeesOpen && (
                 <ul className="ml-6 mt-2 space-y-2">
                   <li>
+                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/feemaster' ? 'bg-gray-200' : ''}`}>
+                      <Link href="/feemaster" className="hover:text-gray-600 flex items-center w-full" onClick={() => localStorage.setItem('sidebarScrollPosition', sidebarRef.current?.scrollTop?.toString() || '0')}>
+                        <span className="text-sm">Fee master</span>
+                      </Link>
+                    </div>
+                  </li>
+                  <li>
                     <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/collectfees' ? 'bg-gray-200' : ''}`}>
                       <Link href="/collectfees" className="hover:text-gray-600 flex items-center w-full" onClick={() => localStorage.setItem('sidebarScrollPosition', sidebarRef.current?.scrollTop?.toString() || '0')}>
                         <span className="text-sm">Collect Fees</span>
                       </Link>
                     </div>
                   </li>
-                 
           
                 </ul>
               )}

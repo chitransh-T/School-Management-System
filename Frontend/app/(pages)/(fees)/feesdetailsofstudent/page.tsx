@@ -418,7 +418,7 @@ export default function FeesCollectionPage() {
               
               <div className="bg-white rounded-xl shadow-md p-6 space-y-4">
                 {/* Monthly Fee */}
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-blue-800 mb-1">Monthly Fee*</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -435,7 +435,24 @@ export default function FeesCollectionPage() {
                       required
                     />
                   </div>
-                </div>
+                </div> */}
+                <div>
+  <label className="block text-sm font-medium text-blue-800 mb-1">Monthly Fee*</label>
+  <div className="relative group">
+    
+    
+   
+
+    {/* Locked input field */}
+    <input
+      type="text" // changed to text to remove number spinners
+      className="block w-full pl-10 pr-10 py-2 border border-blue-200 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
+      value={monthlyFeeValue} // value from backend
+      readOnly // ensures field is not editable
+    />
+  </div>
+</div>
+
                 
                 {/* One-time fees row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -19,11 +19,17 @@ const SignIn: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated && user) {
       // Determine which dashboard to redirect to based on role
-      let redirectPath = '/Admindashboard'; // Default
-      
-      if (user.role === 'teacher') {
+      let redirectPath =''; // Default
+      if(user.role === 'admin') {
+        redirectPath = '/admindashboard';
+      }
+      else if(user.role === 'principal') {
+        redirectPath = '/principledashboard';
+      }
+      else if(user.role === 'teacher') {
         redirectPath = '/Teacherdashboard';
-      } else if (user.role === 'student') {
+      }
+      else if(user.role === 'student') {
         redirectPath = '/Studentdashboard';
       }
       
@@ -88,13 +94,13 @@ const SignIn: React.FC = () => {
       
       // Redirect based on role
       if (data.role === 'admin') {
-        router.push("/Admindashboard");
+        router.push("/admindashboard");
       } else if (data.role === 'teacher') {
         router.push("/Teacherdashboard");
       } else if (data.role === 'student') {
         router.push("/Studentdashboard");
       } else {
-        router.push("/Admindashboard"); // Default fallback
+        router.push("/"); // Default fallback
       }
     } catch (err) {
       console.error("Login error:", err);
@@ -208,22 +214,10 @@ const SignIn: React.FC = () => {
             </button>
 
             
-            {/* Google Sign In Button */}
-         
+            
           </div>
 
-          {/* Sign Up Link */}
-          <div className="text-center pt-2">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
-              <Link
-                href="/auth/signup"
-                className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
-              >
-                Sign up
-              </Link>
-            </p>
-          </div>
+         
         </div>
       </div>
     </div>

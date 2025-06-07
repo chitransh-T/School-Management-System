@@ -25,13 +25,7 @@ const Signup: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated && user) {
       // Determine which dashboard to redirect to based on role
-      let redirectPath = '/Admindashboard'; // Default
-      
-      if (user.role === 'teacher') {
-        redirectPath = '/Teacherdashboard';
-      } else if (user.role === 'student') {
-        redirectPath = '/Studentdashboard';
-      }
+      let redirectPath = '/admindashboard'; // Default
       
       router.push(redirectPath);
     }
@@ -91,19 +85,6 @@ const Signup: React.FC = () => {
       console.error("Registration error:", err);
       // Display specific error message from API if available
       setError(err instanceof Error ? err.message : "Failed to sign up. Please try again.");
-    } finally {
-      setAuthing(false);
-    }
-  };
-
-  const signUpWithGoogle = async () => {
-    setAuthing(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert("Signed up with Google!");
-      router.push("/auth/signin");
-    } catch (err) {
-      setError("Failed to sign up with Google.");
     } finally {
       setAuthing(false);
     }
