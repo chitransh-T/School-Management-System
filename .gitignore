@@ -40,4 +40,4 @@ Frontend/.env.production
 next-env.d.ts
 
 # uploads
-/uploads
+/api/uploads
