@@ -10,6 +10,7 @@ interface Notice {
   title: string;
   content: string;
   notice_date: string;
+  end_date: string;
   category: string;
   priority: 'high' | 'medium' | 'low';
 }
@@ -20,6 +21,7 @@ const NewNoticePage = () => {
     title: '',
     content: '',
     notice_date: new Date().toISOString().split('T')[0],
+    end_date: new Date().toISOString().split('T')[0],
     category: '',
     priority: 'medium'
   });
@@ -207,6 +209,21 @@ const NewNoticePage = () => {
                     type="date"
                     value={formData.notice_date}
                     onChange={(e) => setFormData({ ...formData, notice_date: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 text-gray-900"
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                {/* End Date Field */}
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-3">
+                    <Calendar className="h-4 w-4 mr-2 text-blue-500" />
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 text-gray-900"
                     disabled={isSubmitting}
                   />

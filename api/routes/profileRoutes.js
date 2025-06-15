@@ -6,6 +6,6 @@ import upload from '../middlewares/upload.js';
 const router = express.Router();
 
 router.post('/profile', verifyToken, upload, saveOrUpdateProfile);
-router.get('/profile/:userEmail', verifyToken, getProfile);
+router.get('/profile', verifyToken, getProfile);
 
 export default router;

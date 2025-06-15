@@ -8,7 +8,7 @@ import { useAuth } from '@/app/context/AuthContext';
 interface Teacher {
   id: number;
   teacher_name: string;
-  email: string;
+  // email: string;
   date_of_birth: string;
   date_of_joining: string;
   gender: string;
@@ -41,7 +41,7 @@ export default function EditTeacher() {
   const [teacherData, setTeacherData] = useState<Teacher>({
     id: 0,
     teacher_name: '',
-    email: '',
+    // email: '',
     date_of_birth: '',
     date_of_joining: '',
     gender: '',
@@ -273,7 +273,7 @@ export default function EditTeacher() {
                 />
               </div>
               
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Email</label>
                 <input
                   type="email"
@@ -284,8 +284,8 @@ export default function EditTeacher() {
                   className="w-full p-2 border rounded-md"
                 />
               </div>
-              
-              <div className="space-y-2">
+               */}
+              {/* <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Phone</label>
                 <input
                   type="tel"
@@ -295,7 +295,7 @@ export default function EditTeacher() {
                   required
                   className="w-full p-2 border rounded-md"
                 />
-              </div>
+              </div> */}
               
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Date of Birth</label>

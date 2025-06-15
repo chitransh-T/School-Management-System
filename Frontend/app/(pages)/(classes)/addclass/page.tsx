@@ -23,7 +23,7 @@ const AddNewClassPage: React.FC = () => {
   const [className, setClassName] = useState<string>('');
   const [section, setSection] = useState<string>('');
   const [tuitionFees, setTuitionFees] = useState<string>('');
-  const [teacherName, setTeacherName] = useState<string>('');
+  const [teacherId, setTeacherId] = useState<string>('');
 
   useEffect(() => {
     const fetchTeachers = async () => {
@@ -148,7 +148,7 @@ const AddNewClassPage: React.FC = () => {
       return;
     }
     
-    if (!teacherName) {
+    if (!teacherId) {
       setFormError('Please select a teacher');
       return;
     }
@@ -171,7 +171,7 @@ const AddNewClassPage: React.FC = () => {
         class_name: className,
         section: section,
         tuition_fees: Number(tuitionFees),
-        teacher_name: teacherName // This should now be just the teacher's name string
+        teacher_id: teacherId // This should now be just the teacher's name string
       };
       
       console.log('Submitting class data:', classData);
@@ -201,7 +201,7 @@ const AddNewClassPage: React.FC = () => {
       setClassName('');
       setSection('');
       setTuitionFees('');
-      setTeacherName('');
+      setTeacherId('');
       
       // Redirect to all classes page after a short delay
       setTimeout(() => {
@@ -310,10 +310,10 @@ const AddNewClassPage: React.FC = () => {
                 <span className="ml-2 text-xs text-purple-600">REQUIRED</span>
               </label>
               <select
-                value={teacherName}
+                value={teacherId}
                 onChange={(e) => {
                   console.log('Selected teacher:', e.target.value);
-                  setTeacherName(e.target.value);
+                  setTeacherId(e.target.value);
                 }}
                 className="w-full px-4 py-2 text-gray-500 border border-purple-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
                 disabled={loading}
@@ -322,7 +322,7 @@ const AddNewClassPage: React.FC = () => {
                   {loading ? "Loading teachers..." : "SELECT TEACHER"}
                 </option>
                 {teachers.map(teacher => (
-                  <option key={teacher.id} value={teacher.name}>
+                  <option key={teacher.id} value={teacher.id}>
                     {teacher.name}
                   </option>
                 ))}

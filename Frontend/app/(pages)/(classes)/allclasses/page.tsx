@@ -1,6 +1,8 @@
 
 
 
+
+
 "use client";
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/app/dashboardComponents/DashboardLayout';
@@ -12,21 +14,33 @@ interface Class {
   class_name: string;
   section: string;
   tuition_fees: number;
-  teacher_name: string;
+  teacher_id: string;
   student_count?: number;
+}
+
+interface Teacher {
+  id: string;
+  name: string;
 }
 
 interface ClassCardProps {
   classData: Class;
+  teachers: Teacher[];
   onEdit: (classId: string) => void;
   onDelete: (classId: string) => void;
 }
 
 const ClassCard: React.FC<ClassCardProps> = ({ 
   classData, 
+  teachers,
   onEdit, 
   onDelete 
 }) => {
+  // Find teacher name from teachers list by teacherId
+  const teacherName = teachers.find(
+    (teacher) => teacher.id === classData.teacher_id
+  )?.name || 'No Teacher Assigned';
+
   const handleEdit = () => {
     onEdit(classData.id);
   };
@@ -77,7 +91,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
             Teacher
           </div>
           <div className="text-sm font-semibold text-gray-700">
-            {classData.teacher_name || 'Not Assigned'}
+            {teacherName}
           </div>
         </div>
 
@@ -98,9 +112,57 @@ const AllClassesPage: React.FC = () => {
   const router = useRouter();
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [classes, setClasses] = useState<Class[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [fetchingTeachers, setFetchingTeachers] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
-  const [deleteLoading, setDeleteLoading] = useState<string>(''); // Store ID of class being deleted
+  const [deleteLoading, setDeleteLoading] = useState<string>('');
+
+  // Fetch teachers from backend
+  const fetchTeachers = async () => {
+    try {
+      setFetchingTeachers(true);
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Authentication token not found. Please login again.');
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch(`${baseUrl}/api/teachers`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError('Session expired. Please login again.');
+          router.push('/login');
+          return;
+        }
+        throw new Error(`Failed to fetch teachers: ${response.status}`);
+      }
+
+      const teachersData = await response.json();
+      const formattedTeachers = Array.isArray(teachersData) 
+        ? teachersData.map(teacher => ({
+            id: teacher._id || teacher.id || '',
+            name: teacher.teacher_name || 'Unknown Teacher'
+          })).filter(teacher => teacher.id) // Filter out invalid teachers
+        : [];
+
+      setTeachers(formattedTeachers);
+    } catch (err: any) {
+      console.error('Error fetching teachers:', err);
+      setError(err.message || 'Failed to load teachers. Please try again.');
+    } finally {
+      setFetchingTeachers(false);
+    }
+  };
 
   // Fetch classes and student counts from backend
   const fetchClasses = async () => {
@@ -134,7 +196,6 @@ const AllClassesPage: React.FC = () => {
       }
 
       const classesData = await classesResponse.json();
-      console.log('Classes data received:', classesData);
       
       // Fetch student counts by class
       const studentCountResponse = await fetch(`${baseUrl}/api/api/students/count-by-class`, {
@@ -145,42 +206,28 @@ const AllClassesPage: React.FC = () => {
         }
       });
 
-      if (!studentCountResponse.ok) {
-        console.error(`Failed to fetch student counts: ${studentCountResponse.status}`);
-        // Continue with classes data even if student count fetch fails
-      }
-
       // Create a map of class_name to student_count
       const studentCountMap: Record<string, number> = {};
       
       if (studentCountResponse.ok) {
         const studentCountData = await studentCountResponse.json();
-        console.log('Student count data received:', studentCountData);
         
         if (studentCountData.success && Array.isArray(studentCountData.data)) {
-          // Log all class names from the student count data for debugging
-          console.log('Class names from student count data:', 
-            studentCountData.data.map((item: { class_name: string }) => item.class_name));
-          
           studentCountData.data.forEach((item: { class_name: string; student_count: number }) => {
-            // Store counts with both original case and lowercase for more flexible matching
             if (item.class_name) {
               studentCountMap[item.class_name] = item.student_count;
               studentCountMap[item.class_name.toLowerCase()] = item.student_count;
-              // Also store with trimmed whitespace
               studentCountMap[item.class_name.trim()] = item.student_count;
               studentCountMap[item.class_name.toLowerCase().trim()] = item.student_count;
             }
           });
         }
-        console.log('Student count map created:', studentCountMap);
       }
 
       // Transform the data to match our interface and merge with student counts
       const formattedClasses = Array.isArray(classesData) ? classesData.map(classItem => {
         const className = classItem.class_name || classItem.className || 'Unknown Class';
         
-        // Try multiple variations to find a match in the student count map
         let studentCount = 0;
         const possibleKeys = [
           className,
@@ -189,15 +236,9 @@ const AllClassesPage: React.FC = () => {
           className.toLowerCase().trim()
         ];
         
-        // Log the class we're trying to match
-        console.log(`Looking for student count for class: ${className}`);
-        console.log('Possible keys to match:', possibleKeys);
-        
-        // Try each possible key until we find a match
         for (const key of possibleKeys) {
           if (studentCountMap[key] !== undefined) {
             studentCount = studentCountMap[key];
-            console.log(`Found match with key: ${key}, count: ${studentCount}`);
             break;
           }
         }
@@ -207,13 +248,11 @@ const AllClassesPage: React.FC = () => {
           class_name: className,
           section: classItem.section || 'Unknown Section',
           tuition_fees: classItem.tuition_fees || classItem.tuitionFees || 0,
-          teacher_name: classItem.teacher_name || classItem.teacherName || 'Not Assigned',
+          teacher_id: classItem.teacher_id || 'No Teacher Assigned',
           student_count: studentCount
         };
       }) : [];
       
-      console.log('Formatted classes with student counts:', formattedClasses);
-
       setClasses(formattedClasses);
     } catch (err: any) {
       console.error('Error fetching classes:', err);
@@ -223,14 +262,23 @@ const AllClassesPage: React.FC = () => {
     }
   };
 
-  // Load classes on component mount
+  // Load data on component mount
   useEffect(() => {
-    fetchClasses();
+    const loadData = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        await fetchClasses();
+        await fetchTeachers();
+      } else {
+        setError('Authentication token not found. Please login again.');
+        router.push('/login');
+      }
+    };
+    
+    loadData();
   }, []);
 
   const handleEditClass = (classId: string) => {
-    console.log('Edit class:', classId);
-    // Navigate to edit page with query parameter
     router.push(`/editclass?id=${classId}`);
   };
 
@@ -264,10 +312,7 @@ const AllClassesPage: React.FC = () => {
         throw new Error(errorData.message || 'Failed to delete class');
       }
 
-      // Remove the deleted class from state
       setClasses(prevClasses => prevClasses.filter(c => c.id !== classId));
-      
-      // Show success message (you can replace with a toast notification)
       alert('Class deleted successfully!');
       
     } catch (err: any) {
@@ -279,21 +324,22 @@ const AllClassesPage: React.FC = () => {
   };
 
   const handleAddNewClass = () => {
-    router.push('/addclass'); // Adjust route as needed
+    router.push('/addclass');
   };
 
   const handleRefresh = () => {
     fetchClasses();
+    fetchTeachers();
   };
 
-  if (loading) {
+  if (loading || fetchingTeachers) {
     return (
       <DashboardLayout>
         <div className="min-h-screen flex-1 bg-gray-100 p-6">
           <div className="flex items-center justify-center h-64">
             <div className="flex items-center space-x-2 text-gray-600">
               <RefreshCw className="animate-spin" size={20} />
-              <span>Loading classes...</span>
+              <span>Loading data...</span>
             </div>
           </div>
         </div>
@@ -308,6 +354,13 @@ const AllClassesPage: React.FC = () => {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl text-gray-500 font-bold">Classes | All Classes</h1>
           <div className="flex space-x-3">
+            <button
+              onClick={handleRefresh}
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+              title="Refresh Data"
+            >
+              <RefreshCw size={16} />
+            </button>
             <button
               onClick={handleAddNewClass}
               className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
@@ -334,7 +387,7 @@ const AllClassesPage: React.FC = () => {
         )}
 
         {/* Classes Grid */}
-        {classes.length === 0 && !loading ? (
+        {classes.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-gray-500 text-lg mb-4">No classes found</div>
             <button
@@ -351,10 +404,10 @@ const AllClassesPage: React.FC = () => {
               <div key={classData.id} className="relative">
                 <ClassCard
                   classData={classData}
+                  teachers={teachers}
                   onEdit={handleEditClass}
                   onDelete={handleDeleteClass}
                 />
-                {/* Delete Loading Overlay */}
                 {deleteLoading === classData.id && (
                   <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
                     <div className="flex items-center space-x-2 text-red-600">

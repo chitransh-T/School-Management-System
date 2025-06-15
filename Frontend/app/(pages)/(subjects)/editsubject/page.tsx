@@ -1,8 +1,9 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FaPlus, FaMinus, FaArrowLeft } from 'react-icons/fa';
+import { FaPlus, FaMinus } from 'react-icons/fa';
 import DashboardLayout from '@/app/dashboardComponents/DashboardLayout';
 import { useAuth } from '@/app/context/AuthContext';
 
@@ -15,19 +16,11 @@ interface Subject {
 
 interface ClassData {
   id: number;
+  class_id: number;
+  subject_id?: number; // The subject record ID for updating
   class_name: string;
   section: string;
   subjects: Subject[];
-}
-
-interface ClassOption {
-  id: number;
-  class_name: string;
-}
-
-interface SectionOption {
-  id: number;
-  section_name: string;
 }
 
 export default function EditClassSubjectsPage() {
@@ -37,14 +30,15 @@ export default function EditClassSubjectsPage() {
   const { user } = useAuth();
 
   // Get URL parameters
+  const classId = searchParams.get('id');
   const classParam = searchParams.get('class');
   const sectionParam = searchParams.get('section');
-
+  
   // State management
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState<string>('');
 
   // Form data
   const [classData, setClassData] = useState<ClassData | null>(null);
@@ -53,10 +47,6 @@ export default function EditClassSubjectsPage() {
   const [subjects, setSubjects] = useState<Subject[]>([
     { name: '', marks: 0 }
   ]);
-
-  // Options for dropdowns
-  const [classOptions, setClassOptions] = useState<ClassOption[]>([]);
-  const [sectionOptions, setSectionOptions] = useState<SectionOption[]>([]);
 
   // Fetch initial data
   useEffect(() => {
@@ -68,63 +58,39 @@ export default function EditClassSubjectsPage() {
           setError('Authentication token not found');
           return;
         }
-
-        // Fetch classes and sections
-        const [classesRes, sectionsRes] = await Promise.all([
-          fetch(`${baseUrl}/api/classes`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }),
-          fetch(`${baseUrl}/api/sections`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          })
-        ]);
-
-        if (classesRes.ok) {
-          const classesData = await classesRes.json();
-          setClassOptions(classesData);
-        }
-
-        if (sectionsRes.ok) {
-          const sectionsData = await sectionsRes.json();
-          setSectionOptions(sectionsData);
-        }
-
-        // Check if we have stored class data from the previous page
-        const storedClassData = localStorage.getItem('editClassSubjects');
+  
+        // First check for sessionStorage data
+        const storedData = sessionStorage.getItem('editClassSubjects');
         
-        if (storedClassData) {
+        if (storedData) {
           try {
-            const parsedData = JSON.parse(storedClassData);
+            const parsedData = JSON.parse(storedData);
+            console.log('Loaded data from sessionStorage:', parsedData);
+            
             setClassData(parsedData);
             setSelectedClass(parsedData.class_name);
             setSelectedSection(parsedData.section);
             
-            // Pre-fill subjects from stored data
-            if (parsedData.subjects && parsedData.subjects.length > 0) {
-              setSubjects(parsedData.subjects);
-            } else {
-              setSubjects([{ name: '', marks: 0 }]);
-            }
+            // Ensure subjects array is properly formatted
+            const formattedSubjects = parsedData.subjects?.length > 0 
+              ? parsedData.subjects 
+              : [{ name: '', marks: 0 }];
+              
+            setSubjects(formattedSubjects);
             
-            // Clear the localStorage after using it
-            localStorage.removeItem('editClassSubjects');
-            return; // Skip the API call if we have stored data
+            // Clear the storage after use
+            sessionStorage.removeItem('editClassSubjects');
+            return;
           } catch (err) {
-            console.error('Error parsing stored class data:', err);
-            // Continue with API call if parsing fails
+            console.error('Error parsing stored data:', err);
+            // Continue with API fetch if parsing fails
           }
         }
         
-        // If we have class and section parameters but no stored data, fetch from API
-        if (classParam && sectionParam) {
-          const classSubjectsRes = await fetch(
-            `${baseUrl}/api/classes/subjects?class=${encodeURIComponent(classParam)}&section=${encodeURIComponent(sectionParam)}`,
+        // If we have parameters but no stored data, fetch from API
+        if (classParam && sectionParam && classId) {
+          const response = await fetch(
+            `${baseUrl}/api/classes/subjects?class=${encodeURIComponent(classParam)}&section=${encodeURIComponent(sectionParam)}&id=${classId}`,
             {
               headers: {
                 'Authorization': `Bearer ${token}`,
@@ -132,22 +98,20 @@ export default function EditClassSubjectsPage() {
               }
             }
           );
-
-          if (classSubjectsRes.ok) {
-            const data = await classSubjectsRes.json();
+  
+          if (response.ok) {
+            const data = await response.json();
             setClassData(data);
             setSelectedClass(data.class_name);
             setSelectedSection(data.section);
-            
-            // Pre-fill subjects or add empty one if none exist
-            if (data.subjects && data.subjects.length > 0) {
-              setSubjects(data.subjects);
-            } else {
-              setSubjects([{ name: '', marks: 0 }]);
-            }
+            setSubjects(data.subjects?.length > 0 ? data.subjects : [{ name: '', marks: 0 }]);
+          } else {
+           
           }
+        } else {
+          setError('Missing required parameters');
         }
-
+  
       } catch (err) {
         console.error('Error fetching data:', err);
         setError('Failed to load data. Please try again.');
@@ -155,9 +119,9 @@ export default function EditClassSubjectsPage() {
         setLoading(false);
       }
     };
-
+  
     fetchData();
-  }, [classParam, sectionParam]);
+  }, [classParam, sectionParam, classId]);
 
   // Add new subject row
   const addSubject = () => {
@@ -185,22 +149,7 @@ export default function EditClassSubjectsPage() {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!selectedClass || !selectedSection) {
-      setError('Please select both class and section');
-      return;
-    }
-
-    // Validate subjects
-    const validSubjects = subjects.filter(subject => 
-      subject.name.trim() !== '' && subject.marks > 0
-    );
-
-    if (validSubjects.length === 0) {
-      setError('Please add at least one valid subject');
-      return;
-    }
-
+  
     try {
       setSaving(true);
       setError('');
@@ -212,46 +161,66 @@ export default function EditClassSubjectsPage() {
         return;
       }
 
-      // Format subjects for the API
-      const formattedSubjects = validSubjects.map(subject => ({
-        subject_name: subject.name,
-        marks: subject.marks,
-        class_name: selectedClass
-      }));
+      // Validate subjects
+      const validSubjects = subjects.filter(subject => 
+        subject.name.trim() !== '' && Number(subject.marks) > 0
+      );
 
-      // Call the backend API to update subjects
+      if (validSubjects.length === 0) {
+        setError('Please enter at least one subject with marks.');
+        return;
+      }
+
+      // Prepare the data for update
+      const formattedSubjects = validSubjects.map(subject => ({
+        id: subject.id, // Include the subject ID if available
+        subject_name: subject.name,
+        marks: subject.marks
+      }));
+  
+      const payload = {
+        class_id: classData?.class_id || classData?.id,
+        subject_id: classData?.subject_id, // The subject record ID for updating
+        subjects: formattedSubjects
+      };
+  
+      console.log('Submitting payload:', payload);
+  
+      // Call backend
       const response = await fetch(`${baseUrl}/api/updatesubject`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+           'Authorization': `Bearer ${token}`,
+           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          subject_id: classData?.id,
-          subjects: formattedSubjects
-        })
+        body: JSON.stringify(payload)
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `Failed to update subjects: ${response.status}`);
       }
-
-      setSuccess('Subjects updated successfully!');
+  
+      const responseData = await response.json();
+      console.log('Update response:', responseData);
       
-      // Redirect back to classes list after a delay
+      setSuccess('Subjects updated successfully!');
+      setError('');
+      
+      // Optionally redirect after successful update
       setTimeout(() => {
-        router.push('/classeswithsubject');
+        router.push('/classeswithsubject'); // Navigate back to classes page
       }, 2000);
-
-    } catch (err) {
-      console.error('Error updating subjects:', err);
-      setError('Failed to update subjects. Please try again.');
+      
+    } catch (err: any) {
+      console.error('Update error:', err);
+      setError(err.message || 'Failed to update subjects. Please try again.');
+      setSuccess('');
     } finally {
       setSaving(false);
     }
   };
-
+  
   // Handle back navigation
   const handleBack = () => {
     router.back();

@@ -14,7 +14,9 @@ import classRoutes from './routes/classRoutes.js';
 import subjectRoutes from './routes/subjectRoutes.js';
 import feeRoutes from './routes/feeRoutes.js';
 import noticeRoutes from './routes/noticeRoutes.js';
+import feeMasterRoutes from './routes/feeMasterRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
+import sessionRoutes from './routes/sessionRoutes.js';
 // Setup for file path management
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -69,12 +71,7 @@ app.use('/uploads', (err, req, res, next) => {
   if (err) {
     // console.error('Error serving static file:', err);
     const filePath = path.join(uploadsPath, req.url);
-    // console.log('File request details:', {
-    //   url: req.url,
-    //   fullPath: filePath,
-    //   exists: fs.existsSync(filePath),
-    //   availableFiles: fs.readdirSync(uploadsPath)
-    // });
+   
     res.status(404).json({
       message: 'File not found',
       requestedPath: req.url,
@@ -96,6 +93,8 @@ app.use('/api',subjectRoutes);
 app.use('/api',feeRoutes);
 app.use('/api',noticeRoutes);
 app.use('/api',profileRoutes);
+app.use('/api',sessionRoutes);
+app.use('/api',feeMasterRoutes);
 // If no route matches, return 404
 app.use((req, res) => {
   // console.log('404 for route:', req.url);

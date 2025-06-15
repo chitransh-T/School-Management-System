@@ -1,12 +1,9 @@
 
 
-
 import pool from '../config/db.js';
-
 export const createTeacher = async (teacherData) => {
   const {
     teacher_name,
-    email,
     date_of_birth,
     date_of_joining,
     gender,
@@ -15,16 +12,14 @@ export const createTeacher = async (teacherData) => {
     experience,
     salary,
     address,
-    phone,
-    qualification_certificate, 
+    qualification_certificate,
     teacher_photo,
-    user_email
+    signup_id
   } = teacherData;
 
   const sql = `
     INSERT INTO teacher (
       teacher_name,
-      email,
       date_of_birth,
       date_of_joining,
       gender,
@@ -33,51 +28,40 @@ export const createTeacher = async (teacherData) => {
       experience,
       salary,
       address,
-      phone,
+    
       qualification_certificate,
       teacher_photo,
-      user_email
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      signup_id
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
     RETURNING *
   `;
 
+  const values = [
+    teacher_name,
+    date_of_birth,
+    date_of_joining,
+    gender,
+    guardian_name,
+    qualification,
+    experience,
+    salary,
+    address,
+    qualification_certificate,
+    teacher_photo,
+    signup_id
+  ];
+
+  // console.log("Insert values count:", values.length); // Should be 14
+  // console.log("Insert values:", values);
+
   try {
-    const result = await pool.query(sql, [
-      teacher_name,
-      email,
-      date_of_birth,
-      date_of_joining,
-      gender,
-      guardian_name,
-      qualification,
-      experience,
-      salary,
-      address,
-      phone,
-      qualification_certificate,
-      teacher_photo,
-      user_email
-    ]);
+    const result = await pool.query(sql, values);
     return result.rows[0];
   } catch (err) {
     console.error('Error creating teacher:', err);
     throw err;
   }
 };
-
-export const getTeachersByUser = async (user_email) => {
-  const query = 'SELECT * FROM teacher WHERE user_email = $1';
-  try {
-    const result = await pool.query(query, [user_email]);
-    return result.rows;
-  } catch (err) {
-    console.error('Error fetching teachers:', err);
-    throw err;
-  }
-};
-
-
-
 export const getTeacherById = async (teacherId) => {
   const query = 'SELECT * FROM teacher WHERE id = $1';
   try {
@@ -88,11 +72,27 @@ export const getTeacherById = async (teacherId) => {
     throw err;
   }
 };
+export const getTeachersBySchoolId = async (signup_id) => {
+  const query = `
+    SELECT t.*
+    FROM teacher t
+    JOIN signup s ON t.signup_id = s.id
+    WHERE s.school_id = (SELECT school_id FROM signup WHERE id = $1)
+  `;
+  try {
+    const result = await pool.query(query, [signup_id]);
+    // console.log('getTeachersBySchoolId result:', result.rows);
+    return result.rows;
+  } catch (err) {
+    console.error('Error fetching teachers by school_id:', err);
+    throw err;
+  }
+};
+
 
 export const updateTeacher = async (teacherId, teacherData) => {
   const {
     teacher_name,
-    email,
     date_of_birth,
     date_of_joining,
     gender,
@@ -101,7 +101,7 @@ export const updateTeacher = async (teacherId, teacherData) => {
     experience,
     salary,
     address,
-    phone,
+    // phone,
     qualification_certificate,
     teacher_photo
   } = teacherData;
@@ -109,26 +109,24 @@ export const updateTeacher = async (teacherId, teacherData) => {
   const updateQuery = `
     UPDATE teacher SET
       teacher_name = $1,
-      email = $2,
-      date_of_birth = $3,
-      date_of_joining = $4,
-      gender = $5,
-      guardian_name = $6,
-      qualification = $7,
-      experience = $8,
-      salary = $9,
-      address = $10,
-      phone = $11, 
-      qualification_certificate = $12, 
-      teacher_photo = $13
-    WHERE id = $14
+      date_of_birth = $2,
+      date_of_joining = $3,
+      gender = $4,
+      guardian_name = $5,
+      qualification = $6,
+      experience = $7,
+      salary = $8,
+      address = $9,
+    
+      qualification_certificate = $10,
+      teacher_photo = $11
+    WHERE id = $12
     RETURNING *
   `;
 
   try {
     const result = await pool.query(updateQuery, [
       teacher_name,
-      email,
       date_of_birth,
       date_of_joining,
       gender,
@@ -137,7 +135,7 @@ export const updateTeacher = async (teacherId, teacherData) => {
       experience,
       salary,
       address,
-      phone,
+      // phone,
       qualification_certificate,
       teacher_photo,
       teacherId
@@ -160,11 +158,23 @@ export const deleteTeacher = async (teacherId) => {
   }
 };
 
-export const getTeacherCount = async (user_email) => {
-  const query = 'SELECT COUNT(*) AS totalteachers FROM teacher WHERE user_email = $1';
-  const values = [user_email];
+
+
+export const getTeacherCount = async (signup_id) => {
+  // console.log("Fetching count:", { signup_id });
+
+  const query = `
+    SELECT COUNT(*) AS totalteachers 
+    FROM teacher 
+    WHERE signup_id IN (
+      SELECT id FROM signup WHERE school_id = (
+        SELECT school_id FROM signup WHERE id = $1
+      ) AND role = 'teacher'
+    )
+  `;
+
   try {
-    const result = await pool.query(query, values);
+    const result = await pool.query(query, [signup_id]);
     return result.rows;
   } catch (err) {
     console.error('Error getting teacher count:', err);

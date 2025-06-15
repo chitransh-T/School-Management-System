@@ -102,7 +102,7 @@ const Signup: React.FC = () => {
               alt="Logo"
               className="h-8 mx-auto"
             />
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Create Account</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Create Account For Schools</h2>
             <p className="text-sm text-gray-600 max-w-sm mx-auto">
               Join us to manage your school efficiently
             </p>

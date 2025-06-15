@@ -9,6 +9,7 @@ import DashboardLayout from '@/app/dashboardComponents/DashboardLayout';
 interface TeacherFormData {
   name: string;
   email: string;
+  password: string;
   phone: string;
   dateOfBirth: string;
   gender: string;
@@ -35,6 +36,7 @@ const AddTeacherForm = () => {
   const [formData, setFormData] = useState<TeacherFormData>({
     name: '',
     email: '',
+    password: '',
     phone: '',
     dateOfBirth: '',
     gender: '',
@@ -68,6 +70,7 @@ const AddTeacherForm = () => {
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Invalid email format';
     }
+    if (!formData.password.trim()) newErrors.password = 'Password is required';
     if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
     if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
     if (!formData.gender) newErrors.gender = 'Gender is required';
@@ -146,6 +149,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       // Map fields to match backend expectations
       apiFormData.append('teacher_name', formData.name);
       apiFormData.append('email', formData.email);
+      apiFormData.append('password', formData.password);
       apiFormData.append('phone', formData.phone);
       apiFormData.append('date_of_birth', formData.dateOfBirth);
       apiFormData.append('date_of_joining', formData.joiningDate);
@@ -228,7 +232,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       setTeacherPhotoFileName('');
       
       // Redirect to teacher list page
-      router.push('/Admindashboard');
+      router.push('/principledashboard');
     } catch (err: any) {
       console.error('Error details:', err);
       
@@ -341,6 +345,22 @@ const handleSubmit = async (e: React.FormEvent) => {
                         } px-3 py-2 focus:border-blue-500 focus:outline-none text-gray-900`}
                       />
                       {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-900">
+                        Password*
+                      </label>
+                      <input
+                        type="password"
+                        name="password"
+                        placeholder="Enter password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        className={`mt-1 block w-full rounded-md border ${
+                          errors.password ? 'border-red-500' : 'border-gray-300'
+                        } px-3 py-2 focus:border-blue-500 focus:outline-none text-gray-900`}
+                      />
+                      {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
                     </div>
 
                      <div>

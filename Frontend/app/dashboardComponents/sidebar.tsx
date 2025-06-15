@@ -18,6 +18,7 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
   const [isSubjectOpen, setIsSubjectOpen] = useState(true);
   const [isFeesOpen, setIsFeesOpen] = useState(false);
   const sidebarRef = React.useRef<HTMLDivElement>(null);
+  const [isSessionOpen, setIsSessionOpen] = useState(true);
   const pathname = usePathname();
   const { isMobile } = useResponsive();
 
@@ -26,6 +27,7 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
   const isAttendanceRoute = pathname?.includes('/attendance');
   const isClassRoute = pathname?.includes('/class') || pathname?.includes('/allClasses') || pathname?.includes('/addClass');
   const isSubjectRoute = pathname?.includes('/subject') || pathname?.includes('/classeswithsubject') || pathname?.includes('/assignSubject');
+  const isSessionRoute = pathname?.includes('/session') || pathname?.includes('/managesession') || pathname?.includes('/createsession');
 
   // Close sidebar automatically on mobile
   useEffect(() => {
@@ -49,12 +51,15 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
     if (isTeacherRoute) {
       setIsTeacherOpen(true);
     }
+    if (isSessionRoute) {
+      setIsSessionOpen(true);
+    }
     
     // Keep class dropdown open if on a class-related page
     if (isClassRoute) {
       setIsClassOpen(true);
     }
-  }, [pathname, isTeacherRoute, isClassRoute]);
+  }, [pathname, isTeacherRoute, isClassRoute, isSessionRoute]);
   
   // Save scroll position to localStorage when scrolling
   useEffect(() => {
@@ -97,6 +102,7 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
       setIsClassOpen(true);
       setIsSubjectOpen(true);
       setIsFeesOpen(true);
+      setIsSessionOpen(true);
     }
     // Notify parent component about sidebar state change
     if (onToggle) {
@@ -180,6 +186,50 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
                 </svg>
                 Dashboard
               </Link>
+            </li>
+            <li className="mb-4">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsSessionOpen(!isSessionOpen);
+                }}
+                className={`w-full hover:text-gray-600 flex items-center justify-between ${isSessionRoute ? 'text-blue-600 font-medium' : ''}`}
+              >
+                <div className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                  Sessions
+                </div>
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className={`h-4 w-4 transition-transform duration-200 ${isSessionOpen ? 'transform rotate-180' : ''}`}
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {isSessionOpen && (
+                <ul className="ml-6 mt-2 space-y-2">
+                  <li>
+                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/createsession' ? 'bg-gray-200' : ''}`}>
+                      <Link href="/createsession" className="hover:text-gray-600 flex items-center w-full" onClick={() => localStorage.setItem('sidebarScrollPosition', sidebarRef.current?.scrollTop?.toString() || '0')}>
+                        <span className="text-sm">Create Session</span>
+                      </Link>
+                    </div>
+                  </li>
+                  <li>
+                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/managesession' ? 'bg-gray-200' : ''}`}>
+                      <Link href="/managesession" className="hover:text-gray-600 flex items-center w-full">
+                        <span className="text-sm">Manage Session</span>
+                      </Link>
+                    </div>
+                  </li>
+          
+                </ul>
+              )}
             </li>
 
              {/* Teacher Section */}

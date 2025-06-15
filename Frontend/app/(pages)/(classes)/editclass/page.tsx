@@ -13,7 +13,7 @@ interface Class {
   class_name: string;
   section: string;
   tuition_fees: number;
-  teacher_name: string;
+  teacher_id: string;
 }
 
 const EditClassPage: React.FC = () => {
@@ -28,7 +28,7 @@ const EditClassPage: React.FC = () => {
     class_name: '',
     section: '',
     tuition_fees: 0,
-    teacher_name: ''
+    teacher_id: ''
   });
   
   // UI state
@@ -94,7 +94,7 @@ const EditClassPage: React.FC = () => {
           class_name: classInfo.class_name || '',
           section: classInfo.section || '',
           tuition_fees: classInfo.tuition_fees || 0,
-          teacher_name: classInfo.teacher_name || ''
+          teacher_id: classInfo.teacher_id || ''
         });
         
         // Fetch teachers list
@@ -188,7 +188,7 @@ const EditClassPage: React.FC = () => {
       return;
     }
     
-    if (!classData.teacher_name) {
+    if (!classData.teacher_id) {
       setFormError('Please select a teacher');
       return;
     }
@@ -213,7 +213,7 @@ const EditClassPage: React.FC = () => {
         class_name: classData.class_name,
         section: classData.section,
         tuition_fees: Number(classData.tuition_fees),
-        teacher_name: classData.teacher_name
+        teacher_id: classData.teacher_id
       };
       
       console.log('Updating class data:', updateData);
@@ -364,14 +364,14 @@ const EditClassPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700">Teacher</label>
                 <select
                   name="teacher_name"
-                  value={classData.teacher_name}
+                  value={classData.teacher_id}
                   onChange={handleInputChange}
                   className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 >
                   <option value="">Select Teacher</option>
                   {teachers.map((teacher) => (
-                    <option key={teacher.id} value={teacher.name}>
+                    <option key={teacher.id} value={teacher.id}>
                       {teacher.name}
                     </option>
                   ))}

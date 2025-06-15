@@ -1,12 +1,13 @@
 import pool from '../config/db.js';
 
+
 export const upsertProfile = async (profileData) => {
-  const { institute_name, address, logo, user_email } = profileData;
+  const { institute_name, address, logo, signup_id } = profileData;
 
   const query = `
-    INSERT INTO institute_profiles (user_email, institute_name, address, logo)
+    INSERT INTO institute_profiles (signup_id, institute_name, address, logo)
     VALUES ($1, $2, $3, $4)
-    ON CONFLICT (user_email)
+    ON CONFLICT (signup_id)
     DO UPDATE SET
       institute_name = EXCLUDED.institute_name,
       address = EXCLUDED.address,
@@ -15,20 +16,30 @@ export const upsertProfile = async (profileData) => {
   `;
 
   try {
-    return await pool.query(query, [user_email, institute_name, address, logo]);
+    return await pool.query(query, [signup_id, institute_name, address, logo]);
   } catch (err) {
     console.error('PostgreSQL Error in upsertProfile:', err);
     throw err;
   }
 };
 
-export const getProfileByUser = async (user_email) => {
-  const query = 'SELECT * FROM institute_profiles WHERE user_email = $1 LIMIT 1';
+
+// models/profileModel.js
+export const getProfileBySchoolId = async (signup_id) => {
+  const query = `
+    SELECT ip.*
+    FROM institute_profiles ip
+    JOIN signup s ON ip.signup_id = s.id
+    WHERE s.school_id = (
+      SELECT school_id FROM signup WHERE id = $1
+    )
+    LIMIT 1
+  `;
   try {
-    const result = await pool.query(query, [user_email]);
+    const result = await pool.query(query, [signup_id]);
     return result.rows[0];
   } catch (err) {
-    console.error('PostgreSQL Error in getProfileByUser:', err);
+    console.error('PostgreSQL Error in getProfileBySchoolId:', err);
     throw err;
   }
 };

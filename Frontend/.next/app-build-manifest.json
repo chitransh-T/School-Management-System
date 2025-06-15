@@ -21,10 +21,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/principledashboard/page.js"
     ],
-    "/profilepage/page": [
+    "/(pages)/(fees)/feemaster/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/profilepage/page.js"
+      "static/chunks/app/(pages)/(fees)/feemaster/page.js"
     ]
   }
 }

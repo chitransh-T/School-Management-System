@@ -133,22 +133,13 @@ export const LandingNavbar: React.FC = () => {
               </Link>
               <div className="border-t border-gray-100 my-2"></div>
               <button
-                className="w-full py-3 text-gray-600 hover:text-blue-600 font-semibold tracking-wide text-left"
+                className="w-full py-3 px-4 mt-2 mb-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-center"
                 onClick={() => {
                   router.push('/auth/signin');
                   setIsMenuOpen(false);
                 }}
               >
                 Sign In
-              </button>
-              <button
-                className="w-full py-3 px-4 mt-2 mb-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-center"
-                onClick={() => {
-                  router.push('/auth/signup');
-                  setIsMenuOpen(false);
-                }}
-              >
-                Sign Up
               </button>
             </nav>
           </div>

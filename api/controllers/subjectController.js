@@ -1,38 +1,39 @@
 
 
 
+
+
 import pool from '../config/db.js';
 import { createSubject, deleteSubjectById, getSubjectsByUser } from '../models/subjectModel.js';
 
 // ✅ Register subjects
 export const registerSubject = async (req, res) => {
   try {
-    const { class_name, section, subject_name, marks } = req.body;
-    const user_email = req.user_email;
+    const { class_id, subject_name, marks } = req.body;
+    const signup_id = req.signup_id;
 
-    if (!class_name || !section || !subject_name || !marks || !user_email) {
+    if (!class_id  || !subject_name || !marks || !signup_id) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
     // Check existing subjects
-    const checkQuery = 'SELECT id FROM subjects WHERE class_name = $1 AND section = $2 AND user_email = $3';
-    const checkResult = await pool.query(checkQuery, [class_name, section, user_email]);
+    const checkQuery = 'SELECT id FROM subjects WHERE class_id = $1  AND signup_id = $2';
+    const checkResult = await pool.query(checkQuery, [class_id, signup_id]);
 
     if (checkResult.rows.length > 0) {
       return res.status(409).json({
         success: false,
         message: 'This class already has subjects assigned. Please use update instead.',
-        existingClass: class_name,
+        existingClass: class_id,
       });
     }
 
     // Create new subject
     const newSubject = await createSubject({ 
-      class_name, 
-      section, 
+      class_id, 
       subject_name, 
       marks, 
-      user_email 
+      signup_id 
     });
 
     res.status(201).json({
@@ -52,45 +53,47 @@ export const registerSubject = async (req, res) => {
 // ✅ Get all subjects
 export const getAllSubjects = async (req, res) => {
   try {
-    const user_email = req.user_email;
+    const signup_id = req.signup_id;
 
-    if (!user_email) {
+    if (!signup_id) {
       return res.status(400).json({ message: 'User email is required' });
     }
 
     // Get valid classes
     const classResult = await pool.query(
-      'SELECT class_name FROM classes WHERE user_email = $1',
-      [user_email]
+      'SELECT class_name FROM classes WHERE signup_id = $1',
+      [signup_id]
     );
     const validClasses = classResult.rows.map(c => c.class_name);
 
     // Get subjects
-    const subjects = await getSubjectsByUser(user_email);
+    const subjects = await getSubjectsByUser(signup_id);
 
     // Filter and transform data
     const filteredResults = subjects.filter(subject => 
       validClasses.includes(subject.class_name)
     );
-    
-    const classSubjectsMap = filteredResults.reduce((acc, subject) => {
-      if (!acc[subject.class_name]) {
-        acc[subject.class_name] = {
-          _id: subject.id,
-          class_name: subject.class_name,
-          section: subject.section || 'Unknown',
-          user_email: subject.user_email,
-          subjects: [],
-        };
-      }
-      
-      acc[subject.class_name].subjects.push({
-        subject_name: subject.subject_name,
-        marks: subject.marks,
-      });
-      
-      return acc;
-    }, {});
+   const classSubjectsMap = filteredResults.reduce((acc, subject) => {
+  const key = `${subject.class_name}-${subject.section}`;
+
+  if (!acc[key]) {
+    acc[key] = {
+      id: subject.class_id.toString(), // or subject.id
+      class_name: subject.class_name,
+      section: subject.section || 'Unknown',
+      signup_id: subject.signup_id,
+      subjects: [],
+    };
+  }
+
+  acc[key].subjects.push({
+    id: subject.id,
+    subject_name: subject.subject_name,
+    marks: subject.marks,
+  });
+
+  return acc;
+}, {});
 
     res.status(200).json({ data: Object.values(classSubjectsMap) });
   } catch (err) {
@@ -99,55 +102,58 @@ export const getAllSubjects = async (req, res) => {
   }
 };
 
+
+
 // ✅ Update subject
 export const updateSubject = async (req, res) => {
   try {
     const { subject_id, subjects } = req.body;
-    const user_email = req.user_email;
+    const signup_id = req.signup_id;
 
-    if (!subject_id || !subjects || !user_email) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Missing required fields' 
+    if (!subject_id || !subjects || !signup_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields',
       });
     }
 
     const combinedSubjectNames = subjects.map(s => s.subject_name).join(', ');
     const combinedMarks = subjects.map(s => s.marks).join(', ');
-    const class_name = subjects[0].class_name;
+    // const class_id = subjects[0].class_id; // Use class_id now
+    const { class_id } = req.body;
 
     const updateQuery = `
       UPDATE subjects 
-      SET class_name = $1, subject_name = $2, marks = $3
-      WHERE id = $4 AND user_email = $5
+      SET subject_name = $1, marks = $2, class_id = $3
+      WHERE id = $4 AND signup_id = $5
       RETURNING *
     `;
 
     const result = await pool.query(updateQuery, [
-      class_name,
       combinedSubjectNames,
       combinedMarks,
+      class_id,
       subject_id,
-      user_email
+      signup_id,
     ]);
 
     if (result.rowCount === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'No subject found with that ID for this user' 
+      return res.status(404).json({
+        success: false,
+        message: 'No subject found with that ID for this user',
       });
     }
 
     res.status(200).json({
       success: true,
       message: 'Subjects updated successfully',
-      data: result.rows[0]
+      data: result.rows[0],
     });
   } catch (err) {
     console.error('Error updating subject:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Database operation failed' 
+    res.status(500).json({
+      success: false,
+      message: 'Database operation failed',
     });
   }
 };
@@ -156,16 +162,16 @@ export const updateSubject = async (req, res) => {
 export const deleteSubject = async (req, res) => {
   try {
     const { subject_id } = req.params;
-    const user_email = req.user_email;
+    const signup_id = req.signup_id;
 
-    if (!subject_id || !user_email) {
+    if (!subject_id || !signup_id) {
       return res.status(400).json({
         success: false,
         message: 'Subject ID and user email are required',
       });
     }
 
-    const result = await deleteSubjectById(subject_id, user_email);
+    const result = await deleteSubjectById(subject_id, signup_id);
 
     if (result.rowCount === 0) {
       return res.status(404).json({

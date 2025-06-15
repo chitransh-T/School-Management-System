@@ -68,7 +68,7 @@ export default function ProfileSetupPage() {
     setError('');
     try {
       // Follow the same pattern as student details page
-      const response = await fetch(`${baseUrl}/api/profile/${encodeURIComponent(user.email)}`, {
+      const response = await fetch(`${baseUrl}/api/profile`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

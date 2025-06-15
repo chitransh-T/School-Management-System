@@ -444,8 +444,8 @@ const StudentDetails = () => {
                   <p>
                     Class: {student.assigned_class} | Section: {student.assigned_section}
                   </p>
-                  <p>Contact: {student.phone}</p>
-                  <p>Email: {student.email}</p>
+                  {/* <p>Contact: {student.phone}</p>
+                  <p>Email: {student.email}</p> */}
                   <p>Address: {student.address}</p>
                 </div>
               </div>

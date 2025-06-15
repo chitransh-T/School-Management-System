@@ -40,13 +40,13 @@ const DashboardNavbar: React.FC = () => {
       
       const token = localStorage.getItem('token');
       
-      if (!token || !user?.email) {
+      if (!token) {
         setIsLoading(false);
         return;
       }
 
       try {
-        const response = await fetch(`${baseUrl}/api/profile/${encodeURIComponent(user.email)}`, {
+        const response = await fetch(`${baseUrl}/api/profile`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,

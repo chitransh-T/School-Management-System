@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { CheckCircle } from 'lucide-react';
 import { memo } from 'react';
 import Footer from '../components/footer';
+import { LandingNavbar } from '../components/LandingNavbar';
 // Lazy load the slider component with a loading placeholder
 const ImageSlider = dynamic(() => import("../components/sliderComponent"), {
   loading: () => (
@@ -68,6 +69,7 @@ function MainPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* <LandingNavbar /> */}
       {/* Hero Section */}
       <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">

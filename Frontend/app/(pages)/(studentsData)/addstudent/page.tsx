@@ -166,7 +166,7 @@ const PreviewPage = () => {
         throw new Error(result.message || 'Failed to register student');
       }
 
-      router.push('/Admindashboard');
+      router.push('/principledashboard');
       // Reset the form
       (e.target as HTMLFormElement).reset();
       setBirthCertFileName('');

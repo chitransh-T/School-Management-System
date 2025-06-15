@@ -310,11 +310,22 @@ const MarkAttendance = () => {
         throw new Error('Authentication token not found');
       }
 
+      // Determine class_id based on selected class and section
+      const selectedClassObj = classes.find(
+        (cls) => cls.class_name === selectedClass && cls.section === selectedSection
+      );
+
+      if (!selectedClassObj || !selectedClassObj.id) {
+        throw new Error('Unable to determine class ID for the selected class and section.');
+      }
+
+      const classId = selectedClassObj.id;
+
       // Format data according to the backend API expectations
       const studentsData = students.map((student) => ({
         student_id: student.id,
         is_present: attendance[student.id] ? 1 : 0,
-        class_name: selectedClass
+        class_id: classId,
       }));
 
       const url = `${baseUrl}/api/attendance`;

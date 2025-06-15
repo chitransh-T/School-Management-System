@@ -1,3 +1,5 @@
+
+//--------------------------------------------------------------------
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -8,16 +10,16 @@ import { useAuth } from '@/app/context/AuthContext';
 
 // Types
 interface Subject {
+  id: number;
   subject_name: string;
   marks: number;
 }
 
 interface ClassWithSubjects {
-  _id: number;
-  id?: number; // For compatibility
+  id: number; // This should be the class_id from your database
   class_name: string;
   section: string;
-  user_email: string;
+  signup_id: number;
   subjects: Subject[];
   total_subjects: number;
   total_marks: number;
@@ -99,6 +101,7 @@ export default function ClassesWithSubjectsPage() {
               subjectNames.forEach((name: string, index: number) => {
                 if (name) { // Only add if name is not empty
                   processedSubjects.push({
+                    id: subject.id, // Use the subject ID from database
                     subject_name: name,
                     marks: markValues[index] || 0
                   });
@@ -107,17 +110,19 @@ export default function ClassesWithSubjectsPage() {
             } else {
               // Single subject, just add it
               processedSubjects.push({
+                id: subject.id, // Use the subject ID from database
                 subject_name: subject.subject_name,
                 marks: typeof subject.marks === 'string' ? parseInt(subject.marks) : subject.marks
               });
             }
           });
           
-          // Add id for compatibility with existing code
           return {
-            ...classItem,
-            id: classItem._id, // For backward compatibility
-            subjects: processedSubjects, // Replace with processed subjects
+            id: classItem.id, // This should be the class_id
+            class_name: classItem.class_name,
+            section: classItem.section,
+            signup_id: classItem.signup_id,
+            subjects: processedSubjects,
             total_subjects: processedSubjects.length,
             total_marks: processedSubjects.reduce((sum: number, subject: Subject) => {
               const markValue = typeof subject.marks === 'string' ? parseInt(subject.marks) : subject.marks;
@@ -146,23 +151,38 @@ export default function ClassesWithSubjectsPage() {
 
   // Handle edit class subjects
   const handleEditClass = (classItem: ClassWithSubjects) => {
+    // Validate required data
+    if (!classItem.id || !classItem.class_name || !classItem.section) {
+      console.error('Missing required class data:', classItem);
+      setError('Missing class information. Please refresh and try again.');
+      return;
+    }
+
+    // Create URL parameters
     const searchParams = new URLSearchParams({
       class: classItem.class_name,
       section: classItem.section,
-      id: classItem._id.toString()
+      id: classItem.id.toString()
     });
     
-    // Store the subjects data in localStorage for retrieval in the edit page
-    localStorage.setItem('editClassSubjects', JSON.stringify({
-      id: classItem._id,
+    // Prepare edit data - find the first subject's ID to use as subject_id
+    const firstSubject = classItem.subjects && classItem.subjects.length > 0 ? classItem.subjects[0] : null;
+    
+    const editData = {
+      id: classItem.id, // class_id
+      class_id: classItem.id, // Explicit class_id
+      subject_id: firstSubject?.id, // The subject record ID for updating
       class_name: classItem.class_name,
       section: classItem.section,
-      subjects: classItem.subjects.map(subject => ({
+      subjects: classItem.subjects?.map(subject => ({
+        id: subject.id, // Include subject ID
         name: subject.subject_name,
         marks: typeof subject.marks === 'string' ? parseInt(subject.marks) : subject.marks
-      }))
-    }));
+      })) || []
+    };
     
+    console.log('Storing edit data:', editData);
+    sessionStorage.setItem('editClassSubjects', JSON.stringify(editData));
     router.push(`/editsubject?${searchParams.toString()}`);
   };
 
@@ -213,7 +233,7 @@ export default function ClassesWithSubjectsPage() {
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"> {/* Changed grid layout */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {classesData.map((classItem) => (
             <div key={classItem.id} className="bg-white rounded-lg shadow-md p-3 relative"> 
               {/* Edit Button */}
@@ -227,24 +247,24 @@ export default function ClassesWithSubjectsPage() {
               </button>
 
               {/* Class Header */}
-              <div className="text-center mb-3"> {/* Reduced margin */}
-                <h2 className="text-2xl font-bold text-gray-900 mb-1"> {/* Smaller text */}
+              <div className="text-center mb-3">
+                <h2 className="text-2xl font-bold text-gray-900 mb-1">
                   {classItem.class_name}
                 </h2>
-                <div className="flex items-center justify-center space-x-2"> {/* Horizontal layout */}
+                <div className="flex items-center justify-center space-x-2">
                   <div>
-                    <span className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs font-medium inline-block"> {/* Smaller badge */}
+                    <span className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs font-medium inline-block">
                       {classItem.total_subjects}
                     </span>
-                    <p className="text-xs text-gray-600 uppercase"> {/* Smaller text */}
+                    <p className="text-xs text-gray-600 uppercase">
                       Subjects
                     </p>
                   </div>
                   <div>
-                    <span className="text-lg font-bold text-gray-900 block"> {/* Smaller text */}
+                    <span className="text-lg font-bold text-gray-900 block">
                       {classItem.total_marks}
                     </span>
-                    <p className="text-xs text-orange-500 uppercase"> {/* Smaller text */}
+                    <p className="text-xs text-orange-500 uppercase">
                       Marks
                     </p>
                   </div>
@@ -252,17 +272,17 @@ export default function ClassesWithSubjectsPage() {
               </div>
 
               {/* Section Info */}
-              <div className="text-center mb-2 pb-2 border-b border-gray-200"> {/* Reduced spacing */}
-                <p className="text-xs text-gray-600"> {/* Smaller text */}
+              <div className="text-center mb-2 pb-2 border-b border-gray-200">
+                <p className="text-xs text-gray-600">
                   Section: <span className="font-medium text-gray-900">{classItem.section}</span>
                 </p>
               </div>
 
               {/* Subjects List */}
-              <div className="flex flex-wrap justify-center gap-2"> {/* Changed to flex layout */}
+              <div className="flex flex-wrap justify-center gap-2">
                 {classItem.subjects && classItem.subjects.length > 0 ? (
                   classItem.subjects.map((subject, index) => (
-                    <div key={index}>
+                    <div key={subject.id || index}>
                       <SubjectDisplay 
                         marks={typeof subject.marks === 'string' ? parseInt(subject.marks) : subject.marks} 
                         subject={subject.subject_name}
@@ -286,29 +306,29 @@ export default function ClassesWithSubjectsPage() {
           ))}
 
           {/* Add New Class Card */}
-          <div className="bg-white rounded-lg shadow-md border-2 border-dashed border-blue-300 p-3 flex flex-col items-center justify-center hover:border-blue-500 transition-colors cursor-pointer"> {/* Reduced size */}
+          <div className="bg-white rounded-lg shadow-md border-2 border-dashed border-blue-300 p-3 flex flex-col items-center justify-center hover:border-blue-500 transition-colors cursor-pointer">
             <button
               onClick={handleAssignSubjects}
               className="flex flex-col items-center text-blue-500 hover:text-blue-600 transition-colors"
               aria-label="Assign subjects to a new class"
             >
-              <div className="w-10 h-10 border-2 border-blue-300 border-dashed rounded-lg flex items-center justify-center mb-2"> {/* Smaller icon container */}
-                <FaPlus className="w-5 h-5" /> {/* Smaller icon */}
+              <div className="w-10 h-10 border-2 border-blue-300 border-dashed rounded-lg flex items-center justify-center mb-2">
+                <FaPlus className="w-5 h-5" />
               </div>
-              <span className="text-sm font-medium">Assign</span> {/* Smaller text */}
-              <span className="text-sm font-medium">Subjects</span> {/* Smaller text */}
+              <span className="text-sm font-medium">Assign</span>
+              <span className="text-sm font-medium">Subjects</span>
             </button>
           </div>
         </div>
 
         {/* Empty State */}
         {classesData.length === 0 && (
-          <div className="text-center py-6"> {/* Reduced padding */}
-            <div className="max-w-sm mx-auto"> {/* Reduced width */}
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3"> {/* Smaller icon */}
-                <FaPlus className="w-5 h-5 text-gray-400" /> {/* Smaller icon */}
+          <div className="text-center py-6">
+            <div className="max-w-sm mx-auto">
+              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <FaPlus className="w-5 h-5 text-gray-400" />
               </div>
-              <h3 className="text-base font-medium text-gray-900 mb-1"> {/* Smaller text */}
+              <h3 className="text-base font-medium text-gray-900 mb-1">
                 No Classes with Subjects
               </h3>
               <p className="text-sm text-gray-500 mb-4"> 
@@ -328,3 +348,5 @@ export default function ClassesWithSubjectsPage() {
     </DashboardLayout>
   );
 }
+
+

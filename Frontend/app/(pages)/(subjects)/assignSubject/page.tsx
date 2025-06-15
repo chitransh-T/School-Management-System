@@ -1,3 +1,5 @@
+
+
 'use client';
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/app/dashboardComponents/DashboardLayout';
@@ -9,9 +11,6 @@ interface ClassData {
   id: number;
   class_name: string;
   section: string;
-  tuition_fees: number;
-  teacher_name: string;
-  user_email: string;
 }
 
 interface Subject {
@@ -27,17 +26,12 @@ const AssignSubjects = () => {
   
   // Form states
   const [selectedClass, setSelectedClass] = useState('');
-  const [selectedSection, setSelectedSection] = useState('');
   const [subjects, setSubjects] = useState<Subject[]>([
     { id: '1', name: '', marks: '' }
   ]);
   
   // Data states
   const [classes, setClasses] = useState<ClassData[]>([]);
-  const [availableClasses, setAvailableClasses] = useState<string[]>([]);
-  const [availableSections, setAvailableSections] = useState<string[]>([]);
-  
-  // UI states
   const [loading, setLoading] = useState(false);
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [error, setError] = useState('');
@@ -69,17 +63,7 @@ const AssignSubjects = () => {
         }
         
         const data = await response.json();
-        console.log('Classes data received:', data);
-        
         setClasses(data);
-        
-        // Extract unique class names
-        const uniqueClasses = Array.from(new Set(data.map((cls: ClassData) => cls.class_name))) as string[];
-        setAvailableClasses(uniqueClasses);
-        
-        // Extract all sections initially
-        const allSections = Array.from(new Set(data.map((cls: ClassData) => cls.section))) as string[];
-        setAvailableSections(allSections);
         
       } catch (err) {
         console.error('Error fetching classes:', err);
@@ -92,29 +76,6 @@ const AssignSubjects = () => {
     fetchClasses();
   }, []);
 
-  // Handle class selection change
-  const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedClassName = e.target.value;
-    setSelectedClass(selectedClassName);
-    setSelectedSection(''); // Reset section when class changes
-    
-    if (selectedClassName) {
-      // Filter sections based on selected class
-      const classData = classes.filter(cls => cls.class_name === selectedClassName);
-      const sectionsForClass = classData.map(cls => cls.section);
-      setAvailableSections(sectionsForClass);
-    } else {
-      // Show all sections if no class selected
-      const allSections = Array.from(new Set(classes.map(cls => cls.section))) as string[];
-      setAvailableSections(allSections);
-    }
-  };
-
-  // Handle section selection change
-  const handleSectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedSection(e.target.value);
-  };
-
   // Handle subject name change
   const handleSubjectNameChange = (id: string, value: string) => {
     setSubjects(prev => prev.map(subject => 
@@ -124,7 +85,6 @@ const AssignSubjects = () => {
 
   // Handle subject marks change
   const handleSubjectMarksChange = (id: string, value: string) => {
-    // Only allow numbers
     if (value === '' || /^\d+$/.test(value)) {
       setSubjects(prev => prev.map(subject => 
         subject.id === id ? { ...subject, marks: value } : subject
@@ -149,8 +109,8 @@ const AssignSubjects = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedClass || !selectedSection) {
-      setError('Please select both class and section');
+    if (!selectedClass) {
+      setError('Please select a class');
       return;
     }
 
@@ -170,21 +130,12 @@ const AssignSubjects = () => {
         throw new Error('Authentication token not found');
       }
 
-      // Combine all subjects into a single payload
-      // The backend expects subject_name and marks as single values,
-      // so we'll join them with commas to match the format used in updateSubject
-      const combinedSubjectNames = validSubjects.map(subject => subject.name.trim()).join(', ');
-      // Convert marks to integers before joining as the backend expects numeric values
-      const combinedMarks = validSubjects.map(subject => parseInt(subject.marks.trim())).join(', ');
-      
+      // Prepare payload according to backend expectations
       const payload = {
-        class_name: selectedClass,
-        section: selectedSection,
-        subject_name: combinedSubjectNames,
-        marks: combinedMarks
+        class_id: selectedClass,
+        subject_name: validSubjects.map(subject => subject.name.trim()).join(', '),
+        marks: validSubjects.map(subject => subject.marks.trim()).join(', ')
       };
-
-      console.log('Submitting combined subjects:', payload);
 
       const response = await fetch(`${baseUrl}/api/registersubject`, {
         method: 'POST',
@@ -198,11 +149,10 @@ const AssignSubjects = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess(`Successfully added ${validSubjects.length} subject(s)!`);
+        setSuccess(`Successfully assigned subjects to class!`);
         
         // Reset form on success
         setSelectedClass('');
-        setSelectedSection('');
         setSubjects([{ id: '1', name: '', marks: '' }]);
         
         // Clear success message after 5 seconds
@@ -210,9 +160,9 @@ const AssignSubjects = () => {
           setSuccess('');
         }, 5000);
       } else {
-        // Handle error
+        // Handle specific error cases
         if (response.status === 409) {
-          setError(`Failed to add subjects: ${data.message}`);
+          setError(data.message || 'This class already has subjects assigned');
         } else {
           throw new Error(data.message || 'Failed to assign subjects');
         }
@@ -237,28 +187,24 @@ const AssignSubjects = () => {
 
   return (
     <DashboardLayout>
-      <div className="w-full max-w-3xl mx-auto"> {/* Reduced max width */}
+      <div className="w-full max-w-3xl mx-auto">
         {/* Header */}
-        <div className="mb-4"> {/* Reduced margin */}
-          <nav className="text-xs text-gray-500 mb-2"> {/* Smaller text and margin */}
+        <div className="mb-4">
+          <nav className="text-xs text-gray-500 mb-2">
             <span>Subjects</span>
-            <span className="mx-1">→</span> {/* Reduced margin */}
+            <span className="mx-1">→</span>
             <span className="text-gray-900">Assign Subjects</span>
           </nav>
         </div>
 
         {/* Main Content Card */}
-        <div className="bg-white rounded-lg shadow-md p-4"> {/* Reduced padding and shadow */}
-          <div className="text-center mb-4"> {/* Reduced margin */}
-            <h1 className="text-xl font-bold text-gray-800 mb-1">Create Subjects</h1> {/* Smaller heading */}
-            <div className="flex justify-center items-center gap-2 text-xs"> {/* Smaller text and gap */}
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="text-center mb-4">
+            <h1 className="text-xl font-bold text-gray-800 mb-1">Assign Subjects to Class</h1>
+            <div className="flex justify-center items-center gap-2 text-xs">
               <span className="flex items-center">
-                <span className="w-2 h-2 bg-blue-400 rounded-full mr-1"></span> {/* Smaller indicator */}
+                <span className="w-2 h-2 bg-blue-400 rounded-full mr-1"></span>
                 Required*
-              </span>
-              <span className="flex items-center">
-                <span className="w-2 h-2 bg-gray-400 rounded-full mr-1"></span> {/* Smaller indicator */}
-                Optional
               </span>
             </div>
           </div>
@@ -277,48 +223,24 @@ const AssignSubjects = () => {
           )}
 
           <form onSubmit={handleSubmit}>
-            {/* Class and Section Selection - Side by Side */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              {/* Class Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <span className="text-blue-500">Select Class*</span>
-                </label>
-                <select
-                  value={selectedClass}
-                  onChange={handleClassChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                  required
-                >
-                  <option value="">Select Class</option>
-                  {availableClasses.map((className) => (
-                    <option key={className} value={className}>
-                      {className}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Section Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <span className="text-blue-500">Select Section*</span>
-                </label>
-                <select
-                  value={selectedSection}
-                  onChange={handleSectionChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                  disabled={!selectedClass}
-                  required
-                >
-                  <option value="">Select Section</option>
-                  {availableSections.map((section) => (
-                    <option key={section} value={section}>
-                      {section}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {/* Class Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <span className="text-blue-500">Select Class*</span>
+              </label>
+              <select
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                required
+              >
+                <option value="">Select Class</option>
+                {classes.map((cls) => (
+                  <option key={cls.id} value={cls.id}>
+                    {cls.class_name} ({cls.section})
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Subjects Section */}
@@ -334,7 +256,7 @@ const AssignSubjects = () => {
                       type="text"
                       value={subject.name}
                       onChange={(e) => handleSubjectNameChange(subject.id, e.target.value)}
-                      placeholder={index === 0 ? "Name Of Subject" : "Name Of Subject"}
+                      placeholder="Subject Name"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       required
                     />
@@ -350,7 +272,7 @@ const AssignSubjects = () => {
                         type="text"
                         value={subject.marks}
                         onChange={(e) => handleSubjectMarksChange(subject.id, e.target.value)}
-                        placeholder={index === 0 ? "Total Exam Marks" : "Total Exam Marks"}
+                        placeholder="Total Marks"
                         className="flex-1 px-4 py-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         required
                       />
@@ -375,10 +297,10 @@ const AssignSubjects = () => {
               <button
                 type="button"
                 onClick={addSubject}
-                className="flex items-center px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                className="flex items-center px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
               >
                 <FaPlus className="w-4 h-4 mr-2" />
-                Add More
+                Add More Subjects
               </button>
             </div>
 
@@ -386,7 +308,7 @@ const AssignSubjects = () => {
             <div className="text-center">
               <button
                 type="submit"
-                disabled={loading || !selectedClass || !selectedSection}
+                disabled={loading || !selectedClass}
                 className="px-8 py-3 bg-orange-400 text-white rounded-lg hover:bg-orange-500 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
               >
                 {loading ? (

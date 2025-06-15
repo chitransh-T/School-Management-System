@@ -1,16 +1,15 @@
 import path from 'path';
-import { upsertProfile, getProfileByUser } from '../models/profileModel.js';
-import { uploadDir } from '../middlewares/upload.js';
+import { upsertProfile, getProfileBySchoolId } from '../models/profileModel.js';
 
 export const saveOrUpdateProfile = async (req, res) => {
   try {
     const { institute_name, address } = req.body;
-    const user_email = req.user_email;
+    const signup_id = req.signup_id;  // use signup_id instead of user_email
 
-    if (!institute_name || !address || !user_email) {
+    if (!institute_name || !address || !signup_id) {
       return res.status(400).json({ 
         success: false,
-        message: 'Institute name, address, and user email are required' 
+        message: 'Institute name, address, and signup ID are required' 
       });
     }
 
@@ -28,7 +27,7 @@ export const saveOrUpdateProfile = async (req, res) => {
       institute_name,
       address,
       logo: logo,
-      user_email,
+      signup_id,
     });
 
     res.status(201).json({
@@ -36,7 +35,7 @@ export const saveOrUpdateProfile = async (req, res) => {
       message: 'Profile saved successfully',
       data: {
         ...result.rows[0],
-        logo_url: `/uploads/${logo}` // ✅ Fixed: backticks were missing
+        logo_url: `/uploads/${logo}` // Return URL for frontend
       }
     });
   } catch (err) {
@@ -49,43 +48,44 @@ export const saveOrUpdateProfile = async (req, res) => {
   }
 };
 
+
+
 export const getProfile = async (req, res) => {
   try {
-    const user_email = req.user_email;
+    const signup_id = req.signup_id;
 
-    if (!user_email) {
-      return res.status(400).json({ 
+    if (!signup_id) {
+      return res.status(400).json({
         success: false,
-        message: 'User email is required' 
+        message: 'Signup ID is required',
       });
     }
 
-    const profile = await getProfileByUser(user_email);
+    const profile = await getProfileBySchoolId(signup_id);
 
     if (!profile) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Profile not found' 
+        message: 'Profile not found',
       });
     }
 
     const normalizedProfile = {
       ...profile,
       logo: profile.logo ? path.basename(profile.logo.replace(/\\/g, '/')) : null,
-      logo_url: profile.logo ? `/uploads/${path.basename(profile.logo.replace(/\\/g, '/'))}` : null // ✅ Fixed
+      logo_url:   profile.logo ? `/uploads/${path.basename(profile.logo.replace(/\\/g, '/'))}` : null,
     };
 
     res.status(200).json({
       success: true,
-      data: normalizedProfile
+      data: normalizedProfile,
     });
-
   } catch (err) {
     console.error('Error fetching profile:', err);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Internal server error',
-      error: err.message 
+      error: err.message,
     });
   }
 };
