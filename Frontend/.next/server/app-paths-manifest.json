@@ -1,6 +1,1 @@
-{
-  "/auth/signin/page": "app/auth/signin/page.js",
-  "/page": "app/page.js",
-  "/(pages)/(fees)/feemaster/page": "app/(pages)/(fees)/feemaster/page.js",
-  "/principledashboard/page": "app/principledashboard/page.js"
-}
+{}

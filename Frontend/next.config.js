@@ -2,7 +2,7 @@
 const nextConfig = {
   // Configure image domains and patterns
   images: {
-    domains: ['images.unsplash.com', 'almanet.in', 'picsum.photos', 'school-management-system-backend-i0ft.onrender.com','localhost'],
+    domains: ['images.unsplash.com', 'almanet.in', 'picsum.photos', 'https://school-management-system-fmfi.onrender.com','localhost'],
     remotePatterns: [
       {
         protocol: 'https',
