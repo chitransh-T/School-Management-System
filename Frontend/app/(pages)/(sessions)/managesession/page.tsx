@@ -87,7 +87,7 @@ const ManageSessionsPage: React.FC = () => {
   };
 
   const handleAddNew = () => {
-    router.push("/addsession");
+    router.push("/createsession");
   };
 
   const handleRefresh = () => {

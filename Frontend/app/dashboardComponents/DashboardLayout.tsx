@@ -34,7 +34,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       ) : (
         <Sidebar onToggle={setSidebarOpen} />
       )}
-      {/* <DashboardNavbar /> */}
+      <DashboardNavbar />
       <div className="ml-[250px] mt-2 w-1 h-1" />
       <div
         className={`flex-1 flex flex-col transition-all duration-300 ${

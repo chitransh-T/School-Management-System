@@ -1,14 +1,27 @@
-import { createSessionInDB , getSessionsFromDB , updateSessionInDB , deleteSession} from '../models/sessionModel.js';
+import {
+  createSessionInDB,
+  getSessionsFromDB,
+  updateSessionInDB,
+  deleteSession,
+} from '../models/sessionModel.js';
 
 export const createSession = async (req, res) => {
   try {
     const { session_name, start_date, end_date } = req.body;
-    const signup_id = req.signup_id;  // middleware से आएगा (auth verified user)
+    const signup_id = req.signup_id;
+    const role = req.role;
 
     if (!session_name || !start_date || !end_date || !signup_id) {
       return res.status(400).json({
         success: false,
         message: 'All fields (session_name, start_date, end_date, signup_id) are required',
+      });
+    }
+
+    if (role !== 'principal') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only principals are allowed to create sessions',
       });
     }
 
@@ -24,7 +37,6 @@ export const createSession = async (req, res) => {
       message: 'Session created successfully',
       data: result.rows[0],
     });
-
   } catch (err) {
     console.error('Error creating session:', err);
     return res.status(500).json({
@@ -37,7 +49,7 @@ export const createSession = async (req, res) => {
 
 export const getSessions = async (req, res) => {
   try {
-    const signup_id = req.signup_id; // from middleware
+    const signup_id = req.signup_id;
 
     if (!signup_id) {
       return res.status(400).json({
@@ -52,7 +64,6 @@ export const getSessions = async (req, res) => {
       success: true,
       data: sessions,
     });
-
   } catch (error) {
     console.error('Error fetching sessions:', error);
     return res.status(500).json({
@@ -61,6 +72,7 @@ export const getSessions = async (req, res) => {
     });
   }
 };
+
 export const updateSession = async (req, res) => {
   try {
     const { id, session_name, start_date, end_date } = req.body;
@@ -101,18 +113,17 @@ export const updateSession = async (req, res) => {
   }
 };
 
-// DELETE /api/notices/:id
 export const deleteSessions = (req, res) => {
   const id = req.params.id;
   const signup_id = req.signup_id;
 
-    deleteSession(id, signup_id, (err, result) => {
+  deleteSession(id, signup_id, (err, result) => {
     if (err) return res.status(500).json({ success: false, error: err });
 
     if (result.rowCount === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'session not found or you do not have permission to delete it' 
+      return res.status(404).json({
+        success: false,
+        message: 'Session not found or you do not have permission to delete it',
       });
     }
 

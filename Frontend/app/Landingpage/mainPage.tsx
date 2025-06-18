@@ -69,7 +69,7 @@ function MainPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* <LandingNavbar /> */}
+      <LandingNavbar />
       {/* Hero Section */}
       <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">

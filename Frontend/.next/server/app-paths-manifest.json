@@ -1,1 +1,8 @@
-{}
+{
+  "/principledashboard/page": "app/principledashboard/page.js",
+  "/(pages)/(sessions)/managesession/page": "app/(pages)/(sessions)/managesession/page.js",
+  "/(pages)/(sessions)/createsession/page": "app/(pages)/(sessions)/createsession/page.js",
+  "/(pages)/(TeacherData)/addTeacher/page": "app/(pages)/(TeacherData)/addTeacher/page.js",
+  "/(pages)/(sessions)/editsession/page": "app/(pages)/(sessions)/editsession/page.js",
+  "/(pages)/(TeacherData)/TeacherDetails/page": "app/(pages)/(TeacherData)/TeacherDetails/page.js"
+}

@@ -82,7 +82,7 @@ const CreateSessionPage = () => {
       setEndDate('');
   
       // Optionally redirect after success
-      // router.push('/allsessions'); // Uncomment and adjust path if needed
+      router.push('/managesession'); // Uncomment and adjust path if needed
   
     } catch (err: any) {
       console.error('Error creating session:', err);

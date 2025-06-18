@@ -1,10 +1,3 @@
-
-
-
-
-
-
-///-----------
 // middlewares/auth.js
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
@@ -37,6 +30,7 @@ export const verifyToken = (req, res, next) => {
     req.signup_id = decoded.id || decoded.signup_id; // Attach user email for use in controllers
       // console.log('req.signup_id set to:', req.signup_id);  // <--- and this
       req.school_id = decoded.school_id;
+      req.role = decoded.role;
 
     next(); // Proceed
   });

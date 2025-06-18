@@ -53,7 +53,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <ProtectedRouteWrapper>
-            <NavbarWrapper />
+            {/* <NavbarWrapper /> */}
             <main className="flex-grow w-full max-w-screen-2xl mx-auto">
               {children}
             </main>
