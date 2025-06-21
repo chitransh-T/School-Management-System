@@ -1,4 +1,3 @@
-
 import express from 'express';
 import {
   submitFeePayment,
@@ -6,8 +5,13 @@ import {
   checkFeeEligibility,
   getFeeSummary,
   getPreviousPaymentsForCurrentMonth,
-  getAllPaymentStatusController
+  getAllPaymentStatusController,
+  getYearlyFeeSummary,
+  getPaidFees, // Add this import
+  getFeeStructure
 } from '../controllers/feeController.js';
+
+import { verifyToken } from '../middlewares/auth.js';
 import { check } from 'express-validator';
 
 const router = express.Router();
@@ -19,26 +23,40 @@ router.post(
     check('student_name', 'Student name is required').not().isEmpty(),
     check('class_name', 'Class name is required').not().isEmpty(),
     check('payment_date', 'Payment date is required').isISO8601(),
-    check('monthly_fee', 'Monthly fee must be a number').optional().isNumeric(),
-    check('admission_fee', 'Admission fee must be a number').optional().isNumeric(),
-    check('registration_fee', 'Registration fee must be a number').optional().isNumeric(),
-    check('art_material', 'Art material fee must be a number').optional().isNumeric(),
-    check('transport', 'Transport fee must be a number').optional().isNumeric(),
-    check('books', 'Books fee must be a number').optional().isNumeric(),
-    check('uniform', 'Uniform fee must be a number').optional().isNumeric(),
-    check('fine', 'Fine must be a number').optional().isNumeric(),
-    check('others', 'Others must be a number').optional().isNumeric(),
+    check('fee_months', 'Fee months must be an array').optional().isArray(),
+    check('previous_balance', 'Previous balance must be a number')
+      .optional()
+      .isNumeric(),
     check('deposit', 'Deposit must be a number').optional().isNumeric(),
-    check('selected_months', 'Selected months must be an array').optional().isArray(),
-    check('monthly_fees', 'Monthly fees must be an object').optional().isObject()
+    check('remark', 'Remark is required').not().isEmpty(),
+    check('is_new_admission', 'Is new admission must be a boolean')
+      .optional()
+      .isBoolean(),
+    check('is_yearly_payment', 'Is yearly payment must be a boolean')
+      .optional()
+      .isBoolean(),
+    check('fee_items', 'Fee items must be an array').isArray(),
+    check('fee_items.*.fee_master_id', 'Fee master ID must be an integer').isInt(),
+    check('fee_items.*.fee_name', 'Fee name is required').not().isEmpty(),
+    check('fee_items.*.amount', 'Amount must be a number').isNumeric(),
+    check('fee_items.*.is_monthly', 'Is monthly must be a boolean')
+      .optional()
+      .isBoolean(),
+    check('fee_items.*.is_yearly', 'Is yearly must be a boolean')
+      .optional()
+      .isBoolean(),
   ],
+  verifyToken,
   submitFeePayment
 );
 
-router.get('/history/:studentId', getStudentFeeHistory);
-router.get('/eligibility/:studentId', checkFeeEligibility);
-router.get('/summary/:studentId', getFeeSummary);
-router.get('/previous-payments/:studentId/:month', getPreviousPaymentsForCurrentMonth);
-router.get('/payment-status/:studentId', getAllPaymentStatusController);
+router.get('/history/:studentId', verifyToken, getStudentFeeHistory);
+router.get('/eligibility/:studentId', verifyToken, checkFeeEligibility);
+router.get('/summary/:studentId', verifyToken, getFeeSummary);
+router.get('/previous-payments/:studentId/:month', verifyToken, getPreviousPaymentsForCurrentMonth);
+router.get('/payment-status/:studentId', verifyToken, getAllPaymentStatusController);
+router.get('/yearly-summary/:studentId', verifyToken, getYearlyFeeSummary);
+router.get('/fees/paid', verifyToken, getPaidFees); // Add this new route
+router.get('/structure', verifyToken, getFeeStructure);
 
 export default router;

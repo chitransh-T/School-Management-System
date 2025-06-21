@@ -1,4 +1,4 @@
-
+// .==================================================
 
 import pool from '../config/db.js';
 
@@ -10,39 +10,35 @@ const parseToNumber = (value) => {
   return isNaN(parsed) ? 0 : parsed;
 };
 
+
+
 export const createFee = async (feeData) => {
   const query = `
     INSERT INTO fee_collections (
-      student_id, student_name, class_name, fee_month, payment_date,
-      monthly_fee, admission_fee, registration_fee, art_material,
-      transport, books, uniform, fine, others,
-      previous_balance, total_amount, due_balance, deposit,
-      is_new_admission, remark
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+      signup_id, student_id, class_id, session_id, section, fee_month, payment_date,
+      fee_master_id, fee_name, amount, is_monthly, is_yearly, total_amount, deposit,
+      is_new_admission, remark, created_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, CURRENT_TIMESTAMP)
     RETURNING *
   `;
 
   const values = [
+    feeData.signup_id,
     feeData.student_id,
-    feeData.student_name,
-    feeData.class_name,
+    feeData.class_id,
+    feeData.session_id,
+    feeData.section || null,
     feeData.fee_month || null,
     feeData.payment_date,
-    parseToNumber(feeData.monthly_fee),
-    parseToNumber(feeData.admission_fee),
-    parseToNumber(feeData.registration_fee),
-    parseToNumber(feeData.art_material),
-    parseToNumber(feeData.transport),
-    parseToNumber(feeData.books),
-    parseToNumber(feeData.uniform),
-    parseToNumber(feeData.fine),
-    parseToNumber(feeData.others),
-    parseToNumber(feeData.previous_balance),
+    feeData.fee_master_id,
+    feeData.fee_name,
+    parseToNumber(feeData.amount),
+    feeData.is_monthly || false,
+    feeData.is_yearly || false,
     parseToNumber(feeData.total_amount),
-    parseToNumber(feeData.due_balance),
     parseToNumber(feeData.deposit),
     feeData.is_new_admission || false,
-    feeData.remark || null
+    feeData.remark || null,
   ];
 
   try {
@@ -58,94 +54,76 @@ export const createMonthlyFees = async (feeData) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    
+
+    // Validate one-time fees
+    const oneTimeFeeIds = feeData.fee_items
+      .filter(item => item.is_one_time)
+      .map(item => item.fee_master_id);
+    let paidOneTimeIds = [];
+    if (oneTimeFeeIds.length > 0) {
+      const oneTimeCheck = await client.query(
+        `SELECT fee_master_id FROM fee_collections
+         WHERE student_id = $1 AND fee_master_id = ANY($2)`,
+        [feeData.student_id, oneTimeFeeIds]
+      );
+      paidOneTimeIds = oneTimeCheck.rows.map(row => row.fee_master_id);
+    }
+
+    // Filter out paid one-time fees from fee_items
+    const validFeeItems = feeData.fee_items.filter(
+      item => !item.is_one_time || !paidOneTimeIds.includes(item.fee_master_id)
+    );
+
+    if (validFeeItems.length === 0) {
+      throw new Error('No valid fee items to process after filtering paid one-time fees');
+    }
+
     const paymentStatus = await checkMonthlyFeesPaid(feeData.student_id, feeData.selected_months);
     const fullyPaidMonths = feeData.selected_months.filter(
-      month => paymentStatus[month]?.fullyPaid
+      (month) => paymentStatus[month]?.fullyPaid
     );
 
     if (fullyPaidMonths.length > 0) {
-      throw new Error(`Cannot charge for already fully paid months: ${fullyPaidMonths.join(', ')}`);
+      throw new Error(`Cannot charge for already paid months: ${fullyPaidMonths.join(', ')}`);
     }
 
     const insertLogs = [];
     let remainingDeposit = parseToNumber(feeData.deposit);
-    let previousBalance = parseToNumber(feeData.previous_balance);
-    let isFirstMonth = true;
 
     for (const month of feeData.selected_months) {
       const status = paymentStatus[month] || {};
-      const monthlyFee = status.remainingAmount > 0 ? 
-                       status.remainingAmount : 
-                       (parseToNumber(feeData.monthly_fees?.[month]) || parseToNumber(feeData.monthly_fee));
+      for (const feeItem of validFeeItems) {
+        const feeAmount = parseToNumber(feeItem.amount);
+        if (feeAmount === 0) continue;
 
-      if (monthlyFee <= 0) {
-        insertLogs.push(`ℹ️ Skipped ${month} (already paid)`);
-        continue;
+        let totalAmount = feeAmount;
+        let depositForFee = 0;
+        if (remainingDeposit > 0) {
+          depositForFee = Math.min(remainingDeposit, totalAmount);
+          remainingDeposit -= depositForFee;
+        }
+
+        const result = await createFee({
+          signup_id: feeData.signup_id,
+          student_id: feeData.student_id,
+          class_id: feeData.class_id,
+          session_id: feeData.session_id,
+          section: feeData.section,
+          fee_month: month,
+          payment_date: feeData.payment_date,
+          fee_master_id: feeItem.fee_master_id,
+          fee_name: feeItem.fee_name,
+          amount: feeAmount,
+          is_monthly: feeItem.is_monthly,
+          is_yearly: feeItem.is_yearly,
+          total_amount: totalAmount,
+          deposit: depositForFee,
+          is_new_admission: feeData.is_new_admission,
+          remark: feeData.remark,
+        });
+
+        insertLogs.push(`✅ Inserted fee for ${month} - ${feeItem.fee_name}`);
       }
-
-      const admissionFee = isFirstMonth ? parseToNumber(feeData.admission_fee) : 0;
-      const registrationFee = isFirstMonth ? parseToNumber(feeData.registration_fee) : 0;
-      const artMaterial = isFirstMonth ? parseToNumber(feeData.art_material) : 0;
-      const transport = isFirstMonth ? parseToNumber(feeData.transport) : 0;
-      const books = isFirstMonth ? parseToNumber(feeData.books) : 0;
-      const uniform = isFirstMonth ? parseToNumber(feeData.uniform) : 0;
-      const fine = isFirstMonth ? parseToNumber(feeData.fine) : 0;
-      const others = isFirstMonth ? parseToNumber(feeData.others) : 0;
-
-      let totalAmount = monthlyFee + admissionFee + registrationFee + 
-                      artMaterial + transport + books + 
-                      uniform + fine + others;
-
-      if (isFirstMonth && previousBalance > 0 && !status.remainingAmount) {
-        totalAmount += previousBalance;
-      }
-
-      let deposit = 0;
-      if (remainingDeposit > 0) {
-        deposit = Math.min(remainingDeposit, totalAmount);
-        remainingDeposit -= deposit;
-      }
-
-      const dueBalance = totalAmount - deposit;
-
-      const query = `
-        INSERT INTO fee_collections (
-          student_id, student_name, class_name, fee_month, payment_date,
-          monthly_fee, admission_fee, registration_fee, art_material,
-          transport, books, uniform, fine, others,
-          previous_balance, total_amount, due_balance, deposit,
-          is_new_admission, remark
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
-        RETURNING *
-      `;
-
-      const values = [
-        feeData.student_id,
-        feeData.student_name,
-        feeData.class_name,
-        month,
-        feeData.payment_date,
-        monthlyFee,
-        admissionFee,
-        registrationFee,
-        artMaterial,
-        transport,
-        books,
-        uniform,
-        fine,
-        others,
-        isFirstMonth && previousBalance > 0 && !status.remainingAmount ? previousBalance : 0,
-        totalAmount,
-        dueBalance,
-        deposit,
-        feeData.is_new_admission || false,
-        feeData.remark || null
-      ];
-
-      await client.query(query, values);
-      insertLogs.push(`✅ Inserted fee for ${month}`);
-      isFirstMonth = false;
     }
 
     await client.query('COMMIT');
@@ -165,7 +143,7 @@ export const checkMonthlyFeesPaid = async (studentId, months) => {
   const query = `
     SELECT 
       fee_month,
-      CAST(monthly_fee AS DECIMAL(10,2)) as monthly_fee,
+      CAST(amount AS DECIMAL(10,2)) as amount,
       CAST(total_amount AS DECIMAL(10,2)) as total_amount,
       CAST(deposit AS DECIMAL(10,2)) as deposit,
       CAST((total_amount - deposit) AS DECIMAL(10,2)) as remaining_amount,
@@ -179,24 +157,24 @@ export const checkMonthlyFeesPaid = async (studentId, months) => {
     const result = await pool.query(query, [studentId, months]);
     const paymentStatus = {};
 
-    months.forEach(month => {
-      const payments = result.rows.filter(r => r.fee_month === month);
+    months.forEach((month) => {
+      const payments = result.rows.filter((r) => r.fee_month === month);
       if (payments.length > 0) {
         const latest = payments[0];
         paymentStatus[month] = {
           fullyPaid: latest.fully_paid,
           remainingAmount: Math.max(0, parseToNumber(latest.remaining_amount)),
-          monthlyFee: parseToNumber(latest.monthly_fee),
+          amount: parseToNumber(latest.amount),
           totalAmount: parseToNumber(latest.total_amount),
-          deposit: parseToNumber(latest.deposit)
+          deposit: parseToNumber(latest.deposit),
         };
       } else {
         paymentStatus[month] = {
           fullyPaid: false,
           remainingAmount: 0,
-          monthlyFee: 0,
+          amount: 0,
           totalAmount: 0,
-          deposit: 0
+          deposit: 0,
         };
       }
     });
@@ -210,11 +188,9 @@ export const checkMonthlyFeesPaid = async (studentId, months) => {
 
 export const getLatestDueBalance = async (studentId) => {
   const query = `
-    SELECT CAST(due_balance AS DECIMAL(10,2)) as due_balance 
+    SELECT CAST(SUM(total_amount - deposit) AS DECIMAL(10,2)) as due_balance 
     FROM fee_collections 
-    WHERE student_id = $1 
-    ORDER BY payment_date DESC, id DESC
-    LIMIT 1
+    WHERE student_id = $1
   `;
 
   try {
@@ -230,10 +206,10 @@ export const getAllPaymentStatus = async (studentId) => {
   const query = `
     SELECT 
       fee_month,
-      CAST(monthly_fee AS DECIMAL(10,2)) as monthly_fee,
+      CAST(amount AS DECIMAL(10,2)) as amount,
       CAST(deposit AS DECIMAL(10,2)) as deposit,
-      CAST((monthly_fee - deposit) AS DECIMAL(10,2)) as remaining_amount,
-      (monthly_fee - deposit) <= 0 as fully_paid
+      CAST((total_amount - deposit) AS DECIMAL(10,2)) as remaining_amount,
+      (total_amount - deposit) <= 0 as fully_paid
     FROM fee_collections 
     WHERE student_id = $1
     ORDER BY fee_month
@@ -242,13 +218,15 @@ export const getAllPaymentStatus = async (studentId) => {
   try {
     const result = await pool.query(query, [studentId]);
     const paymentStatus = {};
-    
-    result.rows.forEach(row => {
-      paymentStatus[row.fee_month] = {
-        fullyPaid: row.fully_paid,
-        remainingAmount: Math.max(0, parseToNumber(row.remaining_amount)),
-        monthlyFee: parseToNumber(row.monthly_fee)
-      };
+
+    result.rows.forEach((row) => {
+      if (!paymentStatus[row.fee_month]) {
+        paymentStatus[row.fee_month] = {
+          fullyPaid: row.fully_paid,
+          remainingAmount: Math.max(0, parseToNumber(row.remaining_amount)),
+          amount: parseToNumber(row.amount),
+        };
+      }
     });
 
     return paymentStatus;
@@ -261,18 +239,8 @@ export const getAllPaymentStatus = async (studentId) => {
 export const findFeesByStudentId = async (studentId) => {
   const query = `
     SELECT *,
-      CAST(monthly_fee AS DECIMAL(10,2)) as monthly_fee,
-      CAST(admission_fee AS DECIMAL(10,2)) as admission_fee,
-      CAST(registration_fee AS DECIMAL(10,2)) as registration_fee,
-      CAST(art_material AS DECIMAL(10,2)) as art_material,
-      CAST(transport AS DECIMAL(10,2)) as transport,
-      CAST(books AS DECIMAL(10,2)) as books,
-      CAST(uniform AS DECIMAL(10,2)) as uniform,
-      CAST(fine AS DECIMAL(10,2)) as fine,
-      CAST(others AS DECIMAL(10,2)) as others,
-      CAST(previous_balance AS DECIMAL(10,2)) as previous_balance,
+      CAST(amount AS DECIMAL(10,2)) as amount,
       CAST(total_amount AS DECIMAL(10,2)) as total_amount,
-      CAST(due_balance AS DECIMAL(10,2)) as due_balance,
       CAST(deposit AS DECIMAL(10,2)) as deposit
     FROM fee_collections 
     WHERE student_id = $1 
@@ -281,22 +249,11 @@ export const findFeesByStudentId = async (studentId) => {
 
   try {
     const result = await pool.query(query, [studentId]);
-    // Convert all numeric fields to numbers
-    return result.rows.map(row => ({
+    return result.rows.map((row) => ({
       ...row,
-      monthly_fee: parseToNumber(row.monthly_fee),
-      admission_fee: parseToNumber(row.admission_fee),
-      registration_fee: parseToNumber(row.registration_fee),
-      art_material: parseToNumber(row.art_material),
-      transport: parseToNumber(row.transport),
-      books: parseToNumber(row.books),
-      uniform: parseToNumber(row.uniform),
-      fine: parseToNumber(row.fine),
-      others: parseToNumber(row.others),
-      previous_balance: parseToNumber(row.previous_balance),
+      amount: parseToNumber(row.amount),
       total_amount: parseToNumber(row.total_amount),
-      due_balance: parseToNumber(row.due_balance),
-      deposit: parseToNumber(row.deposit)
+      deposit: parseToNumber(row.deposit),
     }));
   } catch (err) {
     console.error('Error finding fees:', err);
@@ -306,13 +263,13 @@ export const findFeesByStudentId = async (studentId) => {
 
 export const checkFeesPaid = async (studentId, feeType) => {
   const query = `
-    SELECT SUM(CAST(${feeType} AS DECIMAL(10,2))) as total_paid
+    SELECT SUM(CAST(deposit AS DECIMAL(10,2))) as total_paid
     FROM fee_collections 
-    WHERE student_id = $1
+    WHERE student_id = $1 AND fee_name = $2
   `;
 
   try {
-    const result = await pool.query(query, [studentId]);
+    const result = await pool.query(query, [studentId, feeType]);
     return parseToNumber(result.rows[0]?.total_paid) > 0;
   } catch (err) {
     console.error('Error checking fees paid:', err);
@@ -323,22 +280,12 @@ export const checkFeesPaid = async (studentId, feeType) => {
 export const getFeeSummaryByStudent = async (studentId) => {
   const query = `
     SELECT 
-      CAST(SUM(monthly_fee) AS DECIMAL(10,2)) as total_monthly_fee,
-      CAST(SUM(admission_fee) AS DECIMAL(10,2)) as total_admission_fee,
-      CAST(SUM(registration_fee) AS DECIMAL(10,2)) as total_registration_fee,
-      CAST(SUM(art_material) AS DECIMAL(10,2)) as total_art_material,
-      CAST(SUM(transport) AS DECIMAL(10,2)) as total_transport,
-      CAST(SUM(books) AS DECIMAL(10,2)) as total_books,
-      CAST(SUM(uniform) AS DECIMAL(10,2)) as total_uniform,
-      CAST(SUM(fine) AS DECIMAL(10,2)) as total_fine,
-      CAST(SUM(others) AS DECIMAL(10,2)) as total_others,
+      CAST(SUM(amount) AS DECIMAL(10,2)) as total_amount,
       CAST(SUM(deposit) AS DECIMAL(10,2)) as total_deposit,
       CAST(SUM(total_amount) AS DECIMAL(10,2)) as total_charged,
-      (SELECT CAST(due_balance AS DECIMAL(10,2)) FROM fee_collections 
-       WHERE student_id = $1 
-       ORDER BY payment_date DESC, id DESC LIMIT 1) as last_due_balance,
+      CAST(SUM(total_amount - deposit) AS DECIMAL(10,2)) as last_due_balance,
       (SELECT fee_month FROM fee_collections 
-       WHERE student_id = $1 AND CAST(monthly_fee AS DECIMAL(10,2)) > 0
+       WHERE student_id = $1 AND CAST(deposit AS DECIMAL(10,2)) > 0
        ORDER BY payment_date DESC LIMIT 1) as last_payment_month
     FROM fee_collections
     WHERE student_id = $1
@@ -346,22 +293,13 @@ export const getFeeSummaryByStudent = async (studentId) => {
 
   try {
     const result = await pool.query(query, [studentId]);
-    // Convert numeric fields to numbers
     const summary = result.rows[0] || {};
     return [{
       ...summary,
-      total_monthly_fee: parseToNumber(summary.total_monthly_fee),
-      total_admission_fee: parseToNumber(summary.total_admission_fee),
-      total_registration_fee: parseToNumber(summary.total_registration_fee),
-      total_art_material: parseToNumber(summary.total_art_material),
-      total_transport: parseToNumber(summary.total_transport),
-      total_books: parseToNumber(summary.total_books),
-      total_uniform: parseToNumber(summary.total_uniform),
-      total_fine: parseToNumber(summary.total_fine),
-      total_others: parseToNumber(summary.total_others),
+      total_amount: parseToNumber(summary.total_amount),
       total_deposit: parseToNumber(summary.total_deposit),
       total_charged: parseToNumber(summary.total_charged),
-      last_due_balance: parseToNumber(summary.last_due_balance)
+      last_due_balance: parseToNumber(summary.last_due_balance),
     }];
   } catch (err) {
     console.error('Error getting fee summary:', err);
@@ -374,18 +312,8 @@ export const getPreviousPaymentsForMonths = async (studentId, months) => {
 
   const query = `
     SELECT *,
-      CAST(monthly_fee AS DECIMAL(10,2)) as monthly_fee,
-      CAST(admission_fee AS DECIMAL(10,2)) as admission_fee,
-      CAST(registration_fee AS DECIMAL(10,2)) as registration_fee,
-      CAST(art_material AS DECIMAL(10,2)) as art_material,
-      CAST(transport AS DECIMAL(10,2)) as transport,
-      CAST(books AS DECIMAL(10,2)) as books,
-      CAST(uniform AS DECIMAL(10,2)) as uniform,
-      CAST(fine AS DECIMAL(10,2)) as fine,
-      CAST(others AS DECIMAL(10,2)) as others,
-      CAST(previous_balance AS DECIMAL(10,2)) as previous_balance,
+      CAST(amount AS DECIMAL(10,2)) as amount,
       CAST(total_amount AS DECIMAL(10,2)) as total_amount,
-      CAST(due_balance AS DECIMAL(10,2)) as due_balance,
       CAST(deposit AS DECIMAL(10,2)) as deposit
     FROM fee_collections
     WHERE student_id = $1 AND fee_month = ANY($2)
@@ -394,25 +322,106 @@ export const getPreviousPaymentsForMonths = async (studentId, months) => {
 
   try {
     const result = await pool.query(query, [studentId, months]);
-    // Convert all numeric fields to numbers
-    return result.rows.map(row => ({
+    return result.rows.map((row) => ({
       ...row,
-      monthly_fee: parseToNumber(row.monthly_fee),
-      admission_fee: parseToNumber(row.admission_fee),
-      registration_fee: parseToNumber(row.registration_fee),
-      art_material: parseToNumber(row.art_material),
-      transport: parseToNumber(row.transport),
-      books: parseToNumber(row.books),
-      uniform: parseToNumber(row.uniform),
-      fine: parseToNumber(row.fine),
-      others: parseToNumber(row.others),
-      previous_balance: parseToNumber(row.previous_balance),
+      amount: parseToNumber(row.amount),
       total_amount: parseToNumber(row.total_amount),
-      due_balance: parseToNumber(row.due_balance),
-      deposit: parseToNumber(row.deposit)
+      deposit: parseToNumber(row.deposit),
     }));
   } catch (err) {
     console.error('Error getting previous payments:', err);
     throw err;
+  }
+};
+
+export const getYearlyFeeTotal = async (classId, sessionId, studentId) => {
+  const query = `
+    SELECT 
+      SUM(CASE 
+            WHEN fm.is_one_time THEN COALESCE(fs.amount, fm.amount, 0)
+            WHEN fm.is_monthly THEN COALESCE(fs.amount, fm.amount, 0) * 12
+            ELSE COALESCE(fs.amount, fm.amount, 0)
+          END) as total_yearly_fee
+    FROM fee_master fm
+    LEFT JOIN fee_structure fs 
+      ON fm.id = fs.fee_master_id AND fs.class_id = $1
+    LEFT JOIN fee_collections fc
+      ON fm.id = fc.fee_master_id AND fc.student_id = $3
+    WHERE fm.session_id = $2
+      AND (fm.is_common_for_all_classes = true OR fs.fee_master_id IS NOT NULL)
+      AND (fm.is_one_time = false OR fc.fee_master_id IS NULL OR fc.deposit = 0)
+  `;
+
+  try {
+    const result = await pool.query(query, [classId, sessionId, studentId]);
+    return parseToNumber(result.rows[0]?.total_yearly_fee);
+  } catch (err) {
+    console.error('Error calculating yearly fee total:', err);
+    throw err;
+  }
+};
+
+export const getPaidFeeMasterIds = async (studentId) => {
+  const query = `
+    SELECT DISTINCT fee_master_id
+    FROM fee_collections
+    WHERE student_id = $1 AND deposit > 0
+  `;
+
+  try {
+    const result = await pool.query(query, [studentId]);
+    return result.rows.map(row => row.fee_master_id.toString());
+  } catch (err) {
+    console.error('Error fetching paid fee master IDs:', err);
+    throw err;
+  }
+};
+export const getFeeStructure = async (req, res) => {
+  try {
+    const { classId, studentId } = req.query;
+    if (!classId || !studentId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required parameters: classId, studentId',
+      });
+    }
+
+    const query = `
+      SELECT 
+        fm.id AS fee_master_id,
+        fm.fee_name AS fee_field_name,
+        COALESCE(fs.amount, fm.amount, 0) AS amount,
+        fm.is_one_time AS is_one_time,
+        fm.is_monthly AS is_monthly,
+        fm.is_mandatory AS is_mandatory,
+        fm.is_collectable AS is_collectable
+      FROM fee_master fm
+      LEFT JOIN fee_structure fs
+        ON fm.id = fs.fee_master_id AND fs.class_id = $1
+      LEFT JOIN fee_collections fc
+        ON fm.id = fc.fee_master_id AND fc.student_id = $2
+      WHERE (fm.is_common_for_all_classes = true OR fs.fee_master_id IS NOT NULL)
+        AND (fm.is_one_time = false OR fc.fee_master_id IS NULL OR fc.deposit = 0)
+    `;
+    const result = await pool.query(query, [classId, studentId]);
+
+    const feeStructure = result.rows.map(row => ({
+      feeMasterId: row.fee_master_id,
+      feeFieldName: row.fee_field_name,
+      amount: parseFloat(row.amount).toFixed(2),
+      isOneTime: row.is_one_time || false,
+      isMonthly: row.is_monthly || false,
+      isMandatory: row.is_mandatory || false,
+      isCollectable: row.is_collectable || false,
+    }));
+
+    res.status(200).json({ success: true, data: feeStructure });
+  } catch (err) {
+    console.error('Error fetching fee structure:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch fee structure',
+      error: err.message,
+    });
   }
 };

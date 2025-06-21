@@ -1,431 +1,985 @@
-"use client"
-import React, { useState, useEffect, useCallback } from 'react';
-import { Search, School, Users, ArrowRight, User, Filter } from 'lucide-react';
-import DashboardLayout from '@/app/dashboardComponents/DashboardLayout';
+
+
+'use client'
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
+import { FiSearch, FiUsers, FiFilter, FiArrowRight, FiBook } from 'react-icons/fi';
+import DashboardLayout from '@/app/dashboardComponents/DashboardLayout';
 
-// Types
-interface ClassData {
-  id: number;
-  class_name: string;
+type ClassModel = {
+  id: string;
+  name: string;
+  sections: string[];
+};
+
+type StudentModel = {
+  id: string;
+  name: string;
+  classId: string;
+  className: string;
   section: string;
-  tuition_fees: number;
-  teacher_name?: string;
-  user_email?: string;
-}
+};
 
-interface Student {
-  id: number;
-  student_name: string;
-  registration_number: string;
-  assigned_class: string;
-  assigned_section: string;
-  student_photo: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  birth_certificate?: string;
-}
+type FeeStructureModel = {
+  feeMasterId: string;
+  feeFieldName: string;
+  amount: string;
+  isCollectable: boolean;
+  isMandatory: boolean;
+  isMonthly: boolean;
+  isOneTime: boolean;
+};
 
-const FeesStudentSearchPage: React.FC = () => {
-  // Initialize router
-  const router = useRouter();
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-  const [classes, setClasses] = useState<ClassData[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function FeeCollectPage() {
+  const [classes, setClasses] = useState<ClassModel[]>([]);
+  const [students, setStudents] = useState<StudentModel[]>([]);
+  const [filteredStudents, setFilteredStudents] = useState<StudentModel[]>([]);
+  const [isLoadingClasses, setIsLoadingClasses] = useState(true);
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
-  const [loadingClasses, setLoadingClasses] = useState(true);
-  const [selectedClass, setSelectedClass] = useState('');
-  const [selectedSection, setSelectedSection] = useState('');
-  const [availableClasses, setAvailableClasses] = useState<string[]>([]);
+  const [token, setToken] = useState<string | null>(null);
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+  const [selectedClassName, setSelectedClassName] = useState<string | null>(null);
+  const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [availableSections, setAvailableSections] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [classError, setClassError] = useState('');
-  const [success, setSuccess] = useState('');
+  const router = useRouter();
 
-  // Fetch classes when component mounts
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+  const classIdCache: Record<string, string> = {};
+  const feeStructureCache: Record<string, FeeStructureModel[]> = {};
+
   useEffect(() => {
-    fetchClasses();
-  }, []);
-
-  // Filter students based on search, class, and section
-  useEffect(() => {
-    const searchText = searchQuery.toLowerCase();
-    const filtered = students.filter((student) => {
-      // Filter by search query
-      const matchesSearch = student.student_name.toLowerCase().includes(searchText) || 
-                          student.registration_number.toLowerCase().includes(searchText);
-      
-      // Filter by class if selected
-      const matchesClass = !selectedClass || 
-                         student.assigned_class.toLowerCase() === selectedClass.toLowerCase();
-      
-      // Filter by section if selected
-      const matchesSection = !selectedSection || 
-                           student.assigned_section.toLowerCase() === selectedSection.toLowerCase();
-      
-      // Return true only if all conditions are met
-      return matchesSearch && matchesClass && matchesSection;
-    });
-    
-    console.log('Filtered students:', filtered);
-    console.log('Filter criteria - Class:', selectedClass, 'Section:', selectedSection);
-    setFilteredStudents(filtered);
-  }, [students, searchQuery, selectedClass, selectedSection]);
-
-  const fetchClasses = async () => {
-    try {
-      setLoadingClasses(true);
-      setClassError('');
-      
-      // Get token from localStorage
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        setClassError('Authentication token not found');
-        setLoadingClasses(false);
-        return;
-      }
-      
-      const response = await fetch(`${baseUrl}/api/classes`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch classes: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('Classes data received:', data);
-      
-      // Set the classes
-      setClasses(data);
-      
-      // Extract unique class names
-      const uniqueClasses = Array.from(new Set(data.map((cls: ClassData) => cls.class_name))) as string[];
-      setAvailableClasses(uniqueClasses);
-      
-      // Extract unique sections from all classes
-      const uniqueSections = Array.from(new Set(data.map((cls: ClassData) => cls.section))) as string[];
-      setAvailableSections(uniqueSections);
-    } catch (err) {
-      console.error('Error fetching classes:', err);
-      setClassError('Failed to load classes. Please try again.');
-    } finally {
-      setLoadingClasses(false);
-    }
-  };
-
-  // Fetch student data from the API when class or section changes
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        setIsLoadingStudents(true);
-        setFilteredStudents([]);
-        setError(null);
-        
-        // Build query parameters for class and section filters
-        let url = `${baseUrl}/api/students`;
-        const params = new URLSearchParams();
-        
-        if (selectedClass) {
-          params.append('class', selectedClass);
-        }
-        if (selectedSection) {
-          params.append('section', selectedSection);
-        }
-
-        // Add params to URL if any exist
-        if (params.toString()) {
-          url += `?${params.toString()}`;
-        }
-
-        console.log('Fetching students from:', url);
-        
-        // Get the token from localStorage
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-          throw new Error('Authentication token not found');
-        }
-        
-        const response = await fetch(url, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('Fetched students:', data);
-        
-        // Check if the response is an array (as expected)
-        if (Array.isArray(data)) {
-          setStudents(data);
-        } else {
-          // If the API returns an object with a data property (common pattern)
-          if (data.data && Array.isArray(data.data)) {
-            setStudents(data.data);
-          } else {
-            console.error('Unexpected API response format:', data);
-            setStudents([]);
-          }
-        }
-
-        // Extract unique classes for filters if not already selected
-        if (!selectedClass && !selectedSection) {
-          const classes = [...new Set(data.map((student: Student) => student.assigned_class))].filter(Boolean) as string[];
-          setAvailableClasses(classes);
-        }
-      } catch (err) {
-        console.error('Error fetching students:', err);
-        setError('Failed to load student data. Please try again later.');
-      } finally {
-        setIsLoadingStudents(false);
-        setLoading(false);
+    const loadToken = async () => {
+      const storedToken = localStorage.getItem('token');
+      setToken(storedToken);
+      if (storedToken) {
+        await fetchClasses(storedToken);
       }
     };
+    loadToken();
+  }, []);
 
-    fetchStudents();
-  }, [selectedClass, selectedSection]); // Re-fetch when filters change
-
-  // Reset section when class changes
   useEffect(() => {
-    setSelectedSection('');
-  }, [selectedClass]);
+    filterStudents();
+  }, [searchQuery, selectedSection, students]);
 
-  // Handle class change - update available sections
-  const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedClassName = e.target.value;
-    setSelectedClass(selectedClassName);
-    
-    // Filter sections based on the selected class
-    if (selectedClassName) {
-      const classData = classes.filter(cls => cls.class_name === selectedClassName);
-      const availableSections = classData.map(cls => cls.section);
-      setAvailableSections(availableSections);
+  const showError = (message: string) => {
+    setError(message);
+    setTimeout(() => setError(null), 3000);
+  };
+
+  const fetchClasses = async (authToken: string) => {
+    try {
+      setIsLoadingClasses(true);
+      const response = await axios.get(`${baseUrl}/api/classes`, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': authToken,
+        },
+      });
+
+      if (response.status === 200) {
+        const classData = response.data;
+        const classMap: Record<string, ClassModel> = {};
+
+        for (const data of classData) {
+          const rawClassName = (data['class_name'] ?? data['className'] ?? '').toString().trim();
+          if (rawClassName === '') continue;
+
+          const classId = data['id']?.toString() ?? data['class_id']?.toString() ?? '';
+          const section = (data['section'] ?? '').toString().trim();
+
+          if (classMap[rawClassName]) {
+            if (section !== '' && !classMap[rawClassName].sections.includes(section)) {
+              classMap[rawClassName].sections.push(section);
+            }
+          } else {
+            classMap[rawClassName] = {
+              id: classId,
+              name: rawClassName,
+              sections: section !== '' ? [section] : [],
+            };
+            classIdCache[rawClassName] = classId;
+          }
+        }
+
+        for (const classObj of Object.values(classMap)) {
+          classObj.sections.sort();
+        }
+
+        const classesList = Object.values(classMap).sort((a, b) => a.name.localeCompare(b.name));
+        setClasses(classesList);
+      } else {
+        showError(`Failed to load classes: ${response.status}`);
+      }
+    } catch (error) {
+      showError(`Error loading classes: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsLoadingClasses(false);
+    }
+  };
+
+  const updateAvailableSections = (className: string | null) => {
+    if (className !== null) {
+      const selectedClass = classes.find(c => c.name === className) || {
+        id: '',
+        name: '',
+        sections: [],
+      };
+      setSelectedClassId(selectedClass.id);
+      setAvailableSections(selectedClass.sections);
+      setSelectedClassName(selectedClass.name);
     } else {
-      // If no class is selected, show all available sections
-      const allSections = Array.from(new Set(classes.map(cls => cls.section))) as string[];
-      setAvailableSections(allSections);
+      setSelectedClassId(null);
+      setAvailableSections([]);
+      setSelectedClassName(null);
+    }
+    setSelectedSection(null);
+    setStudents([]);
+    setFilteredStudents([]);
+    if (className !== null) {
+      fetchStudents(className);
     }
   };
-  
-  const handleSectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedSection(e.target.value);
-  };
 
-  const openFeesCollectPage = (student: Student) => {
-    // Find the class to get tuition fees
-    const selectedClassData = classes.find(c => c.class_name === student.assigned_class);
-    const monthlyFee = selectedClassData?.tuition_fees || 0;
-    
-    // Create query params for navigation
-    const queryParams = new URLSearchParams({
-      studentId: student.id.toString(),
-      studentName: student.student_name,
-      studentClass: student.assigned_class,
-      studentSection: student.assigned_section,
-      monthlyFee: monthlyFee.toString(),
-      isNewAdmission: 'false'
-    }).toString();
-    
-    // Navigate to fees details page with query parameters
-    router.push(`/feesdetailsofstudent?${queryParams}`);
-    
-    console.log(`Navigating to fees collection for ${student.student_name}`);
-  };
+  const fetchStudents = async (className: string) => {
+    if (!token) return;
 
-  const StudentPhoto: React.FC<{ photoPath: string }> = ({ photoPath }) => {
-    if (!photoPath) {
-      return (
-        <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-          <User className="w-6 h-6 text-blue-800" />
-        </div>
-      );
+    setIsLoadingStudents(true);
+    setFilteredStudents([]);
+
+    try {
+      const encodedClassName = encodeURIComponent(className);
+      const response = await axios.get(`${baseUrl}/api/students/${encodedClassName}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': token,
+        },
+      });
+
+      if (response.status === 200) {
+        const studentData = response.data;
+        const newStudents = studentData
+          .map((data: any) => ({
+            id: data['_id']?.toString() ?? data['id']?.toString() ?? '',
+            name: data['student_name']?.toString() ?? 'Unknown Student',
+            classId: selectedClassId ?? '',
+            className: className,
+            section: data['assigned_section']?.toString() ?? '',
+          }))
+          .filter((student: StudentModel) => student.id !== '');
+
+        setStudents(newStudents);
+      } else {
+        showError(`Failed to load students: ${response.statusText}`);
+      }
+    } catch (error) {
+      showError(`Error loading students: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsLoadingStudents(false);
     }
-    
-    const imageUrl = photoPath.startsWith('http') 
-      ? photoPath 
-      : `${baseUrl}/uploads/${photoPath}`;
-    
-    return (
-      <img
-        src={imageUrl}
-        alt="Student"
-        className="w-12 h-12 rounded-full object-cover"
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          target.style.display = 'none';
-          target.nextElementSibling?.classList.remove('hidden');
-        }}
-      />
-    );
   };
 
-  const ErrorAlert: React.FC = () => {
-    if (!error) return null;
-    
-    return (
-      <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-        {error}
-        <button
-          onClick={() => setError(null)}
-          className="float-right text-red-500 hover:text-red-700"
-        >
-          ×
-        </button>
-      </div>
-    );
+  const filterStudents = useCallback(() => {
+    const searchText = searchQuery.toLowerCase();
+    const filtered = students.filter(student => {
+      const nameMatch = student.name.toLowerCase().includes(searchText);
+      const sectionMatch = selectedSection === null || student.section === selectedSection;
+      return nameMatch && sectionMatch;
+    });
+    setFilteredStudents(filtered);
+  }, [searchQuery, selectedSection, students]);
+
+  const fetchStudentFeeData = async (student: StudentModel) => {
+    const classId = classIdCache[student.className] || await getClassId(student.className);
+    const feeStructure = feeStructureCache[student.className] || await getFeeStructure(classId);
+    const paidFeeMasterIds = await getPaidFees(student.id);
+    const previousBalance = await getPreviousBalance(student.id);
+
+    let totalYearlyFee = 0.0;
+    for (const fee of feeStructure) {
+      if (!paidFeeMasterIds.includes(fee.feeMasterId.toString()) || !fee.isOneTime) {
+        const amount = parseFloat(fee.amount) || 0.0;
+        totalYearlyFee += fee.isMonthly ? amount : amount;
+      }
+    }
+
+    return {
+      classId,
+      feeStructure,
+      paidFeeMasterIds,
+      previousBalance,
+      totalYearlyFee,
+    };
+  };
+
+  const getClassId = async (className: string) => {
+    if (classIdCache[className]) return classIdCache[className];
+
+    try {
+      const response = await axios.get(`${baseUrl}/api/classes`, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': token || '',
+        },
+      });
+
+      if (response.status === 200) {
+        const classData = response.data;
+        for (const data of classData) {
+          const name = (data['class_name'] ?? data['className'] ?? '').toString().trim();
+          if (name.toLowerCase() === className.toLowerCase()) {
+            const id = data['id']?.toString() ?? data['class_id']?.toString();
+            if (id) {
+              classIdCache[className] = id;
+              return id;
+            }
+          }
+        }
+      }
+    } catch (error) {
+      showError(`Error fetching class ID: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    classIdCache[className] = className;
+    return className;
+  };
+
+  const getFeeStructure = async (classId: string) => {
+    if (feeStructureCache[classId]) return feeStructureCache[classId];
+
+    try {
+      const response = await axios.get(`${baseUrl}/api/feestructure/${classId}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': token || '',
+        },
+      });
+
+      if (response.status === 200) {
+        const feeStructureData = response.data;
+        const feeStructureList = Array.isArray(feeStructureData)
+          ? feeStructureData
+          : feeStructureData['data'] || [];
+        const feeStructure: FeeStructureModel[] = feeStructureList.map((item: any) => ({
+          feeMasterId: item.feeMasterId?.toString() || item.fee_master_id?.toString() || '',
+          feeFieldName: item.feeFieldName?.toString() || item.fee_field_name?.toString() || 'Unknown Fee',
+          amount: item.amount?.toString() || '0',
+          isCollectable: item.isCollectable || item.is_collectable || false,
+          isMandatory: item.isMandatory || item.is_mandatory || false,
+          isMonthly: Boolean(item.isMonthly || item.is_monthly || item.feeFieldName?.toLowerCase().includes('tution') || item.feeFieldName?.toLowerCase().includes('monthly')),
+          isOneTime: Boolean(item.isOneTime || item.is_one_time),
+        }));
+        feeStructureCache[classId] = feeStructure;
+        return feeStructure;
+      }
+    } catch (error) {
+      showError(`Error fetching fee structure: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    return [];
+  };
+
+  const getPaidFees = async (studentId: string) => {
+    try {
+      const response = await axios.get(`${baseUrl}/api/fees/paid?studentId=${studentId}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': token || '',
+        },
+      });
+
+      if (response.status === 200) {
+        return response.data as string[];
+      }
+    } catch (error) {
+      showError(`Error fetching paid fees: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    return [];
+  };
+
+  const getPreviousBalance = async (studentId: string) => {
+    try {
+      const response = await axios.get(`${baseUrl}/api/summary/${studentId}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': token || '',
+        },
+      });
+
+      if (response.status === 200) {
+        const balanceData = response.data;
+        return parseFloat(balanceData['data']['last_due_balance'] || 0);
+      }
+    } catch (error) {
+      showError(`Error fetching previous balance: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    return 0;
+  };
+
+  const handleStudentClick = async (student: StudentModel) => {
+    setIsLoadingStudents(true);
+    try {
+      const feeData = await fetchStudentFeeData(student);
+      router.push(`/feesdetailsofstudent/${student.id}?data=${encodeURIComponent(JSON.stringify({
+        studentId: student.id,
+        studentName: student.name,
+        studentClass: student.className,
+        studentSection: student.section,
+        isNewAdmission: false,
+        preloadedData: feeData,
+      }))}`);
+    } catch (error) {
+      showError(`Error navigating to fee details: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsLoadingStudents(false);
+    }
   };
 
   return (
     <DashboardLayout>
-      {/* Header with integrated filters */}
-      <div className="bg-gradient-to-r from-blue-800 to-blue-600 text-white p-6 shadow-md">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold mb-4">Fees Collection</h1>
-          
-          {/* Class and Section Dropdowns directly below header */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {/* Class Dropdown */}
-            <div>
-              <label className="block text-sm font-medium text-white mb-1">Select Class</label>
-              {loadingClasses ? (
-                <div className="flex justify-center py-2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                </div>
-              ) : availableClasses.length === 0 ? (
-                <div className="text-center py-2 text-white bg-blue-700 bg-opacity-50 rounded-lg">No classes available</div>
-              ) : (
-                <select
-                  value={selectedClass}
-                  onChange={handleClassChange}
-                  className="w-full p-3 border border-blue-300 rounded-lg bg-blue-700 bg-opacity-30 text-white placeholder-blue-200 focus:ring-2 focus:ring-white focus:border-blue-300"
-                >
-                  <option value="" className="text-gray-800">-- Select a Class --</option>
-                  {availableClasses.map((className) => (
-                    <option key={className} value={className} className="text-gray-800">
-                      {className}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            {/* Section Dropdown */}
-            <div>
-              <label className="block text-sm font-medium text-white mb-1">Select Section</label>
-              <select
-                value={selectedSection}
-                onChange={handleSectionChange}
-                className="w-full p-3 border border-blue-300 rounded-lg bg-blue-700 bg-opacity-30 text-white placeholder-blue-200 focus:ring-2 focus:ring-white focus:border-blue-300"
-                disabled={!selectedClass}
-              >
-                <option value="" className="text-gray-800">-- All Sections --</option>
-                {availableSections.map((section) => (
-                  <option key={section} value={section} className="text-gray-800">
-                    {section}
-                  </option>
-                ))}
-              </select>
-            </div>
+      <div className="min-h-screen bg-gray-100">
+        <header className="bg-blue-900 text-white shadow-md">
+          <div className="container mx-auto px-4 py-4">
+            <h1 className="text-xl font-bold text-center">Collect Fee</h1>
           </div>
-        </div>
-      </div>
+        </header>
 
-      <div className="p-4 max-w-4xl mx-auto">
-        <ErrorAlert />
-
-        {/* Search Field */}
-        {selectedClass && (
-          <div className="bg-white rounded-xl shadow-sm border p-4 mb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-800" />
-              <input
-                type="text"
-                placeholder="Search Student"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border-none rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Students Section */}
-        {selectedClass && (
-          <div className="mb-4">
-            <h3 className="text-lg font-bold text-blue-900 mb-2">Students</h3>
-          </div>
-        )}
-
-        {/* Content Area */}
-        <div className="min-h-96">
-          {isLoadingStudents ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-800"></div>
-            </div>
-          ) : !selectedClass ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <School className="w-12 h-12 text-blue-800 mb-4" />
-              <p className="text-lg text-gray-800">Please select a class to view students</p>
-            </div>
-          ) : filteredStudents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <Users className="w-12 h-12 text-blue-800 mb-4" />
-              <p className="text-lg text-gray-800">
-                {selectedSection 
-                  ? 'No students found in this section'
-                  : 'No students found in this class'
-                }
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredStudents.map((student) => (
-                <div
-                  key={student.id}
-                  className="bg-white rounded-xl shadow-sm border p-4 hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => openFeesCollectPage(student)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <StudentPhoto photoPath={student.student_photo} />
-                      <div>
-                        <h4 className="font-bold text-blue-900">{student.student_name}</h4>
-                        <p className="text-sm text-gray-600">
-                          Reg: {student.registration_number}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Class: {student.assigned_class} • Section: {student.assigned_section}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center">
-                      <ArrowRight className="w-5 h-5 text-blue-800" />
-                    </div>
-                  </div>
-                </div>
-              ))}
+        <main className="container mx-auto px-4 py-6">
+          {error && (
+            <div className="mb-6 p-4 bg-red-800 text-white rounded-lg shadow-md">
+              {error}
             </div>
           )}
-        </div>
+
+          <div className="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+            <div className="p-6">
+              <h2 className="text-lg font-bold text-blue-900 mb-4">Filter Students</h2>
+              
+              {isLoadingClasses ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-900"></div>
+                </div>
+              ) : classes.length === 0 ? (
+                <div className="text-center text-gray-600 py-4">No classes available</div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-blue-900 mb-1">Select Class</label>
+                    <select
+                      className="w-full p-3 border border-blue-100 rounded-lg bg-blue-50 focus:ring-2 focus:ring-blue-900 focus:border-blue-900"
+                      value={selectedClassName || ''}
+                      onChange={(e) => updateAvailableSections(e.target.value || null)}
+                    >
+                      <option value="">-- Select a Class --</option>
+                      {classes.map((classItem) => (
+                        <option key={classItem.id} value={classItem.name}>
+                          {classItem.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {selectedClassName && availableSections.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-blue-900 mb-1">Select Section</label>
+                      <select
+                        className="w-full p-3 border border-blue-100 rounded-lg bg-blue-50 focus:ring-2 focus:ring-blue-900 focus:border-blue-900"
+                        value={selectedSection || ''}
+                        onChange={(e) => setSelectedSection(e.target.value || null)}
+                      >
+                        <option value="">-- All Sections --</option>
+                        {availableSections.map((section) => (
+                          <option key={section} value={section}>
+                            {section}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {selectedClassName && (
+            <div className="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiSearch className="text-blue-900" />
+                </div>
+                <input
+                  type="text"
+                  className="w-full py-3 pl-10 pr-4 bg-blue-50 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-blue-900"
+                  placeholder="Search Student"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
+          {selectedClassName && (
+            <div>
+              <h2 className="text-lg font-bold text-blue-900 mb-4">Students</h2>
+              
+              {isLoadingStudents ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-900"></div>
+                </div>
+              ) : filteredStudents.length === 0 ? (
+                <div className="bg-white rounded-xl shadow-md overflow-hidden py-12 text-center">
+                  <div className="flex flex-col items-center justify-center">
+                    {selectedSection === null ? (
+                      <>
+                        <FiUsers className="text-blue-900 text-4xl mb-4" />
+                        <p className="text-gray-600">No students found in this class</p>
+                      </>
+                    ) : (
+                      <>
+                        <FiFilter className="text-blue-900 text-4xl mb-4" />
+                        <p className="text-gray-600">No students found in this section</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredStudents.map((student) => (
+                    <div
+                      key={student.id}
+                      className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                      onClick={() => handleStudentClick(student)}
+                    >
+                      <div className="p-4 flex items-center">
+                        <div className="bg-blue-50 rounded-full p-3 mr-4">
+                          <FiUsers className="text-blue-900" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-blue-900">{student.name}</h3>
+                          <p className="text-sm text-gray-600">
+                            Class: {student.className} • Section: {student.section}
+                          </p>
+                        </div>
+                        <div className="bg-blue-50 rounded-full p-2">
+                          <FiArrowRight className="text-blue-900" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {!selectedClassName && (
+            <div className="bg-white rounded-xl shadow-md overflow-hidden py-16 text-center">
+              <div className="flex flex-col items-center justify-center">
+                <FiBook className="text-blue-900 text-4xl mb-4" />
+                <p className="text-gray-600">Please select a class to view students</p>
+              </div>
+            </div>
+          )}
+        </main>
       </div>
     </DashboardLayout>
   );
-};
+}
 
-export default FeesStudentSearchPage;
+// 'use client'
+// import { useState, useEffect, useCallback } from 'react';
+// import { useRouter } from 'next/navigation';
+// import axios from 'axios';
+// import { FiSearch, FiUsers, FiFilter, FiArrowRight, FiBook } from 'react-icons/fi';
+// import DashboardLayout from '@/app/dashboardComponents/DashboardLayout';
+
+// type ClassModel = {
+//   id: string;
+//   name: string;
+//   sections: string[];
+// };
+
+// type StudentModel = {
+//   id: string;
+//   name: string;
+//   classId: string;
+//   className: string;
+//   section: string;
+// };
+
+// type FeeStructureModel = {
+//   feeMasterId: string;
+//   feeFieldName: string;
+//   amount: string;
+//   isCollectable: boolean;
+//   isMandatory: boolean;
+//   isMonthly: boolean;
+//   isOneTime: boolean;
+// };
+
+// export default function FeeCollectPage() {
+//   const [classes, setClasses] = useState<ClassModel[]>([]);
+//   const [students, setStudents] = useState<StudentModel[]>([]);
+//   const [filteredStudents, setFilteredStudents] = useState<StudentModel[]>([]);
+//   const [isLoadingClasses, setIsLoadingClasses] = useState(true);
+//   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
+//   const [token, setToken] = useState<string | null>(null);
+//   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+//   const [selectedClassName, setSelectedClassName] = useState<string | null>(null);
+//   const [selectedSection, setSelectedSection] = useState<string | null>(null);
+//   const [availableSections, setAvailableSections] = useState<string[]>([]);
+//   const [searchQuery, setSearchQuery] = useState('');
+//   const [error, setError] = useState<string | null>(null);
+//   const router = useRouter();
+
+//   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+//   const classIdCache: Record<string, string> = {};
+//   const feeStructureCache: Record<string, FeeStructureModel[]> = {};
+
+//   useEffect(() => {
+//     const loadToken = async () => {
+//       const storedToken = localStorage.getItem('token');
+//       setToken(storedToken);
+//       if (storedToken) {
+//         await fetchClasses(storedToken);
+//       }
+//     };
+//     loadToken();
+//   }, []);
+
+//   useEffect(() => {
+//     filterStudents();
+//   }, [searchQuery, selectedSection, students]);
+
+//   const showError = (message: string) => {
+//     setError(message);
+//     setTimeout(() => setError(null), 3000);
+//   };
+
+//   const fetchClasses = async (authToken: string) => {
+//     try {
+//       setIsLoadingClasses(true);
+//       const response = await axios.get(`${baseUrl}/api/classes`, {
+//         headers: {
+//           'Accept': 'application/json',
+//           'Content-Type': 'application/json',
+//           'Authorization': authToken,
+//         },
+//       });
+
+//       if (response.status === 200) {
+//         const classData = response.data;
+//         const classMap: Record<string, ClassModel> = {};
+
+//         for (const data of classData) {
+//           const rawClassName = (data['class_name'] ?? data['className'] ?? '').toString().trim();
+//           if (rawClassName === '') continue;
+
+//           const classId = data['id']?.toString() ?? data['class_id']?.toString() ?? '';
+//           const section = (data['section'] ?? '').toString().trim();
+
+//           if (classMap[rawClassName]) {
+//             if (section !== '' && !classMap[rawClassName].sections.includes(section)) {
+//               classMap[rawClassName].sections.push(section);
+//             }
+//           } else {
+//             classMap[rawClassName] = {
+//               id: classId,
+//               name: rawClassName,
+//               sections: section !== '' ? [section] : [],
+//             };
+//             classIdCache[rawClassName] = classId;
+//           }
+//         }
+
+//         for (const classObj of Object.values(classMap)) {
+//           classObj.sections.sort();
+//         }
+
+//         const classesList = Object.values(classMap).sort((a, b) => a.name.localeCompare(b.name));
+//         setClasses(classesList);
+//       } else {
+//         showError(`Failed to load classes: ${response.status}`);
+//       }
+//     } catch (error) {
+//       showError(`Error loading classes: ${error instanceof Error ? error.message : String(error)}`);
+//     } finally {
+//       setIsLoadingClasses(false);
+//     }
+//   };
+
+//   const updateAvailableSections = (className: string | null) => {
+//     if (className !== null) {
+//       const selectedClass = classes.find(c => c.name === className) || {
+//         id: '',
+//         name: '',
+//         sections: [],
+//       };
+//       setSelectedClassId(selectedClass.id);
+//       setAvailableSections(selectedClass.sections);
+//       setSelectedClassName(selectedClass.name);
+//     } else {
+//       setSelectedClassId(null);
+//       setAvailableSections([]);
+//       setSelectedClassName(null);
+//     }
+//     setSelectedSection(null);
+//     setStudents([]);
+//     setFilteredStudents([]);
+//     if (className !== null) {
+//       fetchStudents(className);
+//     }
+//   };
+
+//   const fetchStudents = async (className: string) => {
+//     if (!token) return;
+
+//     setIsLoadingStudents(true);
+//     setFilteredStudents([]);
+
+//     try {
+//       const encodedClassName = encodeURIComponent(className);
+//       const response = await axios.get(`${baseUrl}/api/students/${encodedClassName}`, {
+//         headers: {
+//           'Accept': 'application/json',
+//           'Content-Type': 'application/json',
+//           'Authorization': token,
+//         },
+//       });
+
+//       if (response.status === 200) {
+//         const studentData = response.data;
+//         const newStudents = studentData
+//           .map((data: any) => ({
+//             id: data['_id']?.toString() ?? data['id']?.toString() ?? '',
+//             name: data['student_name']?.toString() ?? 'Unknown Student',
+//             classId: selectedClassId ?? '',
+//             className: className,
+//             section: data['assigned_section']?.toString() ?? '',
+//           }))
+//           .filter((student: StudentModel) => student.id !== '');
+
+//         setStudents(newStudents);
+//       } else {
+//         showError(`Failed to load students: ${response.statusText}`);
+//       }
+//     } catch (error) {
+//       showError(`Error loading students: ${error instanceof Error ? error.message : String(error)}`);
+//     } finally {
+//       setIsLoadingStudents(false);
+//     }
+//   };
+
+//   const filterStudents = useCallback(() => {
+//     const searchText = searchQuery.toLowerCase();
+//     const filtered = students.filter(student => {
+//       const nameMatch = student.name.toLowerCase().includes(searchText);
+//       const sectionMatch = selectedSection === null || student.section === selectedSection;
+//       return nameMatch && sectionMatch;
+//     });
+//     setFilteredStudents(filtered);
+//   }, [searchQuery, selectedSection, students]);
+
+//   const fetchStudentFeeData = async (student: StudentModel) => {
+//     const classId = classIdCache[student.className] || await getClassId(student.className);
+//     const feeStructure = feeStructureCache[student.className] || await getFeeStructure(classId);
+//     const paidFeeMasterIds = await getPaidFees(student.id);
+//     const previousBalance = await getPreviousBalance(student.id);
+
+//     let totalYearlyFee = 0.0;
+//     for (const fee of feeStructure) {
+//       if (!paidFeeMasterIds.includes(fee.feeMasterId.toString()) || !fee.isOneTime) {
+//         const amount = parseFloat(fee.amount) || 0.0;
+//         totalYearlyFee += fee.isMonthly ? amount : amount;
+//       }
+//     }
+
+//     return {
+//       classId,
+//       feeStructure,
+//       paidFeeMasterIds,
+//       previousBalance,
+//       totalYearlyFee,
+//     };
+//   };
+
+//   const getClassId = async (className: string) => {
+//     if (classIdCache[className]) return classIdCache[className];
+
+//     try {
+//       const response = await axios.get(`${baseUrl}/api/classes`, {
+//         headers: {
+//           'Accept': 'application/json',
+//           'Content-Type': 'application/json',
+//           'Authorization': token || '',
+//         },
+//       });
+
+//       if (response.status === 200) {
+//         const classData = response.data;
+//         for (const data of classData) {
+//           const name = (data['class_name'] ?? data['className'] ?? '').toString().trim();
+//           if (name.toLowerCase() === className.toLowerCase()) {
+//             const id = data['id']?.toString() ?? data['class_id']?.toString();
+//             if (id) {
+//               classIdCache[className] = id;
+//               return id;
+//             }
+//           }
+//         }
+//       }
+//     } catch (error) {
+//       showError(`Error fetching class ID: ${error instanceof Error ? error.message : String(error)}`);
+//     }
+//     classIdCache[className] = className;
+//     return className;
+//   };
+
+//   const getFeeStructure = async (classId: string) => {
+//     if (feeStructureCache[classId]) return feeStructureCache[classId];
+
+//     try {
+//       const response = await axios.get(`${baseUrl}/api/feestructure/${classId}`, {
+//         headers: {
+//           'Accept': 'application/json',
+//           'Content-Type': 'application/json',
+//           'Authorization': token || '',
+//         },
+//       });
+
+//       if (response.status === 200) {
+//         const feeStructureData = response.data;
+//         const feeStructureList = Array.isArray(feeStructureData)
+//           ? feeStructureData
+//           : feeStructureData['data'] || [];
+//         const feeStructure: FeeStructureModel[] = feeStructureList.map((item: any) => ({
+//           feeMasterId: item.feeMasterId?.toString() || item.fee_master_id?.toString() || '',
+//           feeFieldName: item.feeFieldName?.toString() || item.fee_field_name?.toString() || 'Unknown Fee',
+//           amount: item.amount?.toString() || '0',
+//           isCollectable: item.isCollectable || item.is_collectable || false,
+//           isMandatory: item.isMandatory || item.is_mandatory || false,
+//           isMonthly: Boolean(item.isMonthly || item.is_monthly || item.feeFieldName?.toLowerCase().includes('tution') || item.feeFieldName?.toLowerCase().includes('monthly')),
+//           isOneTime: Boolean(item.isOneTime || item.is_one_time),
+//         }));
+//         feeStructureCache[classId] = feeStructure;
+//         return feeStructure;
+//       }
+//     } catch (error) {
+//       showError(`Error fetching fee structure: ${error instanceof Error ? error.message : String(error)}`);
+//     }
+//     return [];
+//   };
+
+//   const getPaidFees = async (studentId: string) => {
+//     try {
+//       const response = await axios.get(`${baseUrl}/api/fees/paid?studentId=${studentId}`, {
+//         headers: {
+//           'Accept': 'application/json',
+//           'Content-Type': 'application/json',
+//           'Authorization': token || '',
+//         },
+//       });
+
+//       if (response.status === 200) {
+//         return response.data as string[];
+//       }
+//     } catch (error) {
+//       showError(`Error fetching paid fees: ${error instanceof Error ? error.message : String(error)}`);
+//     }
+//     return [];
+//   };
+
+//   const getPreviousBalance = async (studentId: string) => {
+//     try {
+//       const response = await axios.get(`${baseUrl}/api/summary/${studentId}`, {
+//         headers: {
+//           'Accept': 'application/json',
+//           'Content-Type': 'application/json',
+//           'Authorization': token || '',
+//         },
+//       });
+
+//       if (response.status === 200) {
+//         const balanceData = response.data;
+//         return parseFloat(balanceData['data']['last_due_balance'] || 0);
+//       }
+//     } catch (error) {
+//       showError(`Error fetching previous balance: ${error instanceof Error ? error.message : String(error)}`);
+//     }
+//     return 0;
+//   };
+
+//   const handleStudentClick = async (student: StudentModel) => {
+//     setIsLoadingStudents(true);
+//     try {
+//       const feeData = await fetchStudentFeeData(student);
+//       router.push(`/feesdetailsofstudent/${student.id}?data=${encodeURIComponent(JSON.stringify({
+//         studentId: student.id,
+//         studentName: student.name,
+//         studentClass: student.className,
+//         studentSection: student.section,
+//         isNewAdmission: false,
+//         preloadedData: feeData,
+//       }))}`);
+//     } catch (error) {
+//       showError(`Error navigating to fee details: ${error instanceof Error ? error.message : String(error)}`);
+//     } finally {
+//       setIsLoadingStudents(false);
+//     }
+//   };
+
+//   return (
+//     <DashboardLayout>
+//       <div className="min-h-screen bg-gray-100">
+//         <header className="bg-blue-900 text-white shadow-md">
+//           <div className="container mx-auto px-4 py-4">
+//             <h1 className="text-xl font-bold text-center">Collect Fee</h1>
+//           </div>
+//         </header>
+
+//         <main className="container mx-auto px-4 py-6">
+//           {error && (
+//             <div className="mb-6 p-4 bg-red-800 text-white rounded-lg shadow-md">
+//               {error}
+//             </div>
+//           )}
+
+//           <div className="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+//             <div className="p-6">
+//               <h2 className="text-lg font-bold text-blue-900 mb-4">Filter Students</h2>
+              
+//               {isLoadingClasses ? (
+//                 <div className="flex justify-center py-4">
+//                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-900"></div>
+//                 </div>
+//               ) : classes.length === 0 ? (
+//                 <div className="text-center text-gray-600 py-4">No classes available</div>
+//               ) : (
+//                 <div className="space-y-4">
+//                   <div>
+//                     <label className="block text-sm font-medium text-blue-900 mb-1">Select Class</label>
+//                     <select
+//                       className="w-full p-3 border border-blue-100 rounded-lg bg-blue-50 focus:ring-2 focus:ring-blue-900 focus:border-blue-900"
+//                       value={selectedClassName || ''}
+//                       onChange={(e) => updateAvailableSections(e.target.value || null)}
+//                     >
+//                       <option value="">-- Select a Class --</option>
+//                       {classes.map((classItem) => (
+//                         <option key={classItem.id} value={classItem.name}>
+//                           {classItem.name}
+//                         </option>
+//                       ))}
+//                     </select>
+//                   </div>
+
+//                   {selectedClassName && availableSections.length > 0 && (
+//                     <div>
+//                       <label className="block text-sm font-medium text-blue-900 mb-1">Select Section</label>
+//                       <select
+//                         className="w-full p-3 border border-blue-100 rounded-lg bg-blue-50 focus:ring-2 focus:ring-blue-900 focus:border-blue-900"
+//                         value={selectedSection || ''}
+//                         onChange={(e) => setSelectedSection(e.target.value || null)}
+//                       >
+//                         <option value="">-- All Sections --</option>
+//                         {availableSections.map((section) => (
+//                           <option key={section} value={section}>
+//                             {section}
+//                           </option>
+//                         ))}
+//                       </select>
+//                     </div>
+//                   )}
+//                 </div>
+//               )}
+//             </div>
+//           </div>
+
+//           {selectedClassName && (
+//             <div className="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+//               <div className="relative">
+//                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+//                   <FiSearch className="text-blue-900" />
+//                 </div>
+//                 <input
+//                   type="text"
+//                   className="w-full py-3 pl-10 pr-4 bg-blue-50 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-blue-900"
+//                   placeholder="Search Student"
+//                   value={searchQuery}
+//                   onChange={(e) => setSearchQuery(e.target.value)}
+//                 />
+//               </div>
+//             </div>
+//           )}
+
+//           {selectedClassName && (
+//             <div>
+//               <h2 className="text-lg font-bold text-blue-900 mb-4">Students</h2>
+              
+//               {isLoadingStudents ? (
+//                 <div className="flex justify-center py-8">
+//                   <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-900"></div>
+//                 </div>
+//               ) : filteredStudents.length === 0 ? (
+//                 <div className="bg-white rounded-xl shadow-md overflow-hidden py-12 text-center">
+//                   <div className="flex flex-col items-center justify-center">
+//                     {selectedSection === null ? (
+//                       <>
+//                         <FiUsers className="text-blue-900 text-4xl mb-4" />
+//                         <p className="text-gray-600">No students found in this class</p>
+//                       </>
+//                     ) : (
+//                       <>
+//                         <FiFilter className="text-blue-900 text-4xl mb-4" />
+//                         <p className="text-gray-600">No students found in this section</p>
+//                       </>
+//                     )}
+//                   </div>
+//                 </div>
+//               ) : (
+//                 <div className="space-y-3">
+//                   {filteredStudents.map((student) => (
+//                     <div
+//                       key={student.id}
+//                       className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+//                       onClick={() => handleStudentClick(student)}
+//                     >
+//                       <div className="p-4 flex items-center">
+//                         <div className="bg-blue-50 rounded-full p-3 mr-4">
+//                           <FiUsers className="text-blue-900" />
+//                         </div>
+//                         <div className="flex-1">
+//                           <h3 className="font-semibold text-blue-900">{student.name}</h3>
+//                           <p className="text-sm text-gray-600">
+//                             Class: {student.className} • Section: {student.section}
+//                           </p>
+//                         </div>
+//                         <div className="bg-blue-50 rounded-full p-2">
+//                           <FiArrowRight className="text-blue-900" />
+//                         </div>
+//                       </div>
+//                     </div>
+//                   ))}
+//                 </div>
+//               )}
+//             </div>
+//           )}
+
+//           {!selectedClassName && (
+//             <div className="bg-white rounded-xl shadow-md overflow-hidden py-16 text-center">
+//               <div className="flex flex-col items-center justify-center">
+//                 <FiBook className="text-blue-900 text-4xl mb-4" />
+//                 <p className="text-gray-600">Please select a class to view students</p>
+//               </div>
+//             </div>
+//           )}
+//         </main>
+//       </div>
+//     </DashboardLayout>
+//   );
+// }

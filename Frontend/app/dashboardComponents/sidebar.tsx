@@ -499,6 +499,20 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
                     </div>
                   </li>
                   <li>
+                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/feestructure' ? 'bg-gray-200' : ''}`}>
+                      <Link href="/feestructure" className="hover:text-gray-600 flex items-center w-full" onClick={() => localStorage.setItem('sidebarScrollPosition', sidebarRef.current?.scrollTop?.toString() || '0')}>
+                        <span className="text-sm">Fee Structure</span>
+                      </Link>
+                    </div>
+                  </li>
+                  <li>
+                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/Viewfeestructure' ? 'bg-gray-200' : ''}`}>
+                      <Link href="/Viewfeestructure" className="hover:text-gray-600 flex items-center w-full" onClick={() => localStorage.setItem('sidebarScrollPosition', sidebarRef.current?.scrollTop?.toString() || '0')}>
+                        <span className="text-sm">View Fee Structure</span>
+                      </Link>
+                    </div>
+                  </li>
+                  <li>
                     <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/collectfees' ? 'bg-gray-200' : ''}`}>
                       <Link href="/collectfees" className="hover:text-gray-600 flex items-center w-full" onClick={() => localStorage.setItem('sidebarScrollPosition', sidebarRef.current?.scrollTop?.toString() || '0')}>
                         <span className="text-sm">Collect Fees</span>

@@ -17,6 +17,7 @@ import noticeRoutes from './routes/noticeRoutes.js';
 import feeMasterRoutes from './routes/feeMasterRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
 import sessionRoutes from './routes/sessionRoutes.js';
+import feeStructureRoutes from './routes/feeStructureRoutes.js';
 // Setup for file path management
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -95,6 +96,7 @@ app.use('/api',noticeRoutes);
 app.use('/api',profileRoutes);
 app.use('/api',sessionRoutes);
 app.use('/api',feeMasterRoutes);
+app.use('/api',feeStructureRoutes);
 // If no route matches, return 404
 app.use((req, res) => {
   // console.log('404 for route:', req.url);

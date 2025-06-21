@@ -5,6 +5,6 @@ import { verifyToken } from '../middlewares/auth.js';
 const router = express.Router();
 
 router.post('/createfee', verifyToken, createFeeFields);
-router.get('/getfeefields', verifyToken, getFeeFields);
+router.get('/getfee', verifyToken, getFeeFields);
 
 export default router;

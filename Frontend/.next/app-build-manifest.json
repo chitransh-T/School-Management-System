@@ -6,11 +6,6 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/principledashboard/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/principledashboard/page.js"
-    ],
     "/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -21,20 +16,36 @@
       "static/chunks/main-app.js",
       "static/chunks/app/auth/signin/page.js"
     ],
-    "/(pages)/(sessions)/managesession/page": [
+    "/principledashboard/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/(sessions)/managesession/page.js"
+      "static/chunks/app/principledashboard/page.js"
+    ],
+    "/(pages)/(fees)/collectfees/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(fees)/collectfees/page.js"
+    ],
+    "/(pages)/(fees)/feesdetailsofstudent/[studentId]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/(pages)/(fees)/feesdetailsofstudent/[studentId]/page.css",
+      "static/chunks/app/(pages)/(fees)/feesdetailsofstudent/[studentId]/page.js"
+    ],
+    "/(pages)/(fees)/feemaster/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(fees)/feemaster/page.js"
     ],
     "/(pages)/(sessions)/createsession/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(pages)/(sessions)/createsession/page.js"
     ],
-    "/(pages)/(sessions)/editsession/page": [
+    "/(pages)/(sessions)/managesession/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/(sessions)/editsession/page.js"
+      "static/chunks/app/(pages)/(sessions)/managesession/page.js"
     ],
     "/(pages)/(TeacherData)/addTeacher/page": [
       "static/chunks/webpack.js",
@@ -45,6 +56,31 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(pages)/(TeacherData)/TeacherDetails/page.js"
+    ],
+    "/(pages)/(classes)/allclasses/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(classes)/allclasses/page.js"
+    ],
+    "/(pages)/(classes)/addclass/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(classes)/addclass/page.js"
+    ],
+    "/(pages)/(studentsData)/addstudent/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(studentsData)/addstudent/page.js"
+    ],
+    "/(pages)/(fees)/feestructure/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(fees)/feestructure/page.js"
+    ],
+    "/(pages)/(fees)/Viewfeestructure/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(fees)/Viewfeestructure/page.js"
     ]
   }
 }
