@@ -373,7 +373,7 @@ export default function FeeCollectPage() {
                   <div>
                     <label className="block text-sm font-medium text-blue-900 mb-1">Select Class</label>
                     <select
-                      className="w-full p-3 border border-blue-100 rounded-lg bg-blue-50 focus:ring-2 focus:ring-blue-900 focus:border-blue-900"
+                      className="w-full p-3 border border-blue-100 rounded-lg text-gray-700 bg-blue-50 focus:ring-2 focus:ring-blue-900 focus:border-blue-900"
                       value={selectedClassName || ''}
                       onChange={(e) => updateAvailableSections(e.target.value || null)}
                     >
@@ -390,7 +390,7 @@ export default function FeeCollectPage() {
                     <div>
                       <label className="block text-sm font-medium text-blue-900 mb-1">Select Section</label>
                       <select
-                        className="w-full p-3 border border-blue-100 rounded-lg bg-blue-50 focus:ring-2 focus:ring-blue-900 focus:border-blue-900"
+                        className="w-full p-3 border border-blue-100 rounded-lg text-gray-700 bg-blue-50 focus:ring-2 focus:ring-blue-900 focus:border-blue-900"
                         value={selectedSection || ''}
                         onChange={(e) => setSelectedSection(e.target.value || null)}
                       >

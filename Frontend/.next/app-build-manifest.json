@@ -81,6 +81,11 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(pages)/(fees)/Viewfeestructure/page.js"
+    ],
+    "/profilepage/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/profilepage/page.js"
     ]
   }
 }

@@ -521,9 +521,9 @@ const FeesCollectionPage: React.FC<{ params: Promise<{ studentId: string }> }> =
             <div className="p-6">
               <h2 className="text-lg font-bold text-blue-900 mb-4">Yearly Fee Summary</h2>
               <div className="space-y-3">
-                <div className="flex justify-between"><span>Total Yearly Fee:</span><span className="font-bold text-blue-900">₹{totalYearlyFee.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span>Total Paid:</span><span className="font-bold text-green-600">₹{totalPaid.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span>Total Due:</span><span className="font-bold text-red-600">₹{totalDue.toFixed(2)}</span></div>
+                <div className="flex justify-between text-gray-700"><span>Total Yearly Fee:</span><span className="font-bold text-blue-900">₹{totalYearlyFee.toFixed(2)}</span></div>
+                <div className="flex justify-between text-gray-700"><span>Total Paid:</span><span className="font-bold text-green-600">₹{totalPaid.toFixed(2)}</span></div>
+                <div className="flex justify-between text-gray-700"><span>Total Due:</span><span className="font-bold text-red-600">₹{totalDue.toFixed(2)}</span></div>
               </div>
             </div>
           </div>

@@ -176,7 +176,7 @@ export default function FeeStructurePage() {
           <select
             value={selectedClassId}
             onChange={(e) => setSelectedClassId(e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2"
+            className="w-full border text-gray-700 border-gray-300 rounded px-3 py-2"
           >
             <option value="">Select Class</option>
             {classes.map((c) => (
@@ -195,7 +195,7 @@ export default function FeeStructurePage() {
                   value={f.amount}
                   readOnly={f.isCommonForAll && f.defaultAmount != null}
                   onChange={(e) => handleFieldChange(i, 'amount', e.target.value)}
-                  className={`w-full border rounded mt-2 p-2 ${
+                  className={`w-full border text-gray-700 border-gray-300 rounded mt-2 p-2 ${
                     f.isCommonForAll ? 'bg-gray-200' : ''
                   }`}
                   placeholder={f.isCommonForAll ? 'Fixed amount' : 'Enter amount'}
@@ -210,7 +210,7 @@ export default function FeeStructurePage() {
                       }
                       className="form-checkbox"
                     />
-                    <span className="ml-2 text-sm">Not Collectable</span>
+                    <span className="ml-2 text-sm text-gray-700">Not Collectable</span>
                   </label>
                 )}
               </div>

@@ -96,11 +96,11 @@ export default function ViewFeeStructurePage() {
         <h1 className="text-2xl font-bold text-blue-900 mb-6">View Fee Structure</h1>
 
         <div className="mb-6">
-          <label className="block font-medium mb-2">Select Class</label>
+          <label className="block font-medium mb-2 text-gray-700">Select Class</label>
           <select
             value={selectedClassId}
             onChange={handleClassChange}
-            className="w-full border border-gray-300 rounded px-3 py-2"
+            className="w-full border text-gray-700 border-gray-300 rounded px-3 py-2"
           >
             <option value="">-- Select Class --</option>
             {classes.map((c) => (
