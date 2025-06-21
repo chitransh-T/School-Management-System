@@ -1,4 +1,4 @@
-import { createFeeStructure, deleteFeeStructureForClass,getFeeStructureByClassFromDB } from '../models/feestructureModel.js';
+import { createFeeStructure, deleteFeeStructureForClass,getFeeStructureByClassFromDB } from '../models/feeStructureModel.js';
 import { getActiveSessionFromDB } from '../models/sessionModel.js';
 
 // ✅ Register Fee Structure
