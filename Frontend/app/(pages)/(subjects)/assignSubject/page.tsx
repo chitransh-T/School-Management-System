@@ -63,7 +63,7 @@ const AssignSubjects = () => {
         }
         
         const data = await response.json();
-        setClasses(data);
+        setClasses(data.data || data); // Adjust based on API response structure
         
       } catch (err) {
         console.error('Error fetching classes:', err);
@@ -74,7 +74,7 @@ const AssignSubjects = () => {
     };
     
     fetchClasses();
-  }, []);
+  }, [baseUrl]);
 
   // Handle subject name change
   const handleSubjectNameChange = (id: string, value: string) => {
@@ -115,7 +115,9 @@ const AssignSubjects = () => {
     }
 
     // Validate subjects
-    const validSubjects = subjects.filter(subject => subject.name.trim() && subject.marks.trim());
+    const validSubjects = subjects.filter(subject => 
+      subject.name.trim() && subject.marks.trim()
+    );
     if (validSubjects.length === 0) {
       setError('Please add at least one subject with name and marks');
       return;
@@ -130,11 +132,13 @@ const AssignSubjects = () => {
         throw new Error('Authentication token not found');
       }
 
-      // Prepare payload according to backend expectations
+      // Prepare payload matching backend expectations
       const payload = {
-        class_id: selectedClass,
-        subject_name: validSubjects.map(subject => subject.name.trim()).join(', '),
-        marks: validSubjects.map(subject => subject.marks.trim()).join(', ')
+        class_id: parseInt(selectedClass),
+        subjects: validSubjects.map(subject => ({
+          subject_name: subject.name.trim(),
+          marks: parseInt(subject.marks.trim())
+        }))
       };
 
       const response = await fetch(`${baseUrl}/api/registersubject`, {
@@ -162,7 +166,9 @@ const AssignSubjects = () => {
       } else {
         // Handle specific error cases
         if (response.status === 409) {
-          setError(data.message || 'This class already has subjects assigned');
+          setError(data.message || 'This class already has subjects assigned. Please use update instead.');
+        } else if (response.status === 400) {
+          setError(data.message || 'Invalid input data');
         } else {
           throw new Error(data.message || 'Failed to assign subjects');
         }
@@ -257,7 +263,7 @@ const AssignSubjects = () => {
                       value={subject.name}
                       onChange={(e) => handleSubjectNameChange(subject.id, e.target.value)}
                       placeholder="Subject Name"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-500 text-gray-900"
                       required
                     />
                   </div>

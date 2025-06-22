@@ -56,7 +56,7 @@ const features = [
 function MainPage() {
   // Memoized navigation handlers
   const handleGetStarted = () => {
-    window.location.href = '/auth/signup';
+    window.location.href = '';
   };
 
   const handleLearnMore = () => {
@@ -64,7 +64,7 @@ function MainPage() {
   };
 
   const handleStartFreeTrial = () => {
-    window.location.href = '/auth/signup';
+    window.location.href = '';
   };
 
   return (

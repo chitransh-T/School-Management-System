@@ -1,7 +1,7 @@
 {
-  "/(pages)/(fees)/feemaster/page": "app/(pages)/(fees)/feemaster/page.js",
-  "/(pages)/(fees)/feestructure/page": "app/(pages)/(fees)/feestructure/page.js",
-  "/(pages)/(fees)/Viewfeestructure/page": "app/(pages)/(fees)/Viewfeestructure/page.js",
-  "/(pages)/(fees)/collectfees/page": "app/(pages)/(fees)/collectfees/page.js",
-  "/(pages)/(fees)/feesdetailsofstudent/[studentId]/page": "app/(pages)/(fees)/feesdetailsofstudent/[studentId]/page.js"
+  "/auth/signin/page": "app/auth/signin/page.js",
+  "/principledashboard/page": "app/principledashboard/page.js",
+  "/(pages)/(subjects)/assignSubject/page": "app/(pages)/(subjects)/assignSubject/page.js",
+  "/(pages)/(subjects)/classeswithsubject/page": "app/(pages)/(subjects)/classeswithsubject/page.js",
+  "/(pages)/(subjects)/editsubject/page": "app/(pages)/(subjects)/editsubject/page.js"
 }
