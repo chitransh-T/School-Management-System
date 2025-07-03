@@ -1,49 +1,60 @@
+
 // models/attendanceModel.js - FIXED VERSION
 import pool from '../config/db.js';
 
-// Record student attendance
 export const recordStudentAttendance = async (attendanceData) => {
   const { student_id, date, is_present, class_id } = attendanceData;
 
-  const query = `
-    INSERT INTO attendance (student_id, date, is_present, class_id) 
+  const checkQuery = `
+    SELECT 1 FROM attendance
+    WHERE student_id = $1 AND date = $2 AND class_id = $3
+  `;
+
+  const result = await pool.query(checkQuery, [student_id, date, class_id]);
+
+  if (result.rowCount > 0) {
+    const error = new Error('Attendance already exists for this student on this date');
+    error.code = 'STUDENT_ATTENDANCE_EXISTS';
+    throw error;
+  }
+
+  const insertQuery = `
+    INSERT INTO attendance (student_id, date, is_present, class_id)
     VALUES ($1, $2, $3, $4)
-    ON CONFLICT (student_id, date, class_id) DO UPDATE 
-    SET is_present = EXCLUDED.is_present
     RETURNING *;
   `;
 
-  try {
-    const result = await pool.query(query, [student_id, date, is_present, class_id]);
-    return result.rows[0];
-  } catch (err) {
-    console.error('Error recording student attendance:', err);
-    throw err;
-  }
+  const insertResult = await pool.query(insertQuery, [student_id, date, is_present, class_id]);
+  return insertResult.rows[0];
 };
 
-// Record teacher attendance
 export const recordTeacherAttendance = async (attendanceData) => {
   const { teacher_id, date, is_present } = attendanceData;
 
-  const query = `
-    INSERT INTO teacher_attendance (teacher_id, date, is_present) 
-    VALUES ($1, $2, $3)
-    ON CONFLICT (teacher_id, date) DO UPDATE 
-    SET is_present = EXCLUDED.is_present
-    RETURNING *;
+  // Step 1: Check if already exists
+  const checkQuery = `
+    SELECT 1 FROM teacher_attendance
+    WHERE teacher_id = $1 AND date = $2
   `;
 
-  try {
-    const result = await pool.query(query, [teacher_id, date, is_present]);
-    return result.rows[0];
-  } catch (err) {
-    console.error('Error recording teacher attendance:', err);
-    throw err;
+  const result = await pool.query(checkQuery, [teacher_id, date]);
+
+  if (result.rowCount > 0) {
+    const error = new Error('Attendance already exists for this teacher on this date');
+    error.code = 'ATTENDANCE_EXISTS';
+    throw error;
   }
+
+  // Step 2: Insert new attendance
+  const insertQuery = `
+    INSERT INTO teacher_attendance (teacher_id, date, is_present)
+    VALUES ($1, $2, $3)
+    RETURNING *
+  `;
+
+  const insertResult = await pool.query(insertQuery, [teacher_id, date, is_present]);
+  return insertResult.rows[0];
 };
-
-
 
 export const getStudentAttendanceByClassIdAndDate = async (classId, date, signup_id) => {
   const checkAttendanceExistsQuery = `
@@ -117,6 +128,29 @@ export const getClassIdByNameAndSection = async (className, section, signup_id) 
 
 // Get teacher attendance
 export const getTeacherAttendanceByDate = async (date, signup_id) => {
+  // Step 1: Check if any attendance record exists on that date for this school
+  const attendanceExistsQuery = `
+    SELECT COUNT(*) AS count
+    FROM teacher_attendance ta
+    JOIN teacher t ON ta.teacher_id = t.id
+    WHERE ta.date = $1
+      AND t.signup_id IN (
+        SELECT s.id FROM signup s 
+        WHERE s.school_id = (
+          SELECT school_id FROM signup WHERE id = $2
+        )
+      )
+  `;
+
+  const attendanceExistsResult = await pool.query(attendanceExistsQuery, [date, signup_id]);
+  const attendanceExists = parseInt(attendanceExistsResult.rows[0].count, 10) > 0;
+
+  if (!attendanceExists) {
+    // No attendance recorded for any teacher on this date
+    return null;  // or return [];
+  }
+
+  // Step 2: Fetch attendance with join as before
   const query = `
     SELECT 
       t.id as teacher_id,
@@ -134,13 +168,8 @@ export const getTeacherAttendanceByDate = async (date, signup_id) => {
     ORDER BY t.teacher_name
   `;
 
-  try {
-    const results = await pool.query(query, [date, signup_id]);
-    return results.rows;
-  } catch (err) {
-    console.error('Error fetching teacher attendance:', err);
-    throw err;
-  }
+  const results = await pool.query(query, [date, signup_id]);
+  return results.rows;
 };
 
 
@@ -165,3 +194,62 @@ export const deleteAttendanceByTeacherId = async (teacherId) => {
     throw err;
   }
 };
+
+//-----------
+
+export async function getStudentAttendanceBySignupIdAndDate(signupId, date) {
+  try {
+    const query = `
+      SELECT
+        a.id AS attendance_id,
+        s.student_name,
+        c.class_name,
+        c.section,
+        a.date,
+        a.is_present
+      FROM attendance a
+      JOIN students s ON s.id = a.student_id
+      JOIN classes c ON c.id = a.class_id
+      JOIN parent_student_link psl ON psl.student_id = s.id
+      WHERE psl.parent_signup_id = $1
+        AND a.date = $2
+      ORDER BY a.date DESC
+    `;
+    const values = [signupId, date];
+    const result = await pool.query(query, values);
+    return result.rows;
+  } catch (err) {
+    console.error('Error fetching attendance by date:', err.stack);
+    throw new Error('Failed to fetch attendance by date');
+  }
+}
+
+
+
+export async function getStudentAttendanceBySignupIdAndMonth(signupId, date) {
+  try {
+    const query = `
+      SELECT
+        a.id AS attendance_id,
+        s.student_name,
+        c.class_name,
+        c.section,
+        a.date,
+        a.is_present
+      FROM attendance a
+      JOIN students s ON s.id = a.student_id
+      JOIN classes c ON c.id = a.class_id
+      JOIN parent_student_link psl ON psl.student_id = s.id
+      WHERE psl.parent_signup_id = $1
+        AND DATE_TRUNC('month', a.date) = DATE_TRUNC('month', $2::date)
+      ORDER BY a.date DESC
+    `;
+    const values = [signupId, date];
+    const result = await pool.query(query, values);
+    return result.rows;
+  } catch (error) {
+    console.error('Database error in getStudentAttendanceBySignupIdAndMonth:', error.stack);
+    throw new Error(`Database error: ${error.message}`);
+  }
+}
+

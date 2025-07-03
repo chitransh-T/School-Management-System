@@ -1,11 +1,11 @@
 import React from 'react'
-import Stats from '../../dashboardComponents/maindetails'
+
 import DashboardLayout from '../../dashboardComponents/DashboardLayout'
 
 const AdminDashboard = () => {
   return (
     <DashboardLayout>
-      p
+      <div className='text-gray-700'> This is admin dashboard you can register multiple school here</div>
     </DashboardLayout>
   )
 }

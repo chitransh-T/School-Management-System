@@ -65,7 +65,15 @@ const PreviewPage = () => {
         console.log('Classes data received:', data);
         
         // Set the classes
-        setClasses(data as ClassData[]);
+        // setClasses(data as ClassData[]);
+
+        const uniqueClassesMap = new Map();
+(data.data || data).forEach((cls: ClassData) => {
+  if (!uniqueClassesMap.has(cls.class_name)) {
+    uniqueClassesMap.set(cls.class_name, cls);
+  }
+});
+setClasses(Array.from(uniqueClassesMap.values()));
         
         // Extract unique sections from all classes
         const uniqueSections = Array.from(new Set(data.map((cls: ClassData) => cls.section))) as string[];
@@ -362,7 +370,7 @@ const PreviewPage = () => {
 
                       <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">
-                          Email<RequiredField />
+                          Parent Email<RequiredField />
                         </label>
                         <input 
                           type="email"
@@ -372,6 +380,7 @@ const PreviewPage = () => {
                           placeholder="Enter parent's email"
                         />
                       </div>
+                      
 
                       <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">
@@ -386,7 +395,7 @@ const PreviewPage = () => {
                         />
                       </div>
 
-                      <h3 className="font-semibold text-lg text-gray-700 border-b pb-2 mt-6">Documents</h3>
+                      <h3 className="font-semibold text-lg text-gray-700 border-b pb-2 mt-6">Student Documents</h3>
 
                       <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">

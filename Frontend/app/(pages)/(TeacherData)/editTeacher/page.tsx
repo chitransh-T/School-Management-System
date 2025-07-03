@@ -273,29 +273,6 @@ export default function EditTeacher() {
                 />
               </div>
               
-              {/* <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={teacherData.email}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full p-2 border rounded-md"
-                />
-              </div>
-               */}
-              {/* <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Phone</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={teacherData.phone}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full p-2 border rounded-md"
-                />
-              </div> */}
               
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Date of Birth</label>

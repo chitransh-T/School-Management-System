@@ -22,7 +22,7 @@ const AddNewClassPage: React.FC = () => {
   // Form state
   const [className, setClassName] = useState<string>('');
   const [section, setSection] = useState<string>('');
-  const [tuitionFees, setTuitionFees] = useState<string>('');
+  
   const [teacherId, setTeacherId] = useState<string>('');
 
   useEffect(() => {
@@ -143,10 +143,7 @@ const AddNewClassPage: React.FC = () => {
       return;
     }
     
-    if (!tuitionFees || isNaN(Number(tuitionFees)) || Number(tuitionFees) <= 0) {
-      setFormError('Please enter a valid tuition fee amount');
-      return;
-    }
+    
     
     if (!teacherId) {
       setFormError('Please select a teacher');
@@ -170,7 +167,6 @@ const AddNewClassPage: React.FC = () => {
       const classData = {
         class_name: className,
         section: section,
-        tuition_fees: Number(tuitionFees),
         teacher_id: teacherId // This should now be just the teacher's name string
       };
       
@@ -200,7 +196,6 @@ const AddNewClassPage: React.FC = () => {
       // Reset the form
       setClassName('');
       setSection('');
-      setTuitionFees('');
       setTeacherId('');
       
       // Redirect to all classes page after a short delay
@@ -286,22 +281,8 @@ const AddNewClassPage: React.FC = () => {
               </select>
             </div>
 
-            {/* Monthly Tuition Fees Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Monthly Tuition Fees <span className="text-purple-600">*</span>
-                <span className="ml-2 text-xs text-purple-600">REQUIRED</span>
-              </label>
-              <input
-                type="number"
-                placeholder="MONTHLY TUITION FEES"
-                value={tuitionFees}
-                onChange={(e) => setTuitionFees(e.target.value)}
-                className="w-full px-4 text-gray-500 py-2 border border-purple-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
-                min="0"
-                step="0.01"
-              />
-            </div>
+          
+          
 
             {/* Teacher Selection Field */}
             <div>

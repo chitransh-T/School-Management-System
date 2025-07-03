@@ -1,5 +1,3 @@
-// .==================================================
-
 import pool from '../config/db.js';
 
 // Helper function to safely parse numbers
@@ -9,8 +7,6 @@ const parseToNumber = (value) => {
   const parsed = parseFloat(value);
   return isNaN(parsed) ? 0 : parsed;
 };
-
-
 
 export const createFee = async (feeData) => {
   const query = `

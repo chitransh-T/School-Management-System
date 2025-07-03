@@ -296,15 +296,7 @@ export default function EditClassSubjectsPage() {
                 <input type="hidden" value={selectedClass} name="class" />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-blue-600 mb-2">
-                  Section
-                </label>
-                <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 font-medium">
-                  {selectedSection}
-                </div>
-                <input type="hidden" value={selectedSection} name="section" />
-              </div>
+              
             </div>
 
             {/* Subjects */}

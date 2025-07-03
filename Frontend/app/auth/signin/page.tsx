@@ -1,10 +1,12 @@
+
+
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/app/context/AuthContext";
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 const SignIn: React.FC = () => {
   const router = useRouter();
@@ -14,25 +16,22 @@ const SignIn: React.FC = () => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { login, isAuthenticated, user } = useAuth();
-  
+
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Determine which dashboard to redirect to based on role
-      let redirectPath =''; // Default
-      if(user.role === 'admin') {
-        redirectPath = '/admindashboard';
+      let redirectPath = "/"; // Default
+      if (user.role === "admin") {
+        redirectPath = "/admindashboard";
+      } else if (user.role === "principal") {
+        redirectPath = "/principledashboard";
+      } else if (user.role === "teacher") {
+        redirectPath = "/teacherdashboard";
+      } else if (user.role === "student") {
+        redirectPath = "/studentdashboard";
+      }else if(user.role === "parents"){
+        redirectPath = "/parentdashboard";
       }
-      else if(user.role === 'principal') {
-        redirectPath = '/principledashboard';
-      }
-      else if(user.role === 'teacher') {
-        redirectPath = '/Teacherdashboard';
-      }
-      else if(user.role === 'student') {
-        redirectPath = '/Studentdashboard';
-      }
-      
       router.push(redirectPath);
     }
   }, [isAuthenticated, user, router]);
@@ -45,16 +44,17 @@ const SignIn: React.FC = () => {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     setAuthing(true);
     setError("");
-    
+
     try {
+      // Perform login API call
       const response = await fetch(`${baseUrl}/api/auth/login`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email,
-          password
+          password,
         }),
       });
 
@@ -64,52 +64,81 @@ const SignIn: React.FC = () => {
       }
 
       const data = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        throw new Error(data.message || "Login failed");
       }
 
-      // Check if we have success and token in the response
       if (!data.success || !data.token) {
-        throw new Error('Invalid response from server');
+        throw new Error("Invalid response from server");
       }
 
-      // Store the token in localStorage
-      localStorage.setItem('token', data.token);
-      
-      // Store token and role in cookies for middleware access
-      document.cookie = `token=${data.token}; path=/; max-age=${60*60}`; // 1 hour expiry
-      document.cookie = `userRole=${data.role}; path=/; max-age=${60*60}`; // 1 hour expiry
-      
-      // Create a user object with the token information
+      // Store token and role
+      localStorage.setItem("token", data.token);
+      document.cookie = `token=${data.token}; path=/; max-age=${60 * 60}`; // 1 hour expiry
+      document.cookie = `userRole=${data.role}; path=/; max-age=${60 * 60}`; // 1 hour expiry
+
+      // Create user object
       const userData = {
-        id: Date.now(), // Generate a temporary ID
+        id: Date.now(),
         email: email,
         role: data.role,
-        token: data.token
+        token: data.token,
       };
 
-      // Login successful with user data
+      // Login with user data
       login(userData);
-      
-      // Redirect based on role
-      if (data.role === 'admin') {
-        router.push("/admindashboard");
-      } else if (data.role === 'teacher') {
-        router.push("/Teacherdashboard");
-      } else if (data.role === 'student') {
-        router.push("/Studentdashboard");
-      } else {
-        router.push("/"); // Default fallback
+
+      // Check if profile is set
+      try {
+        const profileResponse = await fetch(`${baseUrl}/api/profile`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${data.token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        const profileData = await profileResponse.json();
+
+        const isProfileSet =
+          profileData.success &&
+          profileData.data?.institute_name &&
+          profileData.data.institute_name.trim() !== "";
+
+        if (!isProfileSet) {
+          router.push("/profilepage");
+        } else {
+          // Redirect based on role
+          if (data.role === "admin") {
+            router.push("/admindashboard");
+          } else if (data.role === "teacher") {
+            router.push("/teacherdashboard");
+          } else if (data.role === "student") {
+            router.push("/studentdashboard");
+          } else if (data.role === "principal") {
+            router.push("/principledashboard");
+          } else if (data.role === "parents") {
+            router.push("/parentdashboard");  /// parent dashboard krne hai
+          }
+           else {
+            router.push("/"); // Default fallback
+          }
+        }
+      } catch (profileError) {
+        console.error("Profile check error:", profileError);
+        setError("Failed to verify profile. Please try again.");
+        return;
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError(err instanceof Error ? err.message : "Failed to sign in. Please try again.");
+      setError(
+        err instanceof Error ? err.message : "Failed to sign in. Please try again."
+      );
     } finally {
       setAuthing(false);
     }
   };
-
 
   return (
     <div className="w-full min-h-screen pt-20 pb-8 flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
@@ -139,14 +168,14 @@ const SignIn: React.FC = () => {
           {/* Form Section */}
           <div className="space-y-5">
             {/* Email Input */}
-             <div className="relative">
+            <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Mail className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 type="email"
                 placeholder="Email address"
-                className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm   text-gray-700 transition-colors"
+                className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-700 transition-colors"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -160,11 +189,11 @@ const SignIn: React.FC = () => {
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
-                className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 text-gray-700   rounded-lg bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors"
+                className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 text-gray-700 rounded-lg bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     signInWithEmail();
                   }
                 }}
@@ -202,9 +231,24 @@ const SignIn: React.FC = () => {
             >
               {authing ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
                   </svg>
                   Signing in...
                 </>
@@ -212,12 +256,7 @@ const SignIn: React.FC = () => {
                 "Sign in"
               )}
             </button>
-
-            
-            
           </div>
-
-         
         </div>
       </div>
     </div>

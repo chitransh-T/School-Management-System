@@ -63,7 +63,13 @@ const AssignSubjects = () => {
         }
         
         const data = await response.json();
-        setClasses(data.data || data); // Adjust based on API response structure
+        const uniqueClassesMap = new Map();
+        (data.data || data).forEach((cls: ClassData) => {
+          if (!uniqueClassesMap.has(cls.class_name)) {
+            uniqueClassesMap.set(cls.class_name, cls);
+          }
+        });
+        setClasses(Array.from(uniqueClassesMap.values())); // Adjust based on API response structure
         
       } catch (err) {
         console.error('Error fetching classes:', err);
@@ -243,7 +249,7 @@ const AssignSubjects = () => {
                 <option value="">Select Class</option>
                 {classes.map((cls) => (
                   <option key={cls.id} value={cls.id}>
-                    {cls.class_name} ({cls.section})
+                    {cls.class_name}
                   </option>
                 ))}
               </select>

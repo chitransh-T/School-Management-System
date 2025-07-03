@@ -80,7 +80,6 @@ const Signup: React.FC = () => {
   
       // Success
       alert("Signed up successfully!");
-      router.push("/auth/signin");
     } catch (err) {
       console.error("Registration error:", err);
       // Display specific error message from API if available
@@ -246,7 +245,7 @@ const Signup: React.FC = () => {
           </div>
 
           {/* Sign In Link */}
-          <div className="text-center pt-2">
+          {/* <div className="text-center pt-2">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
               <Link
@@ -256,7 +255,7 @@ const Signup: React.FC = () => {
                 Sign in
               </Link>
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

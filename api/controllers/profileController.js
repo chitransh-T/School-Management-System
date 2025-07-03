@@ -1,10 +1,11 @@
 import path from 'path';
 import { upsertProfile, getProfileBySchoolId } from '../models/profileModel.js';
+import pool from '../config/db.js';
 
 export const saveOrUpdateProfile = async (req, res) => {
   try {
     const { institute_name, address } = req.body;
-    const signup_id = req.signup_id;  // use signup_id instead of user_email
+    const signup_id = req.signup_id;
 
     if (!institute_name || !address || !signup_id) {
       return res.status(400).json({ 
@@ -13,33 +14,45 @@ export const saveOrUpdateProfile = async (req, res) => {
       });
     }
 
-    if (!req.files?.['logo']) {
-      return res.status(400).json({ 
-        success: false,
-        message: 'Logo file is required' 
-      });
+    // Logo optional banado:
+    let logo;
+    if (req.files?.['logo']) {
+      const logoFile = req.files['logo'][0];
+      logo = path.basename(logoFile.path);
     }
 
-    const logoFile = req.files['logo'][0];
-    const logo = path.basename(logoFile.path);
-
-    const result = await upsertProfile({
-      institute_name,
-      address,
-      logo: logo,
-      signup_id,
-    });
+    // Agar logo available hai to uske sath update karo, nahi to bina logo ke update karo
+    let result;
+    if (logo) {
+      result = await upsertProfile({
+        institute_name,
+        address,
+        logo,
+        signup_id,
+      });
+    } else {
+      // Logo nahi aaya, toh existing logo ko preserve karte hue update karo
+      const query = `
+        UPDATE institute_profiles
+        SET institute_name = $1,
+            address = $2
+        WHERE signup_id = $3
+        RETURNING *;
+      `;
+      result = await pool.query(query, [institute_name, address, signup_id]);
+    }
 
     res.status(201).json({
       success: true,
       message: 'Profile saved successfully',
       data: {
         ...result.rows[0],
-        logo_url: `/uploads/${logo}` // Return URL for frontend
+        logo_url: result.rows[0].logo ? `/uploads/${result.rows[0].logo}` : null
       }
     });
+
   } catch (err) {
-    console.error('Error saving profile:', err);
+    // console.error('Error saving profile:', err);
     res.status(500).json({ 
       success: false,
       message: 'Failed to save profile',
@@ -47,7 +60,6 @@ export const saveOrUpdateProfile = async (req, res) => {
     });
   }
 };
-
 
 
 export const getProfile = async (req, res) => {
@@ -73,7 +85,7 @@ export const getProfile = async (req, res) => {
     const normalizedProfile = {
       ...profile,
       logo: profile.logo ? path.basename(profile.logo.replace(/\\/g, '/')) : null,
-      logo_url:   profile.logo ? `/uploads/${path.basename(profile.logo.replace(/\\/g, '/'))}` : null,
+      logo_url: profile.logo ? `/uploads/${path.basename(profile.logo.replace(/\\/g, '/'))}` : null,
     };
 
     res.status(200).json({
@@ -81,7 +93,7 @@ export const getProfile = async (req, res) => {
       data: normalizedProfile,
     });
   } catch (err) {
-    console.error('Error fetching profile:', err);
+    // console.error('Error fetching profile:', err);
     res.status(500).json({
       success: false,
       message: 'Internal server error',

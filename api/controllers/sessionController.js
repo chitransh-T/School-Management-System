@@ -4,7 +4,8 @@ import {
   updateSessionInDB,
   deleteSession,
 } from '../models/sessionModel.js';
-
+import { getTeachersBySessionId } from '../models/teacherModel.js';
+import { getStudentsBySessionId } from '../models/studentModel.js';
 export const createSession = async (req, res) => {
   try {
     const { session_name, start_date, end_date } = req.body;
@@ -113,20 +114,44 @@ export const updateSession = async (req, res) => {
   }
 };
 
-export const deleteSessions = (req, res) => {
+export const deleteSessions = async (req, res) => {
   const id = req.params.id;
   const signup_id = req.signup_id;
 
-  deleteSession(id, signup_id, (err, result) => {
-    if (err) return res.status(500).json({ success: false, error: err });
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({
+  try {
+    // Check linked teachers
+    const teachers = await getTeachersBySessionId(id);
+    if (teachers.length > 0) {
+      return res.status(400).json({
         success: false,
-        message: 'Session not found or you do not have permission to delete it',
+        message: 'Please delete all teachers related to this session first.',
       });
     }
 
-    res.json({ success: true, message: 'Session deleted' });
-  });
+    // Check linked students
+    const students = await getStudentsBySessionId(id);
+    if (students.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please delete all students related to this session first.',
+      });
+    }
+
+    // Now delete the session
+    deleteSession(id, signup_id, (err, result) => {
+      if (err) return res.status(500).json({ success: false, error: err });
+
+      if (result.rowCount === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Session not found or you do not have permission to delete it',
+        });
+      }
+
+      res.json({ success: true, message: 'Session deleted' });
+    });
+  } catch (err) {
+    console.error('Error in deleteSessions:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
 };

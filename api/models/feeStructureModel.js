@@ -23,7 +23,7 @@ export const createFeeStructure = async ({ class_id, signup_id, session_id, stru
 export const deleteFeeStructureForClass = async ({ class_id, signup_id, session_id }) => {
   try {
     await pool.query(
-      "DELETE FROM fee_structure WHERE class_id = $1 AND signup_id = $2 AND session_id = $3",
+      `DELETE FROM fee_structure WHERE class_id = $1 AND signup_id = $2 AND session_id = $3`,
       [class_id, signup_id, session_id]
     );
   } catch (err) {

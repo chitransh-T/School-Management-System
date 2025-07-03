@@ -1,3 +1,5 @@
+
+
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -12,7 +14,6 @@ interface Class {
   id: string;
   class_name: string;
   section: string;
-  tuition_fees: number;
   teacher_id: string;
 }
 
@@ -27,7 +28,6 @@ const EditClassPage: React.FC = () => {
     id: '',
     class_name: '',
     section: '',
-    tuition_fees: 0,
     teacher_id: ''
   });
   
@@ -93,7 +93,6 @@ const EditClassPage: React.FC = () => {
           id: classInfo.id || classId,
           class_name: classInfo.class_name || '',
           section: classInfo.section || '',
-          tuition_fees: classInfo.tuition_fees || 0,
           teacher_id: classInfo.teacher_id || ''
         });
         
@@ -156,7 +155,7 @@ const EditClassPage: React.FC = () => {
     };
     
     fetchData();
-  }, [classId]);
+  }, [classId, baseUrl]);
   
   // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -164,7 +163,7 @@ const EditClassPage: React.FC = () => {
     
     setClassData(prev => ({
       ...prev,
-      [name]: name === 'tuition_fees' ? Number(value) : value
+     [name]: value
     }));
   };
   
@@ -183,10 +182,7 @@ const EditClassPage: React.FC = () => {
       return;
     }
     
-    if (!classData.tuition_fees || isNaN(Number(classData.tuition_fees)) || Number(classData.tuition_fees) <= 0) {
-      setFormError('Please enter a valid tuition fee amount');
-      return;
-    }
+    
     
     if (!classData.teacher_id) {
       setFormError('Please select a teacher');
@@ -211,12 +207,10 @@ const EditClassPage: React.FC = () => {
       // Prepare the update data
       const updateData = {
         class_name: classData.class_name,
-        section: classData.section,
-        tuition_fees: Number(classData.tuition_fees),
         teacher_id: classData.teacher_id
       };
       
-      console.log('Updating class data:', updateData);
+      console.log('Sending update data:', updateData);
       
       // Make the API call to update the class
       const response = await fetch(`${baseUrl}/api/classes/${classId}`, {
@@ -343,27 +337,13 @@ const EditClassPage: React.FC = () => {
                 <input type="hidden" name="section" value={classData.section} />
               </div>
               
-              {/* Tuition Fees */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Tuition Fees</label>
-                <input
-                  type="number"
-                  name="tuition_fees"
-                  value={classData.tuition_fees}
-                  onChange={handleInputChange}
-                  placeholder="Enter tuition fees"
-                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  min="0"
-                  step="0.01"
-                  required
-                />
-              </div>
+          
               
               {/* Teacher */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Teacher</label>
                 <select
-                  name="teacher_name"
+                  name="teacher_id"
                   value={classData.teacher_id}
                   onChange={handleInputChange}
                   className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

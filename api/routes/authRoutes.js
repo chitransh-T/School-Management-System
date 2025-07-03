@@ -7,6 +7,5 @@ const router = express.Router();
 // Authentication routes
 router.post('/login', login);
 router.post('/register', register);
-// router.post('/student-login', studentLogin);
 
 export default router;

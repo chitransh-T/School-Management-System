@@ -19,7 +19,7 @@ export const submitFeePayment = async (req, res) => {
     const feeData = req.body;
     const signup_id = req.signup_id;
 
-    console.log('submitFeePayment: signup_id=${signup_id}, feeData=${JSON.stringify(feeData)}');
+    console.log(`submitFeePayment: signup_id=${signup_id}, feeData=${JSON.stringify(feeData)}`);
 
     // Validate required fields
     if (!feeData.student_id || !feeData.class_name || !feeData.payment_date) {
@@ -53,7 +53,7 @@ export const submitFeePayment = async (req, res) => {
     if (!classResult.rows[0]) {
       return res.status(400).json({
         success: false,
-        message: 'Class not found: ${feeData.class_name}',
+        message: `Class not found: ${feeData.class_name}`,
       });
     }
     const class_id = classResult.rows[0].id;
@@ -65,7 +65,7 @@ export const submitFeePayment = async (req, res) => {
     `;
     const feeMasterResult = await pool.query(feeMasterQuery, [feeItemIds]);
     if (feeMasterResult.rows.length === 0) {
-      console.error('No fee_master records found for IDs: ${feeItemIds}');
+      console.error(`No fee_master records found for IDs: ${feeItemIds}`);
       return res.status(400).json({
         success: false,
         message: 'Invalid fee_master IDs provided',
@@ -81,7 +81,7 @@ export const submitFeePayment = async (req, res) => {
         item.is_one_time = feeMasterMap[item.fee_master_id].is_one_time;
         item.fee_name = item.fee_name || feeMasterMap[item.fee_master_id].fee_name;
       } else {
-        console.warn('Fee master ID ${item.fee_master_id} not found in fee_master table');
+        console.warn(`Fee master ID ${item.fee_master_id} not found in fee_master table`);
         item.is_one_time = false;
       }
     });
@@ -406,7 +406,7 @@ export const getPaidFees = async (req, res) => {
     }
 
     const paidFeeMasterIds = [...new Set([...oneTimePaidIds, ...monthlyPaidIds])];
-    console.log('getPaidFees: studentId=${studentId}, months=${months}, paidFeeMasterIds=${paidFeeMasterIds}');
+    console.log(`getPaidFees: studentId=${studentId}, months=${months}, paidFeeMasterIds=${paidFeeMasterIds}`);
 
     res.status(200).json(paidFeeMasterIds);
   } catch (err) {
@@ -458,7 +458,7 @@ export const getFeeStructure = async (req, res) => {
       isCollectable: row.is_collectable || false,
     }));
 
-    console.log('getFeeStructure: Returning feeStructure for classId=${classId}, studentId=${studentId}: ${feeStructure}');
+    console.log(`getFeeStructure: Returning feeStructure for classId=${classId}, studentId=${studentId}:`, feeStructure);
 
     res.status(200).json({ success: true, data: feeStructure });
   } catch (err) {
@@ -470,3 +470,7 @@ export const getFeeStructure = async (req, res) => {
     });
   }
 };
+
+
+//-------------
+

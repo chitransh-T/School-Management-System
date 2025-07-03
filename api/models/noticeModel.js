@@ -21,7 +21,6 @@ export const getAllNotices = async (signup_id, callback) => {
   }
 };
 
-
 export const createNotice = async (noticeData, callback) => {
   const query = `
     INSERT INTO notices (title, content, notice_date, end_date, category, priority, signup_id)

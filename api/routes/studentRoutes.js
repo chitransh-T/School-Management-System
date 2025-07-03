@@ -1,5 +1,3 @@
-
-
 // routes/studentRoutes.js
 import express from 'express';
 import { verifyToken } from '../middlewares/auth.js';
@@ -13,7 +11,9 @@ import {
   getTotalStudentCount,
   modelgetStudentCountByClass,
   ggetLastRegistrationNumber,
-  getStudentDashboardDetails
+  getStudentDashboardDetails,
+  ggetStudentsByTeacherClass,
+  getStudentsForParent,
 } from '../controllers/studentController.js';
 
 const router = express.Router();
@@ -29,6 +29,6 @@ router.get('/api/students/count-by-class', verifyToken,modelgetStudentCountByCla
 router.get('/last-registration-number', verifyToken, ggetLastRegistrationNumber);
 // Add this to your studentRoutes.js
 router.get('/students/dashboard/:id', verifyToken, getStudentDashboardDetails);
-
-
+router.get('/getstudents/teacher-class', verifyToken, ggetStudentsByTeacherClass);
+router.get('/dashboard/students', verifyToken, getStudentsForParent);
 export default router;

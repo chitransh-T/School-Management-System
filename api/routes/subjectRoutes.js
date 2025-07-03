@@ -13,11 +13,6 @@ const router = express.Router();
 // Student routes (all protected by JWT authentication)
 router.post('/registersubject', verifyToken,registerSubject);
 router.get('/getallsubjects', verifyToken, getAllSubjects);
-// router.put('/updatesubject',updateSubject)
-router.put('/updatesubject',
-  verifyToken,
-  updateSubject,
-     // Your update controller
-);
+router.put('/updatesubject',verifyToken,updateSubject);
 router.delete('/deletesubject/:subject_id', verifyToken, deleteSubject);
 export default router;

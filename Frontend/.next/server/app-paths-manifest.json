@@ -1,7 +1,7 @@
 {
-  "/auth/signin/page": "app/auth/signin/page.js",
-  "/principledashboard/page": "app/principledashboard/page.js",
-  "/(pages)/(subjects)/assignSubject/page": "app/(pages)/(subjects)/assignSubject/page.js",
-  "/(pages)/(subjects)/classeswithsubject/page": "app/(pages)/(subjects)/classeswithsubject/page.js",
-  "/(pages)/(subjects)/editsubject/page": "app/(pages)/(subjects)/editsubject/page.js"
+  "/(parentdashboard)/parentdashboard/page": "app/(parentdashboard)/parentdashboard/page.js",
+  "/page": "app/page.js",
+  "/(parentdashboard)/(parentpages)/messageControl/receivemessagefromteacher/page": "app/(parentdashboard)/(parentpages)/messageControl/receivemessagefromteacher/page.js",
+  "/(parentdashboard)/(parentpages)/eventphotos/parenteventimages/page": "app/(parentdashboard)/(parentpages)/eventphotos/parenteventimages/page.js",
+  "/(parentdashboard)/(parentpages)/messageControl/sentmessagetoteacher/page": "app/(parentdashboard)/(parentpages)/messageControl/sentmessagetoteacher/page.js"
 }

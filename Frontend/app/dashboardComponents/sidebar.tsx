@@ -19,16 +19,17 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
   const [isFeesOpen, setIsFeesOpen] = useState(false);
   const sidebarRef = React.useRef<HTMLDivElement>(null);
   const [isSessionOpen, setIsSessionOpen] = useState(true);
+  const [isAssignTeacherOpen, setIsAssignTeacherOpen] = useState(false);  
   const pathname = usePathname();
   const { isMobile } = useResponsive();
-
   const isStudentRoute = pathname?.includes('/student');
   const isTeacherRoute = pathname?.includes('/teacher');
   const isAttendanceRoute = pathname?.includes('/attendance');
   const isClassRoute = pathname?.includes('/class') || pathname?.includes('/allClasses') || pathname?.includes('/addClass');
   const isSubjectRoute = pathname?.includes('/subject') || pathname?.includes('/classeswithsubject') || pathname?.includes('/assignSubject');
   const isSessionRoute = pathname?.includes('/session') || pathname?.includes('/managesession') || pathname?.includes('/createsession');
-
+  const isAssignTeacherRoute = pathname?.includes('/assignTeacher') || pathname?.includes('/viewassignteacher');
+  const isFeesRoute = pathname?.includes('/fees') || pathname?.includes('/feemaster') || pathname?.includes('/collectfees')|| pathname?.includes('/feesdetailsofstudent')|| pathname?.includes('/feestructure')|| pathname?.includes('/viewfeestructure');
   // Close sidebar automatically on mobile
   useEffect(() => {
     if (isMobile) {
@@ -54,12 +55,18 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
     if (isSessionRoute) {
       setIsSessionOpen(true);
     }
-    
+    if (isAssignTeacherRoute) {
+      setIsAssignTeacherOpen(true);
+    }    
+
+    if (isFeesRoute) {
+      setIsFeesOpen(true);
+    } 
     // Keep class dropdown open if on a class-related page
     if (isClassRoute) {
       setIsClassOpen(true);
     }
-  }, [pathname, isTeacherRoute, isClassRoute, isSessionRoute]);
+  }, [pathname, isTeacherRoute, isClassRoute, isSessionRoute, isAssignTeacherRoute, isFeesRoute]);
   
   // Save scroll position to localStorage when scrolling
   useEffect(() => {
@@ -103,6 +110,7 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
       setIsSubjectOpen(true);
       setIsFeesOpen(true);
       setIsSessionOpen(true);
+      setIsAssignTeacherOpen(true);
     }
     // Notify parent component about sidebar state change
     if (onToggle) {
@@ -232,6 +240,7 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
               )}
             </li>
 
+
              {/* Teacher Section */}
              <li className="mb-4">
               <button 
@@ -274,6 +283,13 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
                     </div>
                   </li>
                   <li>
+                        <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/jobletter/t_jobletter' ? 'bg-gray-200' : ''}`}>
+                          <Link href="/jobletter/t_jobletter" className="hover:text-gray-600 flex items-center w-full">
+                            <span className="text-sm">  Job Letter</span>
+                          </Link>
+                        </div>
+                      </li>
+                  <li>
                     <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname?.includes('teacherabsent') ? 'bg-gray-200' : ''}`}>
                       <span className="text-sm">Teacher Attendance</span>
                     </div>
@@ -292,8 +308,56 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
                           </Link>
                         </div>
                       </li>
+                      
                     </ul>
+                    
                   </li>
+                </ul>
+              )}
+            </li>
+                {/* subject assign to teacher section */}
+            
+            <li className="mb-4">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsAssignTeacherOpen(!isAssignTeacherOpen);
+                }}
+                className={`w-full hover:text-gray-600 flex items-center justify-between ${isAssignTeacherRoute ? 'text-blue-600 font-medium' : ''}`}
+              >
+                <div className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                </svg>
+                  Teacher Assign
+                </div>
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className={`h-4 w-4 transition-transform duration-200 ${isAssignTeacherOpen ? 'transform rotate-180' : ''}`}
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {isAssignTeacherOpen && (
+                <ul className="ml-6 mt-2 space-y-2">
+                  <li>
+                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/assignteacher' ? 'bg-gray-200' : ''}`}>
+                      <Link href="/assignteacher" className="hover:text-gray-600 flex items-center w-full" onClick={() => localStorage.setItem('sidebarScrollPosition', sidebarRef.current?.scrollTop?.toString() || '0')}>
+                        <span className="text-sm">Assign Subjects</span>
+                      </Link>
+                    </div>
+                  </li>
+                  <li>
+                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/viewassignteacher' ? 'bg-gray-200' : ''}`}>
+                      <Link href="/viewassignteacher" className="hover:text-gray-600 flex items-center w-full">
+                        <span className="text-sm">View Assign Subjects</span>
+                      </Link>
+                    </div>
+                  </li>
+          
                 </ul>
               )}
             </li>
@@ -519,7 +583,13 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
                       </Link>
                     </div>
                   </li>
-          
+                  <li>
+                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/feereceiptstudent' ? 'bg-gray-200' : ''}`}>
+                      <Link href="/feereceiptstudent" className="hover:text-gray-600 flex items-center w-full" onClick={() => localStorage.setItem('sidebarScrollPosition', sidebarRef.current?.scrollTop?.toString() || '0')}>
+                        <span className="text-sm">Fees Paid Slip</span>
+                      </Link>
+                    </div>
+                  </li>
                 </ul>
               )}
             </li>

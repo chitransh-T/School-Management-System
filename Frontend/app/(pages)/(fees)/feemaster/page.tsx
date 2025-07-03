@@ -216,7 +216,7 @@ export default function FeeMasterPage() {
                 className="block w-full bg-blue-800 text-white font-semibold py-3 rounded-lg hover:bg-blue-900"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Submitting...' : 'Submit Fees'}
+                {isSubmitting ? 'Creating...' : 'Create Fee Fields'}
               </button>
 
               {error && <p className="text-red-600 text-sm">{error}</p>}

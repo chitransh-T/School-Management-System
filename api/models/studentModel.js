@@ -90,27 +90,17 @@ export const getStudentsByUser = async (signup_id) => {
   }
 };
 
-export const getStudentById = async (studentId, signup_id) => {
-  const query = `
-    SELECT s.*
-    FROM students s
-    JOIN signup u ON s.signup_id = u.id
-    WHERE s.id = $1
-      AND u.school_id = (
-        SELECT school_id FROM signup WHERE id = $2
-      )
-    LIMIT 1
-  `;
 
+export const getStudentById = async (studentId) => {
+  const query = 'SELECT * FROM students WHERE id = $1';
   try {
-    const result = await pool.query(query, [studentId, signup_id]);
+    const result = await pool.query(query, [parseInt(studentId)]);
     return result.rows[0];
   } catch (err) {
     console.error('Error fetching student by id:', err);
     throw err;
   }
 };
-
 
 export const updateStudent = async (studentId, studentData) => {
   const {
@@ -123,7 +113,8 @@ export const updateStudent = async (studentId, studentData) => {
     assigned_class,
     assigned_section,
     birth_certificate,
-    student_photo
+    student_photo,
+    session_id // ✅ add this
   } = studentData;
 
   const updateQuery = `
@@ -137,8 +128,9 @@ export const updateStudent = async (studentId, studentData) => {
       assigned_class = $7, 
       assigned_section = $8, 
       birth_certificate = $9, 
-      student_photo = $10
-    WHERE id = $11
+      student_photo = $10,
+      session_id = $11         -- ✅ add session_id here
+    WHERE id = $12
     RETURNING *
   `;
 
@@ -154,6 +146,7 @@ export const updateStudent = async (studentId, studentData) => {
       assigned_section,
       birth_certificate,
       student_photo,
+      session_id,     // ✅ make sure it's passed
       studentId
     ]);
     return result;
@@ -162,6 +155,7 @@ export const updateStudent = async (studentId, studentData) => {
     throw err;
   }
 };
+
 export const deleteStudent = async (studentId) => {
   const deleteStudentQuery = 'DELETE FROM students WHERE id = $1 RETURNING *';
   try {
@@ -176,9 +170,6 @@ export const deleteStudent = async (studentId) => {
     throw err;
   }
 };
-
-
-
 
 export const getStudentsByClassInSchool = async (className, signup_id) => {
   const query = `
@@ -298,3 +289,70 @@ export const getLastRegistrationNumber = async (signup_id) => {
     throw err;
   }
 };
+
+
+export const getStudentsByTeacherClass = async (signup_id) => {
+  const query = `
+    SELECT 
+      s.*,
+      c.class_name,
+      c.section,
+      c.id as class_id
+    FROM students s
+    JOIN classes c ON (
+      LOWER(TRIM(s.assigned_class)) = LOWER(TRIM(c.class_name)) 
+      AND LOWER(TRIM(s.assigned_section)) = LOWER(TRIM(c.section))
+    )
+    JOIN teacher t ON c.teacher_id = t.id
+    WHERE t.signup_id = $1
+    AND s.signup_id IN (
+      SELECT id FROM signup WHERE school_id = (
+        SELECT school_id FROM signup WHERE id = $1
+      )
+    )
+    ORDER BY s.student_name
+  `;
+
+  try {
+    const result = await pool.query(query, [signup_id]);
+    return result.rows;
+  } catch (err) {
+    console.error('Error fetching students by teacher class:', err);
+    throw err;
+  }
+};
+// studentModel.js
+export const getStudentsBySessionId = async (sessionId) => {
+  const query = 'SELECT * FROM students WHERE session_id = $1';
+  const result = await pool.query(query, [sessionId]);
+  return result.rows;
+};
+
+
+
+
+export const getStudentsByParentId = async (parentSignupId) => {
+  console.log('📥 Querying students with class teacher for parentSignupId:', parentSignupId);
+
+  const query = `
+    SELECT 
+      s.id AS student_id,
+      s.student_name,
+      s.assigned_class,
+      s.assigned_section,
+      s.student_photo,
+      s.birth_certificate,
+      t.teacher_name
+    FROM parent_student_link psl
+    JOIN students s ON psl.student_id = s.id
+    JOIN classes c ON 
+      LOWER(TRIM(c.class_name)) = LOWER(TRIM(s.assigned_class)) AND 
+      LOWER(TRIM(c.section)) = LOWER(TRIM(s.assigned_section))
+    JOIN teacher t ON c.teacher_id = t.id
+    WHERE psl.parent_signup_id = $1
+  `;
+
+  const { rows } = await pool.query(query, [parentSignupId]);
+  console.log('📤 Students + Teacher returned from DB:', rows);
+  return rows;
+};  

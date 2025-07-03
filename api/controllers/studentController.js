@@ -10,25 +10,28 @@ import {
   getStudentCount, 
   getStudentCountByClass, 
   getLastRegistrationNumber,
-  findSignupByEmail, linkParentStudent 
+  findSignupByEmail, 
+  linkParentStudent,
+  getStudentsByTeacherClass,
+  getStudentsByParentId,
 } from '../models/studentModel.js';
 import { createUserPG } from "../models/userModel.js";
 import { deleteAttendanceByStudentId } from '../models/attendanceModel.js';
 import { uploadDir } from '../middlewares/upload.js';
 import { getActiveSessionFromDB } from '../models/sessionModel.js';
 
-
+import pool from '../config/db.js';
 
 const generateStudentEmail = (studentName, registrationNumber) => {
   const usernamePart = studentName.toLowerCase().replace(/\s+/g, '').substring(0, 5);
   const email = `${usernamePart}${registrationNumber.slice(-4)}@school.edu`;
-  const password = Math.random().toString(36).slice(-8);
+  // Generate password using first name (before first space) + last 4 digits of registration number
+  const firstName = studentName.split(' ')[0].toLowerCase();
+  const password = `${firstName}${registrationNumber.slice(-4)}`;
   return { email, password };
 };
 
-const generatePassword = () => Math.random().toString(36).slice(-8);
-
-
+// Removed generatePassword function as it's no longer needed
 
 export const registerStudent = async (req, res) => {
   try {
@@ -57,29 +60,27 @@ export const registerStudent = async (req, res) => {
 
     // 1. Parent signup check or create
     let parentSignup = await findSignupByEmail(parent_email);
+    // Get student credentials to use same password for parent
+    const { email: studentEmail, password: sharedPassword } = generateStudentEmail(student_name, registration_number);
 
     if (!parentSignup) {
-      const parentPassword = generatePassword();
       parentSignup = await createUserPG({
         email: parent_email,
-        password: parentPassword,
+        password: sharedPassword, // Use same password as student
         role: 'parents',
         school_id
       });
     }
 
-    // 2. Generate student credentials
-    const { email: studentEmail, password: studentPassword } = generateStudentEmail(student_name, registration_number);
-
-    // 3. Create student signup
+    // 2. Create student signup
     const studentSignup = await createUserPG({
       email: studentEmail,
-      password: studentPassword,
+      password: sharedPassword, // Use same password as parent
       role: 'student',
       school_id
     });
 
-    // 4. Insert student record
+    // 3. Insert student record
     const studentRecord = await createStudent({
       student_name,
       registration_number,
@@ -97,17 +98,17 @@ export const registerStudent = async (req, res) => {
       session_id   // ✅ include this in student table
     });
 
-    // 5. Link student to parent
+    // 4. Link student to parent
     await linkParentStudent(parentSignup.id, studentRecord.id);
 
-    // 6. Respond
+    // 5. Respond
     res.status(201).json({
       success: true,
       message: 'Student and Parent registered successfully',
       data: {
         student: {
           email: studentEmail,
-          password: studentPassword,
+          password: sharedPassword,
           id: studentRecord.id,
         },
         parent: {
@@ -146,13 +147,22 @@ export const updateStudentDetails = async (req, res) => {
   try {
     const studentId = req.params.id;
     const updates = req.body;
+    const signup_id = req.signup_id;
+
+    // ✅ Fetch active session again
+    const activeSession = await getActiveSessionFromDB(signup_id);
+    if (!activeSession) {
+      return res.status(400).json({ message: 'No active session found' });
+    }
+
+    updates.session_id = activeSession.id;
 
     if (req.files?.['student_photo']) {
       updates.student_photo = path.basename(req.files['student_photo'][0].path);
     }
 
     const result = await updateStudent(studentId, updates);
-    
+
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Student not found' });
     }
@@ -163,29 +173,53 @@ export const updateStudentDetails = async (req, res) => {
     res.status(500).json({ error: 'Failed to update student' });
   }
 };
-
-
-
 export const deleteStudentById = async (req, res) => {
   try {
-    const studentId = req.params.id;
+    const studentId = parseInt(req.params.id); // ✅ Ensure number
 
-    // Delete attendance records
+    // Step 1: Delete attendance records
     await deleteAttendanceByStudentId(studentId);
 
-    // Get student details
+    // Step 2: Get student details
     const student = await getStudentById(studentId);
     if (!student) {
       return res.status(404).json({ error: 'Student not found' });
     }
 
-    // Delete student
-    const deletedStudent = await deleteStudent(studentId);
-    if (!deletedStudent) {
-      return res.status(404).json({ error: 'Student not found' });
+    const signupId = student.signup_id;
+
+    // Step 3: Get associated parent signup ID (if any)
+    const result = await pool.query(
+      'SELECT parent_signup_id FROM parent_student_link WHERE student_id = $1',
+      [studentId]
+    );
+    const parentSignupId = result.rows[0]?.parent_signup_id;
+
+    // Step 4: Delete parent-student link
+    await pool.query('DELETE FROM parent_student_link WHERE student_id = $1', [studentId]);
+
+    // Step 5: Delete student record
+    await deleteStudent(studentId);
+
+    // Step 6: Delete student login from signup
+    if (signupId) {
+      await pool.query('DELETE FROM signup WHERE id = $1', [signupId]);
     }
 
-    // Delete photo file if exists
+    // Step 7: Delete parent login from signup (if not used by another student)
+    if (parentSignupId) {
+      const res2 = await pool.query(
+        'SELECT COUNT(*) FROM parent_student_link WHERE parent_signup_id = $1',
+        [parentSignupId]
+      );
+      const count = parseInt(res2.rows[0].count);
+
+      if (count === 0) {
+        await pool.query('DELETE FROM signup WHERE id = $1', [parentSignupId]);
+      }
+    }
+
+    // Step 8: Delete photo if exists
     if (student.student_photo) {
       const photoPath = path.join(uploadDir, student.student_photo);
       fs.unlink(photoPath, (err) => {
@@ -194,6 +228,7 @@ export const deleteStudentById = async (req, res) => {
     }
 
     res.status(200).json({ message: 'Student deleted successfully' });
+
   } catch (err) {
     console.error('Error deleting student:', err);
     res.status(500).json({ error: 'Failed to delete student' });
@@ -328,6 +363,66 @@ export const getStudentDashboardDetails = async (req, res) => {
       success: false,
       message: 'Database error',
       error: err.message 
+    });
+  }
+};
+
+export const ggetStudentsByTeacherClass = async (req, res) => {
+  try {
+    const signup_id = req.signup_id;
+    const results = await getStudentsByTeacherClass(signup_id);
+    
+    res.status(200).json({
+      success: true,
+      data: results
+    });
+  } catch (err) {
+    console.error('Database error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Database error',
+      data: []
+    });
+  }
+};
+
+
+
+
+export const getStudentsForParent = async (req, res) => {
+  try {
+    const parentSignupId = req.signup_id; // From auth middleware
+    console.log('👨‍👩‍👧 Parent Signup ID from token:', parentSignupId);
+
+    const students = await getStudentsByParentId(parentSignupId);
+    console.log('🎓 Students fetched from DB:', students);
+
+    if (!students || students.length === 0) {
+      console.log('⚠ No students linked with this parentSignupId:', parentSignupId);
+    }
+
+    const normalizedStudents = students.map(student => ({
+      ...student,
+      student_photo: student.student_photo
+        ? path.basename(student.student_photo.replace(/\\/g, '/'))
+        : null,
+      birth_certificate: student.birth_certificate
+        ? path.basename(student.birth_certificate.replace(/\\/g, '/'))
+        : null
+    }));
+
+    console.log('🧼 Normalized student data:', normalizedStudents);
+
+    res.status(200).json({
+      success: true,
+      data: normalizedStudents
+    });
+  } catch (error) {
+    console.error('❌ Error fetching student data for parent:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch student data',
+      error: error.message
     });
   }
 };

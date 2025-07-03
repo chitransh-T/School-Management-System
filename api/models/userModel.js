@@ -1,21 +1,20 @@
-
 // models/userModelPG.js
 import pool from '../config/db.js';
 import bcrypt from 'bcrypt';
 
-// Get user by email
-export const findUserByEmailPG = async (email) => {
+// // Get user by email
+export const findUsersByEmailPG = async (email) => {
   const query = 'SELECT * FROM signup WHERE email = $1';
   const { rows } = await pool.query(query, [email]);
-  return rows[0]; // Return single user
+  return rows; // returns multiple rows (different school_ids)
 };
+
 
 // Create new user
 export const createUserPG = async (userData) => {
   const { email, phone, password, role, school_id } = userData;
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  console.log('Creating user with data:', { email, phone, role, school_id });
 
   const query = `
     INSERT INTO signup (email, phone, password, role, school_id)

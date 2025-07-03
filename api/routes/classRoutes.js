@@ -4,7 +4,8 @@ import {
    registerClass,
    getAllClasses,
    updateClassDetails,
-   deleteClassById
+   deleteClassById,
+   getAssignedClass
 } from '../controllers/classController.js';
 
 const router = express.Router();
@@ -20,5 +21,8 @@ router.put('/classes/:id', verifyToken, updateClassDetails);
 
 // Route to delete a class by ID (Note the :id parameter)
 router.delete('/classes/:id', verifyToken, deleteClassById);
+
+// Route to get assigned class
+router.get('/assigned-class', verifyToken, getAssignedClass);
 
 export default router;

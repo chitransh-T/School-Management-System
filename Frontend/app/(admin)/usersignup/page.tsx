@@ -92,7 +92,7 @@ const Signup: React.FC = () => {
   };
 
   return (
-   
+   <DashboardLayout>
     <div className="w-full min-h-screen pt-20 pb-8 flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
       <div className="w-full max-w-md mx-4">
         {/* Card Container */}
@@ -227,7 +227,7 @@ const Signup: React.FC = () => {
               >
                 <option value="" disabled>Select your role</option>
                 <option value="principal">Principal</option>
-                <option value="operator">Operator</option>
+                <option value="admin">Admin</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                 <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -264,7 +264,7 @@ const Signup: React.FC = () => {
           </div>
 
           {/* Sign In Link */}
-          <div className="text-center pt-2">
+          {/* <div className="text-center pt-2">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
               <Link
@@ -274,11 +274,11 @@ const Signup: React.FC = () => {
                 Sign in
               </Link>
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
-   
+   </DashboardLayout>
   );
 };
 

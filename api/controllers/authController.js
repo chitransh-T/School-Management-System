@@ -1,11 +1,10 @@
 
 
 // controllers/authController.js
-// controllers/authController.js
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import {
-  findUserByEmailPG,
+  findUsersByEmailPG ,
   createUserPG,
   findStudentByCredentialsPG
 } from '../models/userModel.js';
@@ -14,23 +13,34 @@ import { JWT_SECRET_KEY } from '../middlewares/auth.js';
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: 'Email and password are required' });
+  }
+
   try {
-    const user = await findUserByEmailPG(email);
-    if (!user) {
+    const users = await findUsersByEmailPG(email); // returns all accounts with this email
+
+    if (!users || users.length === 0) {
       return res.status(400).json({ success: false, message: 'User not found' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    // Now try matching password with each user
+    const matchedUser = await Promise.any(users.map(async user => {
+      const isMatch = await bcrypt.compare(password, user.password);
+      return isMatch ? user : Promise.reject(); // reject if password doesn't match
+    })).catch(() => null);
+
+    if (!matchedUser) {
       return res.status(400).json({ success: false, message: 'Invalid credentials' });
     }
 
+    // ✅ login successful with matched user
     const token = jwt.sign(
       {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        school_id: user.school_id
+        id: matchedUser.id,
+        email: matchedUser.email,
+        role: matchedUser.role,
+        school_id: matchedUser.school_id
       },
       JWT_SECRET_KEY,
       { expiresIn: '6h' }
@@ -40,7 +50,8 @@ export const login = async (req, res) => {
       success: true,
       message: 'Login successful',
       token,
-      role: user.role
+      role: matchedUser.role,
+      school_id: matchedUser.school_id, // Optional: show which school user logged into
     });
 
   } catch (err) {
@@ -48,7 +59,6 @@ export const login = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
-
 export const register = async (req, res) => {
   const { email, phone, password, confirmpassword, role, school_id } = req.body;
 
@@ -61,10 +71,16 @@ export const register = async (req, res) => {
   }
 
   try {
-    const existingUser = await findUserByEmailPG(email);
-    if (existingUser) {
-      return res.status(400).json({ success: false, message: 'Email already exists' });
-    }
+    const existingUsers = await findUsersByEmailPG(email);
+
+const alreadyRegisteredInSameSchool = existingUsers.some(
+  user => user.school_id === school_id
+);
+
+if (alreadyRegisteredInSameSchool) {
+  return res.status(400).json({ success: false, message: 'User already registered in this school' });
+}
+
 
     const user = await createUserPG({ email, phone, password, role, school_id });
 

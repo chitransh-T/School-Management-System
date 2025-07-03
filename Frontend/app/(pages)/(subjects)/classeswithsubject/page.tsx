@@ -271,13 +271,7 @@ export default function ClassesWithSubjectsPage() {
                 </div>
               </div>
 
-              {/* Section Info */}
-              <div className="text-center mb-2 pb-2 border-b border-gray-200">
-                <p className="text-xs text-gray-600">
-                  Section: <span className="font-medium text-gray-900">{classItem.section}</span>
-                </p>
-              </div>
-
+            
               {/* Subjects List */}
               <div className="flex flex-wrap justify-center gap-2">
                 {classItem.subjects && classItem.subjects.length > 0 ? (

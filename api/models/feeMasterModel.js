@@ -53,3 +53,4 @@ export const getFeeFieldsFromDB = async (signup_id, session_id) => {
     client.release();
   }
 };
+

@@ -1,6 +1,4 @@
 import pool from '../config/db.js';
-
-
 export const upsertProfile = async (profileData) => {
   const { institute_name, address, logo, signup_id } = profileData;
 
@@ -23,8 +21,6 @@ export const upsertProfile = async (profileData) => {
   }
 };
 
-
-// models/profileModel.js
 export const getProfileBySchoolId = async (signup_id) => {
   const query = `
     SELECT ip.*
