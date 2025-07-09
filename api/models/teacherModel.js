@@ -78,7 +78,8 @@ export const getTeachersBySchoolId = async (signup_id) => {
     SELECT 
       t.*,
       s.email AS username,
-      s.password
+      s.password,
+      s.phone
     FROM teacher t
     JOIN signup s ON t.signup_id = s.id
     WHERE s.school_id = (SELECT school_id FROM signup WHERE id = $1)

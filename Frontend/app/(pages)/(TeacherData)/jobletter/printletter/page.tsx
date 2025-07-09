@@ -295,6 +295,7 @@ if (teacher.teacherPhoto) {
           ['Experience', teacher.experience || ''],
           ['Salary', teacher.salary || ''],
           ['Joining Date', teacher.dateOfJoining ? formatDate(teacher.dateOfJoining) : ''],
+          ['Phone', teacher.phone || ''],
           ['Account Status', 'Active'],
           ['Username', teacher.username || ''],
           ['Password', '••••••••'],
@@ -432,6 +433,7 @@ if (teacher.teacherPhoto) {
                   label="Joining Date"
                   value={teacher.dateOfJoining ? formatDate(teacher.dateOfJoining) : ''}
                 />
+                <TableRow label="Phone" value={teacher.phone || ''} />
                 <TableRow label="Account Status" value="Active" isStatus={true} />
                 <TableRow label="Username" value={teacher.username || ''} copyEnabled={true} />
                 <TableRow

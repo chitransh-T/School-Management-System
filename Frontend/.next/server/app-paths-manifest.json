@@ -1,7 +1,8 @@
 {
-  "/principledashboard/page": "app/principledashboard/page.js",
-  "/profilepage/page": "app/profilepage/page.js",
-  "/(parentdashboard)/parentdashboard/page": "app/(parentdashboard)/parentdashboard/page.js",
-  "/page": "app/page.js",
-  "/(teacherdashboard)/teacherdashboard/page": "app/(teacherdashboard)/teacherdashboard/page.js"
+  "/(pages)/(TeacherData)/TeacherDetails/page": "app/(pages)/(TeacherData)/TeacherDetails/page.js",
+  "/(pages)/(subjects)/assignSubject/page": "app/(pages)/(subjects)/assignSubject/page.js",
+  "/(pages)/(subjects)/classeswithsubject/page": "app/(pages)/(subjects)/classeswithsubject/page.js",
+  "/(pages)/(subjects)/editsubject/page": "app/(pages)/(subjects)/editsubject/page.js",
+  "/(pages)/(classes)/allclasses/page": "app/(pages)/(classes)/allclasses/page.js",
+  "/(pages)/(teacherassign)/viewassignteacher/page": "app/(pages)/(teacherassign)/viewassignteacher/page.js"
 }
