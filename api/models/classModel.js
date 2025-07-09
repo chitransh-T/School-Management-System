@@ -85,3 +85,23 @@ export const getClassByTeacherId = async (teacher_id) => {
     throw err;
   }
 };
+
+
+// Add this to your classModel.js
+export const getClassCountBySchoolId = async (signup_id) => {
+  const query = `
+    SELECT COUNT(c.id) as class_count
+    FROM classes c
+    JOIN signup s ON c.signup_id = s.id
+    WHERE s.school_id = (
+      SELECT school_id FROM signup WHERE id = $1
+    )
+  `;
+  try {
+    const result = await pool.query(query, [signup_id]);
+    return result.rows[0].class_count;
+  } catch (err) {
+    console.error('PostgreSQL Error in getClassCountBySchoolId:', err);
+    throw err;
+  }
+};

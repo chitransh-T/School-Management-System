@@ -70,7 +70,7 @@ const AdminNavbar: React.FC = () => {
           {/* Admin Logo */}
           <Link href="/admindashboard" className="flex-shrink-0">
             <img
-              src="https://almanet.in/wp-content/uploads/2022/03/Almanet-logo-220x47-1.png"
+              src="/logo.jpg"
               alt="Logo"
               className="h-6 sm:h-7 md:h-8 w-auto"
             />

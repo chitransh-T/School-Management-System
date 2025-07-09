@@ -1,5 +1,5 @@
 import pool from '../config/db.js';
-import { createClass, getClassesBySchoolId, updateClass, deleteClass , getClassByTeacherId } from '../models/classModel.js';
+import { createClass, getClassesBySchoolId, updateClass, deleteClass , getClassByTeacherId, getClassCountBySchoolId } from '../models/classModel.js';
 
 // Register class
 export const registerClass = async (req, res) => {
@@ -120,5 +120,23 @@ export const getAssignedClass = async (req, res) => {
   } catch (err) {
     console.error('Error fetching assigned class:', err);
     res.status(500).json({ message: 'Error fetching assigned class' });
+  }
+};
+
+
+
+export const getClassCount = async (req, res) => {
+  try {
+    const signup_id = req.signup_id;
+
+    if (!signup_id) {
+      return res.status(400).json({ message: 'Signup ID is required' });
+    }
+
+    const count = await getClassCountBySchoolId(signup_id);
+    res.status(200).json({ totalClasses: count });
+  } catch (err) {
+    console.error('Error fetching class count:', err);
+    res.status(500).json({ message: 'Error fetching class count' });
   }
 };

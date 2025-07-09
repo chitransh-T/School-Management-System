@@ -88,36 +88,7 @@ const ReceiveMessagesPage: React.FC = () => {
       setErrorMessage(errorMsg);
     }
   };
-  // const handleDeleteMessage = async (messageId: number) => {
-  //   if (!token) {
-  //     setErrorMessage("No token available");
-  //     return;
-  //   }
-
-  //   setIsLoading(true);
-  //   try {
-  //     const response = await fetch(`${baseUrl}/api/teacher-messages-for-parent/${messageId}`, {
-  //       method: "DELETE",
-  //       headers: {
-  //         Accept: "application/json",
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-
-  //     if (response.status === 200) {
-  //       setMessages(messages.filter((msg) => msg.id !== messageId));
-  //       alert("Message deleted successfully");
-  //     } else {
-  //       const data = await response.json();
-  //       setErrorMessage(data.error || "Failed to delete message");
-  //     }
-  //   } catch (error: any) {
-  //     setErrorMessage(`Error deleting message: ${error.message || error}`);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+  
 
   // Function to format timestamp
   const formatTimestamp = (timestamp: string) => {
@@ -164,12 +135,7 @@ const ReceiveMessagesPage: React.FC = () => {
                   <div className="text-gray-900 text-lg">{msg.message}</div>
                 </div>
                 <div className="absolute top-2 right-2">
-                  <button
-                    //onClick={() => handleDeleteMessage(msg.id)}
-                    className="text-white text-xl hover:text-red-500 focus:outline-none"
-                  >
-                    🗑️
-                  </button>
+                
                 </div>
                 <div className="text-gray-600 text-xs mt-2">
                   {formatTimestamp(msg.created_at)}

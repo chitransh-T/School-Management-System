@@ -54,7 +54,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     if (userRole === "admin") return <AdminSidebar onToggle={setSidebarOpen} />;
     if (userRole === "principal") return <Sidebar onToggle={setSidebarOpen} />;
     if (userRole === "teacher") return <TeacherSidebar onToggle={setSidebarOpen} />;
-    if (userRole === "parents") return <ParentSidebar onToggle={setSidebarOpen} />;   // parent sidebar use krna hai
+    if (userRole === "parents") return <ParentSidebar onToggle={setSidebarOpen} />;   
     return null;
   };
 
@@ -70,12 +70,17 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     <div className="flex flex-col min-h-screen pt-16 relative">
       {renderSidebar()}
       {renderNavbar()}
-      <div className="ml-[250px] mt-2 w-1 h-1" />
-      <div
+      {/* <div className="ml-[250px] mt-2 w-1 h-1" /> */}
+      {/* <div
         className={`flex-1 flex flex-col transition-all duration-300 ${
           sidebarOpen ? 'md:ml-64' : 'md:ml-16'
         } p-4 md:p-6 lg:p-8 overflow-auto`}
-      >
+      > */}
+      <div
+  className={`flex-1 flex flex-col transition-all duration-300 ${
+    sidebarOpen ? 'md:ml-64' : 'md:ml-16'
+  } p-4 md:p-6 lg:p-8 overflow-auto`}
+>
         <main className="flex-1">{children}</main>
       </div>
     </div>

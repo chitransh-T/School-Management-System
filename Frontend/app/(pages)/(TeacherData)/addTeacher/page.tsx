@@ -1,3 +1,4 @@
+
 "use client"
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
@@ -15,12 +16,9 @@ interface TeacherFormData {
   gender: string;
   address: string;
   qualification: string;
-  department: string;
-  subject: string;
-  yearsOfExperience: number;
-  salary: number;
+  yearsOfExperience: string;
+  salary: string;
   joiningDate: string;
-  employeeId: string;
   guardian: string;
   qualificationCertificate: File | null;
   teacherPhoto: string | File | null;
@@ -42,12 +40,9 @@ const AddTeacherForm = () => {
     gender: '',
     address: '',
     qualification: '',
-    department: '',
-    subject: '',
-    yearsOfExperience: 0,
-    salary: 0,
+    yearsOfExperience: '',
+    salary: '',
     joiningDate: '',
-    employeeId: '',
     guardian: '',
     qualificationCertificate: null,
     teacherPhoto: null
@@ -64,38 +59,80 @@ const AddTeacherForm = () => {
   const validateForm = () => {
     const newErrors: Partial<TeacherFormData> = {};
     
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    // Text fields - no numbers allowed
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    } else if (/[0-9]/.test(formData.name)) {
+      newErrors.name = 'Name cannot contain numbers';
+    }
+    
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Invalid email format';
     }
-    if (!formData.password.trim()) newErrors.password = 'Password is required';
-    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
-    if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
-    if (!formData.gender) newErrors.gender = 'Gender is required';
-    if (!formData.qualification) newErrors.qualification = 'Qualification is required';
-    if (!formData.department) newErrors.department = 'Department is required';
-    if (!formData.subject) newErrors.subject = 'Subject is required';
-    if (!formData.joiningDate) newErrors.joiningDate = 'Joining date is required';
-    if (!formData.employeeId) newErrors.employeeId = 'Employee ID is required';
+    
+    if (!formData.password.trim()) {
+      newErrors.password = 'Password is required';
+    }
+    
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!/^\d{10}$/.test(formData.phone)) {
+      newErrors.phone = 'Phone number must be 10 digits';
+    }
+    
+    if (!formData.dateOfBirth) {
+      newErrors.dateOfBirth = 'Date of birth is required';
+    }
+    
+    if (!formData.gender) {
+      newErrors.gender = 'Gender is required';
+    }
+    
+    if (!formData.qualification.trim()) {
+      newErrors.qualification = 'Qualification is required';
+    } else if (/[0-9]/.test(formData.qualification)) {
+      newErrors.qualification = 'Qualification cannot contain numbers';
+    }
+    
+    if (!formData.joiningDate) {
+      newErrors.joiningDate = 'Joining date is required';
+    }
+    
     if (!formData.teacherPhoto || !(formData.teacherPhoto instanceof File)) {
       newErrors.teacherPhoto = 'Teacher photo is required';
+    }
+    
+    if (formData.guardian && /[0-9]/.test(formData.guardian)) {
+      newErrors.guardian = 'Guardian name cannot contain numbers';
+    }
+    
+    if (formData.address && /[0-9]/.test(formData.address.replace(/\d+\s*[,-]?\s*/g, ''))) {
+      newErrors.address = 'Address text cannot contain numbers except in street numbers';
+    }
+    
+    // Number fields - must be valid numbers
+    if (Number(formData.yearsOfExperience) < 0) {
+      newErrors.yearsOfExperience = 'Years of experience cannot be negative';
+    }
+    
+    if (Number(formData.salary) < 0) {
+      newErrors.salary = 'Salary cannot be negative';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Form submission started');
     
-    // Log the current form data for debugging
-    console.log('Current form data:', formData);
-    
-    // Don't validate form here - we'll check individual fields below
-    // This prevents the form from being blocked by validation
+    if (!validateForm()) {
+      setError('Please correct the errors in the form');
+      return;
+    }
 
     // Create FormData object for file uploads
     const formDataObj = new FormData(e.target as HTMLFormElement);
@@ -119,13 +156,11 @@ const handleSubmit = async (e: React.FormEvent) => {
     const photoFile = teacherPhotoInput.files[0];
     const certFile = qualificationCertificateInput.files[0];
     
-    // Check photo file type (should be image)
     if (!photoFile.type.startsWith('image/')) {
       setError('Teacher photo must be an image file (JPG, PNG, etc.)');
       return;
     }
     
-    // Check certificate file type (should be PDF)
     if (certFile.type !== 'application/pdf') {
       setError('Qualification certificate must be a PDF file');
       return;
@@ -140,28 +175,16 @@ const handleSubmit = async (e: React.FormEvent) => {
     setError('');
 
     try {
-      // Map form field names to match backend expectations
-      // The backend expects: teacher_name, email, date_of_birth, date_of_joining, gender, etc.
-      
-      // Clear existing form data and rebuild with correct field names
       const apiFormData = new FormData();
       
-      // Map fields to match backend expectations
       apiFormData.append('teacher_name', formData.name);
       apiFormData.append('email', formData.email);
       apiFormData.append('password', formData.password);
       apiFormData.append('phone', formData.phone);
       apiFormData.append('date_of_birth', formData.dateOfBirth);
       apiFormData.append('date_of_joining', formData.joiningDate);
-      // Ensure gender is properly capitalized to match database constraints
-      // The database constraint requires specific values (likely 'Male', 'Female', 'Other')
-      console.log('Original gender value:', formData.gender);
       
-      // The database has a specific check constraint for gender values
-      // Let's hardcode 'M' for Male, 'F' for Female, and 'O' for Other
-      // These are likely the exact values the database constraint expects
-      let dbGenderValue = 'M'; // Default to 'M'
-      
+      let dbGenderValue = 'M';
       if (formData.gender === 'male' || formData.gender === 'Male') {
         dbGenderValue = 'M';
       } else if (formData.gender === 'female' || formData.gender === 'Female') {
@@ -170,7 +193,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         dbGenderValue = 'O';
       }
       
-      console.log('Database gender value:', dbGenderValue);
       apiFormData.append('gender', dbGenderValue);
       apiFormData.append('guardian_name', formData.guardian);
       apiFormData.append('qualification', formData.qualification);
@@ -178,13 +200,6 @@ const handleSubmit = async (e: React.FormEvent) => {
       apiFormData.append('salary', formData.salary.toString());
       apiFormData.append('address', formData.address);
       
-      // Add department and subject fields that might be used in the frontend but not in backend
-      // These won't be processed by the backend but will be included in the form data
-      apiFormData.append('department', formData.department);
-      apiFormData.append('subject', formData.subject);
-      apiFormData.append('employee_id', formData.employeeId);
-      
-      // Add files
       if (teacherPhotoInput?.files?.[0]) {
         apiFormData.append('teacher_photo', teacherPhotoInput.files[0]);
       }
@@ -193,20 +208,11 @@ const handleSubmit = async (e: React.FormEvent) => {
         apiFormData.append('qualification_certificate', qualificationCertificateInput.files[0]);
       }
 
-      // Get the authentication token
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication token not found');
       }
 
-      // Send form data to the backend
-      console.log('Sending teacher registration data to API...');
-      
-      // Log the form data being sent (for debugging)
-      for (const pair of apiFormData.entries()) {
-        console.log(`${pair[0]}: ${pair[1]}`);
-      }
-      
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
       const response = await fetch(`${baseUrl}/api/registerteacher`, {
         method: 'POST',
@@ -216,37 +222,21 @@ const handleSubmit = async (e: React.FormEvent) => {
         }
       });
 
-      console.log('Response status:', response.status);
       const result = await response.json();
-      console.log('Response data:', result);
 
       if (!response.ok) {
         throw new Error(result.message || result.error || 'Failed to register teacher');
       }
 
       alert('Teacher registered successfully!');
-      
-      // Reset the form
       (e.target as HTMLFormElement).reset();
       setQualificationCertificateFileName('');
       setTeacherPhotoFileName('');
-      
-      // Redirect to teacher list page
       router.push('/principledashboard');
     } catch (err: any) {
       console.error('Error details:', err);
-      
-      // Provide a more detailed error message
-      let errorMessage = 'Failed to register teacher. Please try again.';
-      
-      if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      // Set the error message for display
+      let errorMessage = err.message || 'Failed to register teacher. Please try again.';
       setError(errorMessage);
-      
-      // Show error in alert for immediate feedback
       alert(`Error: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
@@ -255,17 +245,64 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Clear error when user starts typing
-    if (errors[name as keyof TeacherFormData]) {
+    
+    // Text field validation (no numbers)
+    const textFields = ['name', 'qualification', 'guardian'];
+    if (textFields.includes(name) && /[0-9]/.test(value)) {
       setErrors(prev => ({
         ...prev,
-        [name]: undefined
+        [name]: `${name.charAt(0).toUpperCase() + name.slice(1)} cannot contain numbers`
       }));
+      return;
     }
+
+    // Number field validation
+    const numberFields = ['yearsOfExperience', 'salary'];
+    if (numberFields.includes(name)) {
+      if (value !== '' && isNaN(Number(value))) {
+        setErrors(prev => ({
+          ...prev,
+          [name]: `${name.charAt(0).toUpperCase() + name.slice(1)} must be a number`
+        }));
+        return;
+      }
+      if (Number(value) < 0) {
+        setErrors(prev => ({
+          ...prev,
+          [name]: `${name.charAt(0).toUpperCase() + name.slice(1)} cannot be negative`
+        }));
+        return;
+      }
+    }
+
+    // Phone number validation
+    if (name === 'phone' && value !== '' && !/^\d{0,10}$/.test(value)) {
+      setErrors(prev => ({
+        ...prev,
+        phone: 'Phone number must contain only digits and be up to 10 digits long'
+      }));
+      return;
+    }
+
+    // Address validation (allow numbers in street addresses)
+    if (name === 'address' && value && /[0-9]/.test(value.replace(/\d+\s*[,-]?\s*/g, ''))) {
+      setErrors(prev => ({
+        ...prev,
+        address: 'Address text cannot contain numbers except in street numbers'
+      }));
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: numberFields.includes(name) ? (value === '' ? 0 : Number(value)) : value
+    }));
+
+    // Clear error when input is valid
+    setErrors(prev => ({
+      ...prev,
+      [name]: undefined
+    }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, isPhoto: boolean) => {
@@ -295,7 +332,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         <div className="max-w-5xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl text-gray-500 font-bold">Add New Teacher</h1>
-            
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6 bg-white rounded-lg shadow-lg p-6">
@@ -363,7 +399,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                       {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
                     </div>
 
-                     <div>
+                    <div>
                       <label className="block text-sm font-medium text-gray-900">
                         Joining Date*
                       </label>
@@ -416,10 +452,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                       </select>
                       {errors.gender && <p className="text-red-500 text-sm mt-1">{errors.gender}</p>}
                     </div>
-
-                    
-
-                   
                   </div>
                 </div>
               )}
@@ -449,8 +481,11 @@ const handleSubmit = async (e: React.FormEvent) => {
                         placeholder="Enter guardian name"
                         value={formData.guardian}
                         onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none text-gray-900"
+                        className={`mt-1 block w-full rounded-md border ${
+                          errors.guardian ? 'border-red-500' : 'border-gray-300'
+                        } px-3 py-2 focus:border-blue-500 focus:outline-none text-gray-900`}
                       />
+                      {errors.guardian && <p className="text-red-500 text-sm mt-1">{errors.guardian}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-900">
@@ -469,7 +504,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                       {errors.qualification && <p className="text-red-500 text-sm mt-1">{errors.qualification}</p>}
                     </div>
 
-                    
                     <div>
                       <label className="block text-sm font-medium text-gray-900">
                         Years of Experience
@@ -481,13 +515,16 @@ const handleSubmit = async (e: React.FormEvent) => {
                         value={formData.yearsOfExperience}
                         onChange={handleChange}
                         min="0"
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none text-gray-900"
+                        className={`mt-1 block w-full rounded-md border ${
+                          errors.yearsOfExperience ? 'border-red-500' : 'border-gray-300'
+                        } px-3 py-2 focus:border-blue-500 focus:outline-none text-gray-900`}
                       />
+                      {errors.yearsOfExperience && <p className="text-red-500 text-sm mt-1">{errors.yearsOfExperience}</p>}
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-900">
-                        Monthly Salary
+                        Salary
                       </label>
                       <input
                         type="number"
@@ -496,11 +533,12 @@ const handleSubmit = async (e: React.FormEvent) => {
                         value={formData.salary}
                         onChange={handleChange}
                         min="0"
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none text-gray-900"
+                        className={`mt-1 block w-full rounded-md border ${
+                          errors.salary ? 'border-red-500' : 'border-gray-300'
+                        } px-3 py-2 focus:border-blue-500 focus:outline-none text-gray-900`}
                       />
+                      {errors.salary && <p className="text-red-500 text-sm mt-1">{errors.salary}</p>}
                     </div>
-
-                   
 
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-900">
@@ -512,26 +550,28 @@ const handleSubmit = async (e: React.FormEvent) => {
                         value={formData.address}
                         onChange={handleChange}
                         rows={3}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none text-gray-900"
+                        className={`mt-1 block w-full rounded-md border ${
+                          errors.address ? 'border-red-500' : 'border-gray-300'
+                        } px-3 py-2 focus:border-blue-500 focus:outline-none text-gray-900`}
                       />
+                      {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
                     </div>
-                     <div>
-                  <label className="block text-sm font-medium text-gray-900">
-                    Phone Number*
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    placeholder="Enter phone number"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className={`mt-1 block w-full rounded-md border ${
-                      errors.phone ? 'border-red-500' : 'border-gray-300'
-                    } px-3 py-2 focus:border-blue-500 focus:outline-none text-gray-900`}
-                  />
-                  {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-                </div>
-
+                    <div>
+                      <label className="block text-sm font-medium text-gray-900">
+                        Phone Number*
+                      </label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        placeholder="Enter phone number"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className={`mt-1 block w-full rounded-md border ${
+                          errors.phone ? 'border-red-500' : 'border-gray-300'
+                        } px-3 py-2 focus:border-blue-500 focus:outline-none text-gray-900`}
+                      />
+                      {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+                    </div>
                   </div>
                 </div>
               )}
@@ -576,7 +616,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                     </div>
                   </div>
                  
-
                   <div>
                     <label className="block text-sm font-medium text-gray-900 mb-2">
                       Teacher Photo*

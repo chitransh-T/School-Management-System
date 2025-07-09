@@ -255,7 +255,7 @@ const AdmissionConfirmationPage: React.FC = () => {
 
       pdf.setDrawColor(blue200[0], blue200[1], blue200[2]); // 144, 202, 249
       pdf.setLineWidth(1);
-      pdf.circle(pageWidth / 2, 110, 30);
+      pdf.circle(pageWidth / 2, 110, 20);
       if (student.studentPhoto) {
         try {
           const photoUrl = student.studentPhoto.startsWith('http')
@@ -264,7 +264,7 @@ const AdmissionConfirmationPage: React.FC = () => {
           const imgResponse = await fetch(photoUrl);
           const imgBlob = await imgResponse.blob();
           const imgUrl = URL.createObjectURL(imgBlob);
-          pdf.addImage(imgUrl, 'PNG', pageWidth / 2 - 30, 80, 60, 60, undefined, 'FAST');
+          pdf.addImage(imgUrl, 'PNG', pageWidth / 2 - 20, 90, 40, 40, undefined, 'FAST');
           URL.revokeObjectURL(imgUrl);
         } catch (err) {
           console.error('Error loading student photo for PDF:', err);
@@ -277,7 +277,7 @@ const AdmissionConfirmationPage: React.FC = () => {
         pdf.setTextColor(0, 0, 0);
         pdf.text('PHOTO', pageWidth / 2, 110, { align: 'center' });
       }
-
+      
       autoTable(pdf, {
         startY: 150,
         head: [['Field', 'Value']],

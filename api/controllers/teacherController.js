@@ -113,6 +113,8 @@ export const getAllTeachers = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+
 export const getTeacherDetails = async (req, res) => {
   try {
     const signup_id = req.signup_id;

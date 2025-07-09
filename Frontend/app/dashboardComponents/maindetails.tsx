@@ -175,7 +175,7 @@ const Stats = () => {
         
         // Fetch classes count (you might need to add this endpoint to your backend)
         const classesCountResponse = await fetch(
-          `${baseUrl}/api/api/classes/count?user_email=${encodeURIComponent(user.email)}`,
+          `${baseUrl}/api/count`,
           { headers }
         );
         

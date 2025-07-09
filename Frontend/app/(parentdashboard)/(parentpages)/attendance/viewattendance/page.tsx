@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -23,6 +21,9 @@ const AttendanceReport: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [totalPresent, setTotalPresent] = useState<number>(0);
+  const [totalAbsent, setTotalAbsent] = useState<number>(0);
+
   const router = useRouter();
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -37,7 +38,7 @@ const AttendanceReport: React.FC = () => {
     if (selectedMonth) {
       fetchMonthData(selectedMonth);
     }
-  }, [selectedMonth, token, router]);
+  }, [selectedMonth]);
 
   useEffect(() => {
     if (!token) {
@@ -48,7 +49,19 @@ const AttendanceReport: React.FC = () => {
     if (selectedDate) {
       fetchDateData(selectedDate);
     }
-  }, [selectedDate, token, router]);
+  }, [selectedDate]);
+
+  useEffect(() => {
+    if (selectedMonth && records.length > 0) {
+      const presentCount = records.filter((r) => r.is_present).length;
+      const absentCount = records.length - presentCount;
+      setTotalPresent(presentCount);
+      setTotalAbsent(absentCount);
+    } else {
+      setTotalPresent(0);
+      setTotalAbsent(0);
+    }
+  }, [records, selectedMonth]);
 
   const fetchMonthData = async (month: string) => {
     setIsLoading(true);
@@ -107,15 +120,14 @@ const AttendanceReport: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="bg-gray-100 min-h-screen text-gray-700 px-4 py-8">
-        <h1 className="text-2xl mb-2 font-bold">Get your attendance record</h1>
-        <p className="mb-4 text-sm text-gray-500">You can fetch attendance month-wise and date-wise.</p>
+        <h1 className="text-2xl mb-2 font-bold">Attendance Records</h1>
+        <p className="mb-4 text-sm text-gray-500">View attendance by month or date.</p>
 
         {errorMessage && (
           <div className="bg-red-500 text-white px-4 py-2 rounded mb-4">{errorMessage}</div>
         )}
 
         <div className="flex gap-6 mb-6">
-          {/* Month Selector */}
           <select
             className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700"
             value={selectedMonth}
@@ -136,7 +148,6 @@ const AttendanceReport: React.FC = () => {
             })}
           </select>
 
-          {/* Date Picker */}
           <input
             type="date"
             className="px-4 py-2 rounded-lg bg-gray-200 text-black"
@@ -149,39 +160,51 @@ const AttendanceReport: React.FC = () => {
           />
         </div>
 
-        {/* Attendance Records */}
-        <div className="space-y-4">
+        <div className="bg-white rounded-md shadow-md p-4">
+          <h2 className="text-lg font-semibold mb-4">Attendance</h2>
+
+          {selectedMonth && records.length > 0 && (
+            <div className="flex gap-4 mb-4">
+              <div className="bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm font-medium">
+                ✅ Total Present: {totalPresent}
+              </div>
+              <div className="bg-red-100 text-red-700 px-4 py-1 rounded-full text-sm font-medium">
+                ❌ Total Absent: {totalAbsent}
+              </div>
+            </div>
+          )}
+
           {isLoading ? (
             <p className="text-gray-400">Loading attendance records...</p>
           ) : records.length === 0 ? (
             <p className="text-gray-400">No attendance records found.</p>
           ) : (
-            records.map((record, index) => (
-              <div key={index} className="bg-white text-black rounded-md p-4 shadow-md">
-                <div className="grid grid-cols-5 font-semibold border-b pb-1 text-sm text-gray-600">
-                  {/* <span>NAME</span>
-                  <span>CLASS</span>
-                  <span>SECTION</span> */}
-                  <span>DATE</span>
-                  <span>STATUS</span>
-                </div>
-                <div className="grid grid-cols-5 mt-2 text-sm">
-                  {/* <span>{record.student_name}</span>
-                  <span>{record.class_name}</span>
-                  <span>{record.section}</span> */}
-                  <span>{dayjs(record.date).format('DD/MM/YYYY')}</span>
-                  <span>
+            <>
+              <div className="grid grid-cols-2 font-semibold border-b pb-2 text-sm text-gray-600">
+                <span>DATE</span>
+                <span>STATUS</span>
+              </div>
+
+              <div className="mt-2 space-y-2">
+                {records.map((record, index) => (
+                  <div
+                    key={index}
+                    className="grid grid-cols-2 text-sm items-center border-b pb-1"
+                  >
+                    <span>{dayjs(record.date).format('DD/MM/YYYY')}</span>
                     <span
-                      className={`px-2 py-1 text-xs rounded-full font-medium ${
-                        record.is_present ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                      className={`px-2 py-1 text-xs rounded-full font-medium inline-block w-fit ${
+                        record.is_present
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-red-100 text-red-700'
                       }`}
                     >
                       {record.is_present ? 'Present' : 'Absent'}
                     </span>
-                  </span>
-                </div>
+                  </div>
+                ))}
               </div>
-            ))
+            </>
           )}
         </div>
       </div>

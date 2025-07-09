@@ -329,7 +329,7 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                 </svg>
-                  Teacher Assign
+                  Subject Assign
                 </div>
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
@@ -346,7 +346,7 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
                   <li>
                     <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/assignteacher' ? 'bg-gray-200' : ''}`}>
                       <Link href="/assignteacher" className="hover:text-gray-600 flex items-center w-full" onClick={() => localStorage.setItem('sidebarScrollPosition', sidebarRef.current?.scrollTop?.toString() || '0')}>
-                        <span className="text-sm">Assign Subjects</span>
+                        <span className="text-sm">Assign Subjects to Teacher</span>
                       </Link>
                     </div>
                   </li>
@@ -389,6 +389,13 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
               </button>
               {isClassOpen && (
                 <ul className="ml-6 mt-2 space-y-2">
+                   <li>
+                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/addclass' ? 'bg-gray-200' : ''}`}>
+                      <Link href="/addclass" className="hover:text-gray-600 flex items-center w-full">
+                        <span className="text-sm">New Class</span>
+                      </Link>
+                    </div>
+                  </li>
                   <li>
                     <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/allclasses' ? 'bg-gray-200' : ''}`}>
                       <Link href="/allclasses" className="hover:text-gray-600 flex items-center w-full" onClick={() => localStorage.setItem('sidebarScrollPosition', sidebarRef.current?.scrollTop?.toString() || '0')}>
@@ -396,13 +403,7 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
                       </Link>
                     </div>
                   </li>
-                  <li>
-                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/addclass' ? 'bg-gray-200' : ''}`}>
-                      <Link href="/addclass" className="hover:text-gray-600 flex items-center w-full">
-                        <span className="text-sm">New Class</span>
-                      </Link>
-                    </div>
-                  </li>
+                 
           
                 </ul>
               )}
@@ -436,6 +437,13 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
               </button>
               {isSubjectOpen && (
                 <ul className="ml-6 mt-2 space-y-2">
+                   <li>
+                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/assignSubject' ? 'bg-gray-200' : ''}`}>
+                      <Link href="/assignSubject" className="hover:text-gray-600 flex items-center w-full">
+                        <span className="text-sm">Assign Subject To Classes</span>
+                      </Link>
+                    </div>
+                  </li>
                   <li>
                     <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/classeswithsubject' ? 'bg-gray-200' : ''}`}>
                       <Link href="/classeswithsubject" className="hover:text-gray-600 flex items-center w-full" onClick={() => localStorage.setItem('sidebarScrollPosition', sidebarRef.current?.scrollTop?.toString() || '0')}>
@@ -443,13 +451,7 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
                       </Link>
                     </div>
                   </li>
-                  <li>
-                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/assignSubject' ? 'bg-gray-200' : ''}`}>
-                      <Link href="/assignSubject" className="hover:text-gray-600 flex items-center w-full">
-                        <span className="text-sm">Assign Subject</span>
-                      </Link>
-                    </div>
-                  </li>
+                 
           
                 </ul>
               )}
@@ -583,13 +585,7 @@ const Sidebar = ({ onToggle }: SidebarProps = {}) => {
                       </Link>
                     </div>
                   </li>
-                  <li>
-                    <div className={`p-2 hover:bg-gray-200 rounded-md ${pathname === '/feereceiptstudent' ? 'bg-gray-200' : ''}`}>
-                      <Link href="/feereceiptstudent" className="hover:text-gray-600 flex items-center w-full" onClick={() => localStorage.setItem('sidebarScrollPosition', sidebarRef.current?.scrollTop?.toString() || '0')}>
-                        <span className="text-sm">Fees Paid Slip</span>
-                      </Link>
-                    </div>
-                  </li>
+                  
                 </ul>
               )}
             </li>

@@ -91,6 +91,7 @@ export const getTeachersBySchoolId = async (signup_id) => {
     throw err;
   }
 };
+
 export const getTeacherBySignupId = async (signup_id) => {
   const query = `
     WITH SubjectAggregates AS (

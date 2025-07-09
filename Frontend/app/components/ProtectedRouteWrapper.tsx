@@ -21,7 +21,7 @@ const ProtectedRouteWrapper = ({ children }: ProtectedRouteWrapperProps) => {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Define public routes that don't require authentication
-  const publicRoutes = ['/auth/signin', '/', '/auth/reset-password'];
+  const publicRoutes = ['/auth/signin', '/', '/auth/reset-password','/quicklinks/about-us','/quicklinks/privacy-policy','/quicklinks/terms-conditions','/faq'];
 
   useEffect(() => {
     // Check if we're on the client side

@@ -23,6 +23,7 @@ import homeworkRoutes from './routes/homeworkRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
 import parentmessageRoutes from './routes/parentmessageRoutes.js';
 import eventimageRoutes from './routes/eventimageRoutes.js';
+import contactRoutes from './routes/contactRoutes.js';
 // Setup for file path management
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -112,6 +113,7 @@ app.use('/api',homeworkRoutes);
 app.use('/api',messageRoutes);
 app.use('/api',parentmessageRoutes);
 app.use('/api',eventimageRoutes);
+app.use('/api', contactRoutes);
 // If no route matches, return 404
 app.use((req, res) => {
   // console.log('404 for route:', req.url);

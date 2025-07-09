@@ -1,17 +1,14 @@
-
-
 'use client';
 
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import DashboardLayout from '@/app/dashboardComponents/DashboardLayout';
+import Calendar from '@/app/components/calender';
 
 const TeacherDashboardPage = () => {
   const router = useRouter();
   const [teacherName, setTeacherName] = useState("Teacher");
-  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [assignedClasses, setAssignedClasses] = useState<any[]>([]);
   const [assignedClass, setAssignedClass] = useState<string | null>(null);
   const [assignedSection, setAssignedSection] = useState<string | null>(null);
@@ -36,16 +33,6 @@ const TeacherDashboardPage = () => {
 
       const data = res.data?.data;
       setTeacherName(data?.teacher_name || "Teacher");
-
-      const photoPath = data?.teacher_photo_url || data?.teacher_photo;
-      if (photoPath) {
-        setProfileImage(
-          photoPath.startsWith("http")
-            ? photoPath
-            : `${BASE_URL}${photoPath.startsWith("/") ? "" : "/"}${photoPath}`
-        );
-      }
-
       setAssignedClasses(data?.assigned_classes || []);
       setLoading(false);
     } catch (err) {
@@ -91,52 +78,50 @@ const TeacherDashboardPage = () => {
     }
   };
 
-  const handleLogout = () => {
-    if (confirm("Are you sure you want to logout?")) {
-      localStorage.removeItem("token");
-      router.push("/login");
-    }
-  };
-
-  const buildCard = (title: string, value: string, icon: string) => (
-    <div className="p-4 bg-blue-100 rounded-xl flex items-center gap-4">
-      <span className="text-blue-700 text-2xl">{icon}</span>
-      <div>
-        <p className="font-semibold text-blue-700">{title}</p>
-        <p className="text-xl font-bold text-blue-900">{value}</p>
-      </div>
-    </div>
-  );
-
   return (
     <DashboardLayout>
-      <div className="min-h-screen p-4 bg-gray-50">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-xl font-bold text-gray-800">Welcome, {teacherName}</h1>
-         
+      <div className="min-h-screen p-6 bg-gray-50">
+        {/* Header Section */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Welcome, {teacherName}</h1>
+          {assignedClass && assignedSection && (
+            <p className="text-sm text-gray-600 mt-1">
+              Class Teacher of {assignedClass} - {assignedSection}
+            </p>
+          )}
         </div>
 
-        <div className="mb-4">
-          <p className="p-4 bg-white rounded shadow text-gray-900">
-            {assignedClass && assignedSection
-              ? `You are the class teacher of ${assignedClass} - ${assignedSection}`
-              : "No class assigned"}
-          </p>
-        </div>
-
+        {/* Error Message */}
         {errorMessage && (
-          <div className="bg-red-500 text-white p-3 rounded mb-4">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {errorMessage}
           </div>
         )}
 
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-2 text-gray-700">Assigned Classes for Teaching</h2>
-          <div className="space-y-3">
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div className="p-4 bg-white rounded-xl shadow flex items-center gap-4">
+            <span className="text-3xl">📚</span>
+            <div>
+              <p className="text-gray-600">Total Assigned Classes To Teach</p>
+              <p className="text-xl font-bold text-blue-700">{assignedClasses.length}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Assigned Classes */}
+        <div className="mb-10">
+          <h2 className="text-xl font-semibold mb-3 text-gray-700">Teaching Assignments</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {assignedClasses.map((cls, idx) => (
-              <div key={idx} className="p-4 bg-white rounded shadow text-gray-700">
-                <p>{cls.class_name || "N/A"} - Section {cls.section || "N/A"}</p>
-                <p className="text-sm text-gray-600">
+              <div
+                key={idx}
+                className="p-4 bg-white rounded-lg shadow border border-gray-200"
+              >
+                <p className="text-lg font-medium text-gray-800">
+                  {cls.class_name || "N/A"} - Section {cls.section || "N/A"}
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
                   Subjects: {(cls.subjects || []).join(", ") || "N/A"}
                 </p>
               </div>
@@ -144,26 +129,38 @@ const TeacherDashboardPage = () => {
           </div>
         </div>
 
-        {buildCard("Total Classes", assignedClasses.length.toString(), "🏫")}
+        {/* Notices + Calendar Section */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Notices */}
+          <div className="flex-1">
+            <h2 className="text-xl font-semibold mb-3 text-gray-700">Notices</h2>
+            {notices.length > 0 ? (
+              <div className="space-y-3">
+                {notices.map((notice, idx) => (
+                  <div
+                    key={notice.id || idx}
+                    className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg shadow"
+                  >
+                    <h3 className="font-bold text-yellow-800">{notice.title}</h3>
+                    <p className="text-gray-700 mt-1">{notice.content}</p>
+                    <p className="text-sm text-gray-500 mt-2">
+                      Date: {new Date(notice.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">No notices found.</p>
+            )}
+          </div>
 
-        {/* Notices Section */}
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-3 text-gray-700">Notices</h2>
-          {notices.length > 0 ? (
-            <ul className="space-y-2">
-              {notices.map((notice, idx) => (
-                <li key={notice.id || idx} className="p-4 bg-yellow-50 rounded shadow">
-                  <h3 className="font-semibold text-yellow-800 ">{notice.title}</h3>
-                  <p className="text-md text-yellow-700 ">{notice.description}</p>
-                  <p className="text-md text-yellow-600 mt-1 ">
-                    Date: {new Date(notice.created_at).toLocaleDateString()}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-600">No notices found.</p>
-          )}
+          {/* Calendar */}
+          <div className="w-full lg:w-80">
+            <h2 className="text-xl font-semibold mb-3 text-gray-700">Calendar</h2>
+            <div className="bg-white rounded-lg shadow-md p-4">
+              <Calendar />
+            </div>
+          </div>
         </div>
       </div>
     </DashboardLayout>
@@ -171,3 +168,5 @@ const TeacherDashboardPage = () => {
 };
 
 export default TeacherDashboardPage;
+
+

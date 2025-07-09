@@ -16,89 +16,101 @@
       "static/chunks/main-app.js",
       "static/chunks/app/auth/signin/page.js"
     ],
-    "/(teacherdashboard)/teacherdashboard/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(teacherdashboard)/teacherdashboard/page.js"
-    ],
-    "/(teacherdashboard)/(teacherpages)/Homework/viewhomework/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(teacherdashboard)/(teacherpages)/Homework/viewhomework/page.js"
-    ],
     "/principledashboard/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/principledashboard/page.js"
+    ],
+    "/quicklinks/about-us/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/quicklinks/about-us/page.js"
+    ],
+    "/quicklinks/privacy-policy/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/quicklinks/privacy-policy/page.js"
+    ],
+    "/quicklinks/terms-conditions/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/quicklinks/terms-conditions/page.js"
     ],
     "/(pages)/(sessions)/createsession/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(pages)/(sessions)/createsession/page.js"
     ],
-    "/(pages)/(sessions)/managesession/page": [
+    "/(pages)/notice/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/(sessions)/managesession/page.js"
+      "static/chunks/app/(pages)/notice/page.js"
     ],
     "/(pages)/(TeacherData)/addTeacher/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(pages)/(TeacherData)/addTeacher/page.js"
     ],
+    "/(pages)/(studentsData)/addstudent/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/(pages)/(studentsData)/addstudent/page.css",
+      "static/chunks/app/(pages)/(studentsData)/addstudent/page.js"
+    ],
+    "/(pages)/(TeacherData)/jobletter/t_jobletter/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(TeacherData)/jobletter/t_jobletter/page.js"
+    ],
+    "/(pages)/(TeacherData)/jobletter/printletter/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(TeacherData)/jobletter/printletter/page.js"
+    ],
     "/(pages)/(TeacherData)/TeacherDetails/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(pages)/(TeacherData)/TeacherDetails/page.js"
     ],
-    "/(pages)/(teacherassign)/viewassignteacher/page": [
+    "/(pages)/(classes)/allclasses/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/(pages)/(teacherassign)/viewassignteacher/page.css",
-      "static/chunks/app/(pages)/(teacherassign)/viewassignteacher/page.js"
+      "static/chunks/app/(pages)/(classes)/allclasses/page.js"
     ],
-    "/(teacherdashboard)/(teacherpages)/attendence/markstudentattendance/page": [
+    "/(pages)/(studentsData)/studentattendance/markattendance/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/(teacherdashboard)/(teacherpages)/attendence/markstudentattendance/page.css",
-      "static/chunks/app/(teacherdashboard)/(teacherpages)/attendence/markstudentattendance/page.js"
+      "static/chunks/app/(pages)/(studentsData)/studentattendance/markattendance/page.js"
     ],
-    "/(teacherdashboard)/(teacherpages)/attendence/studattendancereport/page": [
+    "/(pages)/(studentsData)/studentdetails/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/(teacherdashboard)/(teacherpages)/attendence/studattendancereport/page.css",
-      "static/chunks/app/(teacherdashboard)/(teacherpages)/attendence/studattendancereport/page.js"
+      "static/chunks/app/(pages)/(studentsData)/studentdetails/page.js"
     ],
-    "/(teacherdashboard)/(teacherpages)/Homework/givehomework/page": [
+    "/(pages)/(TeacherData)/TeacherAttendance/markteacherattendance/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/(teacherdashboard)/(teacherpages)/Homework/givehomework/page.css",
-      "static/chunks/app/(teacherdashboard)/(teacherpages)/Homework/givehomework/page.js"
+      "static/chunks/app/(pages)/(TeacherData)/TeacherAttendance/markteacherattendance/page.js"
     ],
-    "/(teacherdashboard)/(teacherpages)/MessagesControl/sentmessage/page": [
+    "/(pages)/(Admission)/studentadmission/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(teacherdashboard)/(teacherpages)/MessagesControl/sentmessage/page.js"
+      "static/chunks/app/(pages)/(Admission)/studentadmission/page.js"
     ],
-    "/(teacherdashboard)/(teacherpages)/MessagesControl/textsent/page": [
+    "/(pages)/(Admission)/Admissionletter/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(teacherdashboard)/(teacherpages)/MessagesControl/textsent/page.js"
+      "static/chunks/app/(pages)/(Admission)/Admissionletter/page.js"
     ],
-    "/(teacherdashboard)/(teacherpages)/MessagesControl/viewmessage/page": [
+    "/(pages)/(subjects)/assignSubject/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(teacherdashboard)/(teacherpages)/MessagesControl/viewmessage/page.js"
+      "static/chunks/app/(pages)/(subjects)/assignSubject/page.js"
     ],
-    "/(teacherdashboard)/(teacherpages)/MessagesControl/receivemessage/page": [
+    "/(teacherdashboard)/teacherdashboard/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(teacherdashboard)/(teacherpages)/MessagesControl/receivemessage/page.js"
-    ],
-    "/(teacherdashboard)/(teacherpages)/eventimages/uploadimage/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(teacherdashboard)/(teacherpages)/eventimages/uploadimage/page.js"
+      "static/chunks/app/(teacherdashboard)/teacherdashboard/page.js"
     ],
     "/(teacherdashboard)/(teacherpages)/eventimages/viewimage/page": [
       "static/chunks/webpack.js",
@@ -110,30 +122,15 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(parentdashboard)/parentdashboard/page.js"
     ],
-    "/(parentdashboard)/(parentpages)/stud_Homework/gethomework/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(parentdashboard)/(parentpages)/stud_Homework/gethomework/page.js"
-    ],
-    "/(parentdashboard)/(parentpages)/attendance/viewattendance/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(parentdashboard)/(parentpages)/attendance/viewattendance/page.js"
-    ],
-    "/(parentdashboard)/(parentpages)/messageControl/sentmessagetoteacher/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(parentdashboard)/(parentpages)/messageControl/sentmessagetoteacher/page.js"
-    ],
-    "/(parentdashboard)/(parentpages)/messageControl/receivemessagefromteacher/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(parentdashboard)/(parentpages)/messageControl/receivemessagefromteacher/page.js"
-    ],
     "/(parentdashboard)/(parentpages)/eventphotos/parenteventimages/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(parentdashboard)/(parentpages)/eventphotos/parenteventimages/page.js"
+    ],
+    "/profilepage/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/profilepage/page.js"
     ]
   }
 }

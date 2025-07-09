@@ -179,7 +179,7 @@ const TeacherAdmissionLetterPage: React.FC = () => {
                     <p className="font-semibold text-blue-900">{teacher.name}</p>
                     <p className="text-sm text-blue-700">Email: {teacher.username}</p>
                     <p className="text-sm text-blue-700">Qualification: {teacher.qualification}</p>
-                    <p className="text-sm text-blue-700">Joined: {teacher.dateOfJoining}</p>
+                    <p className="text-sm text-blue-700">Joined: {new Date(teacher.dateOfJoining).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div>

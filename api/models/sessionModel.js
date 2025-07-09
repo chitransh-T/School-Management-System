@@ -1,8 +1,7 @@
-// ==============================================
 import pool from '../config/db.js';
 
 export const createSessionInDB = async ({ session_name, start_date, end_date, signup_id }) => {
-  // Deactivate old active sessions for the same school
+  // First deactivate any active sessions for the same school
   await pool.query(`
     UPDATE sessions 
     SET is_active = FALSE 
@@ -23,6 +22,23 @@ export const createSessionInDB = async ({ session_name, start_date, end_date, si
   return await pool.query(query, values);
 };
 
+export const getActiveSessionFromDB = async (signup_id) => {
+  const query = `
+    SELECT s.*
+    FROM sessions s
+    JOIN signup u ON s.signup_id = u.id
+    WHERE u.school_id = (
+      SELECT school_id FROM signup WHERE id = $1
+    )
+    AND s.is_active = TRUE
+    ORDER BY s.end_date DESC
+    LIMIT 1
+  `;
+  const result = await pool.query(query, [signup_id]);
+  return result.rows[0];
+};
+
+// ... rest of the model code remains the same ...
 export const getSessionsFromDB = async (signup_id) => {
   const query = `
     SELECT s.id, s.session_name, s.start_date, s.end_date, s.is_active
@@ -62,19 +78,4 @@ export const deleteSession = async (id, signup_id, callback) => {
     console.error('PostgreSQL Error in deleteSession:', err);
     callback(err, null);
   }
-};
-
-export const getActiveSessionFromDB = async (signup_id) => {
-  const query = `
-    SELECT s.*
-    FROM sessions s
-    JOIN signup u ON s.signup_id = u.id
-    WHERE u.school_id = (
-      SELECT school_id FROM signup WHERE id = $1
-    )
-    AND s.is_active = TRUE
-    LIMIT 1
-  `;
-  const result = await pool.query(query, [signup_id]);
-  return result.rows[0];
 };

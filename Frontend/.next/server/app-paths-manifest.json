@@ -1,7 +1,7 @@
 {
+  "/principledashboard/page": "app/principledashboard/page.js",
+  "/profilepage/page": "app/profilepage/page.js",
   "/(parentdashboard)/parentdashboard/page": "app/(parentdashboard)/parentdashboard/page.js",
   "/page": "app/page.js",
-  "/(parentdashboard)/(parentpages)/messageControl/receivemessagefromteacher/page": "app/(parentdashboard)/(parentpages)/messageControl/receivemessagefromteacher/page.js",
-  "/(parentdashboard)/(parentpages)/eventphotos/parenteventimages/page": "app/(parentdashboard)/(parentpages)/eventphotos/parenteventimages/page.js",
-  "/(parentdashboard)/(parentpages)/messageControl/sentmessagetoteacher/page": "app/(parentdashboard)/(parentpages)/messageControl/sentmessagetoteacher/page.js"
+  "/(teacherdashboard)/teacherdashboard/page": "app/(teacherdashboard)/teacherdashboard/page.js"
 }

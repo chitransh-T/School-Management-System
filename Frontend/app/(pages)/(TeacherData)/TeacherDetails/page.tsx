@@ -11,7 +11,7 @@ interface Teacher {
   id: number;
   teacher_name: string;
   phone: string;
-  email: string;
+  username: string;
   address: string;
   teacher_photo: string;
   qualification_certificate: string;
@@ -208,7 +208,7 @@ const TeacherDetails = () => {
                 <div className="space-y-2 text-sm text-gray-600">
                
                   <p>Contact: {teacher.phone}</p>
-                  <p>Email: {teacher.email}</p>
+                  <p>Email: {teacher.username}</p>
                   <p>Address: {teacher.address}</p>
                 </div>
               </div>

@@ -217,7 +217,7 @@ const JobLetterPrintPage: React.FC = () => {
       const blue800 = [30, 136, 229];
       const blue100 = [240, 248, 255];
       const blue200 = [144, 202, 249];
-      const green100 = [220, 252, 231];
+      const green100 = [220,252,231];
       const green800 = [22, 101, 52];
 
       // Header
@@ -261,28 +261,30 @@ const JobLetterPrintPage: React.FC = () => {
 
       pdf.setDrawColor(blue200[0], blue200[1], blue200[2]);
       pdf.setLineWidth(1);
-      pdf.circle(pageWidth / 2, 110, 30);
-      if (teacher.teacherPhoto) {
-        try {
-          const photoUrl = teacher.teacherPhoto.startsWith('http')
-            ? teacher.teacherPhoto
-            : `${baseUrl}/Uploads/${teacher.teacherPhoto}`;
-          const imgResponse = await fetch(photoUrl);
-          const imgBlob = await imgResponse.blob();
-          const imgUrl = URL.createObjectURL(imgBlob);
-          pdf.addImage(imgUrl, 'PNG', pageWidth / 2 - 30, 80, 60, 60, undefined, 'FAST');
-          URL.revokeObjectURL(imgUrl);
-        } catch (err) {
-          console.error('Error loading teacher photo for PDF:', err);
-          pdf.setFontSize(12);
-          pdf.setTextColor(0, 0, 0);
-          pdf.text('PHOTO', pageWidth / 2, 110, { align: 'center' });
-        }
-      } else {
-        pdf.setFontSize(12);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text('PHOTO', pageWidth / 2, 110, { align: 'center' });
-      }
+      
+
+      pdf.circle(pageWidth / 2, 110, 10);
+if (teacher.teacherPhoto) {
+  try {
+    const photoUrl = teacher.teacherPhoto.startsWith('http')
+      ? teacher.teacherPhoto
+      : `${baseUrl}/Uploads/${teacher.teacherPhoto}`;
+    const imgResponse = await fetch(photoUrl);
+    const imgBlob = await imgResponse.blob();
+    const imgUrl = URL.createObjectURL(imgBlob);
+    pdf.addImage(imgUrl, 'PNG', pageWidth / 2 - 20, 90, 40, 40, undefined, 'FAST');
+    URL.revokeObjectURL(imgUrl);
+  } catch (err) {
+    console.error('Error loading teacher photo for PDF:', err);
+    pdf.setFontSize(12);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text('PHOTO', pageWidth / 2, 110, { align: 'center' });
+  }
+} else {
+  pdf.setFontSize(12);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('PHOTO', pageWidth / 2, 110, { align: 'center' });
+}
 
       autoTable(pdf, {
         startY: 150,

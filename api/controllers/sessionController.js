@@ -3,9 +3,11 @@ import {
   getSessionsFromDB,
   updateSessionInDB,
   deleteSession,
+  getActiveSessionFromDB,
 } from '../models/sessionModel.js';
 import { getTeachersBySessionId } from '../models/teacherModel.js';
 import { getStudentsBySessionId } from '../models/studentModel.js';
+
 export const createSession = async (req, res) => {
   try {
     const { session_name, start_date, end_date } = req.body;
@@ -26,6 +28,35 @@ export const createSession = async (req, res) => {
       });
     }
 
+    // Check if there's an active session
+    const activeSession = await getActiveSessionFromDB(signup_id);
+    
+    if (activeSession) {
+      const currentDate = new Date();
+      const activeSessionEndDate = new Date(activeSession.end_date);
+      
+      // Check if active session has ended
+      if (currentDate <= activeSessionEndDate) {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot create new session. Current session is active until ${activeSessionEndDate.toISOString().split('T')[0]}`,
+          activeSessionEndDate: activeSessionEndDate.toISOString().split('T')[0],
+        });
+      }
+    }
+
+    // Validate new session dates
+    const newStartDate = new Date(start_date);
+    const newEndDate = new Date(end_date);
+    
+    if (newStartDate >= newEndDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'End date must be after start date',
+      });
+    }
+
+    // If there was an active session but it has ended, allow creating new session
     const result = await createSessionInDB({
       session_name,
       start_date,
@@ -48,6 +79,7 @@ export const createSession = async (req, res) => {
   }
 };
 
+// ... rest of the controller code remains the same ...
 export const getSessions = async (req, res) => {
   try {
     const signup_id = req.signup_id;
@@ -124,7 +156,7 @@ export const deleteSessions = async (req, res) => {
     if (teachers.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'Please delete all teachers related to this session first.',
+        message: 'Please delete all records related to this session first.',
       });
     }
 
@@ -133,7 +165,7 @@ export const deleteSessions = async (req, res) => {
     if (students.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'Please delete all students related to this session first.',
+        message: 'Please delete all records related to this session first.',
       });
     }
 
@@ -155,3 +187,5 @@ export const deleteSessions = async (req, res) => {
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 };
+//---
+

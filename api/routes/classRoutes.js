@@ -5,7 +5,8 @@ import {
    getAllClasses,
    updateClassDetails,
    deleteClassById,
-   getAssignedClass
+   getAssignedClass,
+   getClassCount
 } from '../controllers/classController.js';
 
 const router = express.Router();
@@ -24,5 +25,8 @@ router.delete('/classes/:id', verifyToken, deleteClassById);
 
 // Route to get assigned class
 router.get('/assigned-class', verifyToken, getAssignedClass);
+
+// Route to get class count
+router.get('/count', verifyToken, getClassCount);
 
 export default router;

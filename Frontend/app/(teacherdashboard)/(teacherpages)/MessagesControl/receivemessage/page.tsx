@@ -124,14 +124,7 @@ const ReceiveMessagesPage: React.FC = () => {
                   </div>
                   <div className="text-white text-lg">{msg.text}</div>
                 </div>
-                <div className="absolute top-2 right-2">
-                  <button
-                    onClick={() => handleDeleteMessage(msg.id)}
-                    className="text-white text-xl hover:text-red-500 focus:outline-none"
-                  >
-                    🗑️
-                  </button>
-                </div>
+                
                 <div className="text-white text-xs mt-2">
                   {formatTimestamp(msg.created_at)}
                 </div>
