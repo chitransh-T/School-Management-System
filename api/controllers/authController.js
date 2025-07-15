@@ -3,6 +3,7 @@
 // controllers/authController.js
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import pool from '../config/db.js';
 import {
   findUsersByEmailPG ,
   createUserPG,
@@ -92,6 +93,43 @@ if (alreadyRegisteredInSameSchool) {
 
   } catch (err) {
     console.error('Register error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+//--------------
+export const changePassword = async (req, res) => {
+  const { email, currentPassword, newPassword } = req.body;
+  const userId = req.signup_id; // Use req.signup_id instead of req.user.id
+
+  if (!email || !currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, message: 'All fields are required' });
+  }
+
+  try {
+    const users = await findUsersByEmailPG(email);
+    const matchedUser = users.find(user => user.id === userId);
+
+    if (!matchedUser) {
+      return res.status(400).json({ success: false, message: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, matchedUser.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    const query = 'UPDATE signup SET password = $1 WHERE id = $2 RETURNING *';
+    const { rows } = await pool.query(query, [hashedNewPassword, userId]);
+
+    if (rows.length === 0) {
+      return res.status(500).json({ success: false, message: 'Failed to update password' });
+    }
+
+    return res.json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    console.error('Change password error:', err);
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };

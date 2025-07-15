@@ -2,6 +2,7 @@ import { createFeeStructure, deleteFeeStructureForClass,getFeeStructureByClassFr
 import { getActiveSessionFromDB } from '../models/sessionModel.js';
 
 // ✅ Register Fee Structure
+
 export const registerFeeStructure = async (req, res) => {
   try {
     const { class_id, structure } = req.body;
@@ -19,10 +20,17 @@ export const registerFeeStructure = async (req, res) => {
 
     const session_id = activeSession.id;
 
-    // ✅ Delete old structure (optional for update)
-    await deleteFeeStructureForClass({ class_id, signup_id, session_id });
+    // ✅ Check if fee structure already exists for the class in current session
+    const existingStructure = await getFeeStructureByClassFromDB({ class_id, signup_id, session_id });
 
-    // ✅ Save new structure
+    if (existingStructure.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Fee structure already exists for this class in the current session. You can only update it after the session ends.',
+      });
+    }
+
+    // ✅ Save new structure (no deletion since nothing exists yet)
     const inserted = await createFeeStructure({
       class_id,
       signup_id,
@@ -41,8 +49,9 @@ export const registerFeeStructure = async (req, res) => {
   }
 };
 
-
 // ✅ Get Fee Structure for a Class
+
+
 export const getFeeStructureByClass = async (req, res) => {
   try {
     const { class_id } = req.params;
@@ -58,7 +67,20 @@ export const getFeeStructureByClass = async (req, res) => {
     }
 
     const session_id = activeSession.id;
-    const data = await getFeeStructureByClassFromDB({ signup_id, session_id, class_id });
+    const rawData = await getFeeStructureByClassFromDB({ signup_id, session_id, class_id });
+
+    // Map the data to match frontend expectations
+    const data = rawData.map(row => ({
+      fee_master_id: row.fee_master_id,
+      fee_field_name: row.fee_field_name,
+      amount: Number(parseFloat(row.amount).toFixed(2)),
+      is_one_time: !!row.is_one_time,
+      is_monthly: !!row.is_monthly,
+      is_mandatory: !!row.is_mandatory,
+      is_collectable: !!row.is_collectable,
+    }));
+
+    console.log('Final mapped fee structure:', JSON.stringify(data, null, 2));
 
     res.status(200).json({
       success: true,

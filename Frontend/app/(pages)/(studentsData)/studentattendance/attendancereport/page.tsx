@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -67,8 +68,9 @@ const AttendanceReport = () => {
         setClasses(data);
         const uniqueClasses = Array.from(new Set(data.map((cls) => cls.class_name))) as string[];
         setAvailableClasses(uniqueClasses);
-        const uniqueSections = Array.from(new Set(data.map((cls) => cls.section))) as string[];
-        setAvailableSections(uniqueSections);
+        
+        // Don't set all sections initially - wait for class selection
+        setAvailableSections([]);
       } catch (err) {
         console.error("Error fetching classes:", err);
         setClassError("Failed to load classes. Please try again.");
@@ -86,20 +88,44 @@ const AttendanceReport = () => {
   const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedClassName = e.target.value;
     setSelectedClassName(selectedClassName);
-
-    const classData = classes.find((cls) => cls.class_name === selectedClassName);
-    setSelectedClassId(classData ? classData.id : null);
+    setSelectedSection(""); // Reset section when class changes
 
     if (selectedClassName) {
+      // Find the class ID for the selected class name
+      const classData = classes.find((cls) => cls.class_name === selectedClassName);
+      setSelectedClassId(classData ? classData.id : null);
+
+      // Filter sections for the selected class only
       const filteredSections = classes
         .filter((cls) => cls.class_name === selectedClassName)
         .map((cls) => cls.section);
-      setAvailableSections(filteredSections);
-      setSelectedSection("");
+      
+      // Remove duplicates and sort
+      const uniqueSections = Array.from(new Set(filteredSections)).sort();
+      setAvailableSections(uniqueSections);
+      
+      console.log("Selected class:", selectedClassName);
+      console.log("Available sections for this class:", uniqueSections);
     } else {
-      const allSections = Array.from(new Set(classes.map((cls) => cls.section))) as string[];
-      setAvailableSections(allSections);
-      setSelectedSection("");
+      // Reset when no class is selected
+      setSelectedClassId(null);
+      setAvailableSections([]);
+    }
+  };
+
+  const handleSectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedSectionValue = e.target.value;
+    setSelectedSection(selectedSectionValue);
+    
+    // Update the class ID based on the selected class and section combination
+    if (selectedClassName && selectedSectionValue) {
+      const classData = classes.find(
+        (cls) => cls.class_name === selectedClassName && cls.section === selectedSectionValue
+      );
+      setSelectedClassId(classData ? classData.id : null);
+      
+      console.log("Selected section:", selectedSectionValue);
+      console.log("Class ID for this combination:", classData?.id);
     }
   };
 
@@ -120,7 +146,13 @@ const AttendanceReport = () => {
         throw new Error("Authentication token not found");
       }
 
-      console.log("Fetching attendance with params:", { selectedClassId, selectedSection, selectedDate });
+      console.log("Fetching attendance with params:", { 
+        selectedClassId, 
+        selectedClassName,
+        selectedSection, 
+        selectedDate 
+      });
+      
       const url = `${baseUrl}/api/attendance/${selectedClassId}/${encodeURIComponent(selectedSection)}/${encodeURIComponent(selectedDate)}`;
       console.log("Request URL:", url);
 
@@ -150,13 +182,14 @@ const AttendanceReport = () => {
         const formattedData = studentsArray.map((student: any) => ({
           id: student.id || student.student_id || Math.random().toString(36).substr(2, 9),
           student_name: student.student_name || "Unknown",
-          registration_number: student.registration_number || "N/A",
           assigned_class: selectedClassName || student.class_name || "Unknown",
           assigned_section: student.section || selectedSection,
           status: student.is_present ? "Present" : "Absent",
           date: selectedDate,
         }));
-        setAttendanceData(formattedData);
+        
+        console.log("Formatted attendance data:", formattedData);
+        setAttendanceData(formattedData as Student[]);
       } else if (response.status === 500) {
         const errorData = await response.json();
         setError(errorData.error || "Server error occurred");
@@ -235,7 +268,7 @@ const AttendanceReport = () => {
                 ) : (
                   <select
                     value={selectedSection}
-                    onChange={(e) => setSelectedSection(e.target.value)}
+                    onChange={handleSectionChange}
                     className="w-full p-2 border rounded-md text-gray-700"
                     required
                     disabled={!selectedClassName}
@@ -248,13 +281,16 @@ const AttendanceReport = () => {
                     ))}
                   </select>
                 )}
+                {!selectedClassName && (
+                  <p className="text-gray-500 text-xs mt-1">Please select a class first</p>
+                )}
               </div>
             </div>
 
             <div className="mt-4">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !selectedClassId || !selectedSection}
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 {loading ? "Loading..." : "View Report"}
@@ -269,6 +305,26 @@ const AttendanceReport = () => {
             </div>
           ) : attendanceData.length > 0 ? (
             <div className="overflow-x-auto">
+              <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+                <h3 className="text-lg font-semibold text-blue-800 mb-2">
+                  Attendance Report Summary
+                </h3>
+                <p className="text-sm text-blue-700">
+                  Class: <span className="font-medium">{selectedClassName}</span> | 
+                  Section: <span className="font-medium">{selectedSection}</span> | 
+                  Date: <span className="font-medium">{format(new Date(selectedDate), "dd/MM/yyyy")}</span>
+                </p>
+                <p className="text-sm text-blue-700 mt-1">
+                  Total Students: <span className="font-medium">{attendanceData.length}</span> | 
+                  Present: <span className="font-medium text-green-600">
+                    {attendanceData.filter(s => s.status === "Present").length}
+                  </span> | 
+                  Absent: <span className="font-medium text-red-600">
+                    {attendanceData.filter(s => s.status === "Absent").length}
+                  </span>
+                </p>
+              </div>
+              
               <table className="min-w-full bg-white border">
                 <thead>
                   <tr className="bg-gray-50">
@@ -292,7 +348,7 @@ const AttendanceReport = () => {
                 <tbody className="divide-y divide-gray-200">
                   {attendanceData.map((student) => (
                     <tr key={student.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-700 font-medium">
                         {student.student_name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-gray-700">

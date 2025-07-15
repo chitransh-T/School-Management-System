@@ -1,3 +1,5 @@
+
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -59,10 +61,10 @@ export default function EventGalleryPage() {
               });
         })
       );
-      
+
       setUniqueTitles(['All Images', ...Array.from(titles) as string[]]);
       setUniqueDates(['All Dates', ...Array.from(dates) as string[]]);
-      
+
       setLoading(false);
     } catch (err: any) {
       setError(err.message || 'Unable to load event images');
@@ -75,7 +77,7 @@ export default function EventGalleryPage() {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${baseUrl}/api/event-images/${imageId}`, {
+      const res = await fetch(`${baseUrl}/api/delete-event-image/${imageId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -92,8 +94,7 @@ export default function EventGalleryPage() {
     try {
       const response = await fetch(imageUrl, {
         headers: {
-          // Add any auth headers if required
-          // Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
 
@@ -114,6 +115,12 @@ export default function EventGalleryPage() {
       alert('Failed to download image.');
       console.error('Download error:', error);
     }
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = e.target.value ? new Date(e.target.value) : null;
+    setSelectedDate(newDate);
+    setSelectedFilter('All Images');
   };
 
   const getFilteredImages = () => {
@@ -174,12 +181,6 @@ export default function EventGalleryPage() {
     return ['All Images', ...Array.from(titles)];
   };
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = e.target.value ? new Date(e.target.value) : null;
-    setSelectedDate(newDate);
-    setSelectedFilter('All Images'); // Reset title filter when date changes
-  };
-
   return (
     <DashboardLayout>
       <div className="p-6 max-w-6xl mx-auto">
@@ -187,66 +188,65 @@ export default function EventGalleryPage() {
 
         {/* Filters with proper alignment */}
         <div className="mb-6 flex items-end gap-4">
-          {/* Title Filter */}
-          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-  {/* Title Filter */}
-  <div>
-    <label htmlFor="event-filter" className="block text-sm font-medium text-gray-700 mb-1">
-      Filter by Event
-    </label>
-    <select
-      id="event-filter"
-      value={selectedFilter || 'All Images'}
-      onChange={(e) => setSelectedFilter(e.target.value)}
-      className="w-full rounded-md border-gray-300 text-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
-    >
-      {getTitlesForSelectedDate().map((title) => (
-        <option key={title} value={title}>
-          {title}
-        </option>
-      ))}
-    </select>
-  </div>
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+            {/* Title Filter */}
+            <div>
+              <label htmlFor="event-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                Filter by Event
+              </label>
+              <select
+                id="event-filter"
+                value={selectedFilter || 'All Images'}
+                onChange={(e) => setSelectedFilter(e.target.value)}
+                className="w-full rounded-md border-gray-300 text-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+              >
+                {getTitlesForSelectedDate().map((title) => (
+                  <option key={title} value={title}>
+                    {title}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-  {/* Date Filter */}
-  <div>
-    <label htmlFor="date-filter" className="block text-sm font-medium text-gray-700 mb-1">
-      Filter by Date
-    </label>
-    <div className="flex items-center gap-2">
-      <input
-        type="date"
-        id="date-filter"
-        value={selectedDate ? selectedDate.toISOString().split('T')[0] : ''}
-        onChange={handleDateChange}
-        className="w-full rounded-md border-gray-300 text-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
-        max={new Date().toISOString().split('T')[0]}
-        min="2020-01-01"
-      />
-      {selectedDate && (
-        <button
-          onClick={() => {
-            setSelectedDate(null);
-            setSelectedFilter('All Images');
-          }}
-          className="text-gray-500 hover:text-gray-700 text-xl"
-          title="Clear date filter"
-        >
-          ✕
-        </button>
-      )}
-    </div>
-  </div>
-</div>
-
+            {/* Date Filter */}
+            <div>
+              <label htmlFor="date-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                Filter by Date
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  id="date-filter"
+                  value={selectedDate ? selectedDate.toISOString().split('T')[0] : ''}
+                  onChange={handleDateChange}
+                  className="w-full rounded-md border-gray-300 text-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                  max={new Date().toISOString().split('T')[0]}
+                  min="2020-01-01"
+                />
+                {selectedDate && (
+                  <button
+                    onClick={() => {
+                      setSelectedDate(null);
+                      setSelectedFilter('All Images');
+                    }}
+                    className="text-gray-500 hover:text-gray-700 text-xl"
+                    title="Clear date filter"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {error && <div className="text-red-600 mb-4">{error}</div>}
 
+        {/* Image grid */}
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
+          <div className="text-gray-600">Loading images...</div>
+        ) : error ? (
+          <div className="text-red-600">{error}</div>
         ) : getFilteredImages().length === 0 ? (
           <div className="text-center py-12">
             <svg
@@ -272,29 +272,60 @@ export default function EventGalleryPage() {
                 className="relative group cursor-pointer"
                 onClick={() => setSelectedImage(img)}
               >
-                <p className="text-center text-blue-800 font-medium mb-2">{img.title}</p>
-                <div className="relative">
+                <p className="text-center text-blue-800 font-medium mb-2 truncate">{img.title}</p>
+                <div className="relative w-full h-48 bg-gray-100 rounded-md overflow-hidden shadow hover:shadow-lg transition-shadow duration-200">
                   <Image
                     src={img.image_url}
                     alt={img.title}
-                    width={400}
-                    height={250}
-                    className="rounded-md object-cover shadow"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   />
-
-                  {/* Hover buttons */}
-                  <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200" />
+                  {/* Download Icon on Hover */}
+                  <button
+                    className="absolute bottom-2 right-2 p-2 bg-blue-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-blue-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownload(img.image_url, img.title);
+                    }}
+                    title="Download image"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                  </button>
+                  {/* Delete Button (if user is authorized, e.g., teacher or principal) */}
+                  {user?.role === 'teacher' || user?.role === 'principal' ? (
                     <button
-                      className="bg-blue-600 text-white rounded-full p-1 text-sm"
-                      title="Download"
+                      className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-700"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDownload(img.image_url, img.title);
+                        handleDeleteImage(img.id);
                       }}
+                      title="Delete image"
                     >
-                      ⬇
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
                     </button>
-                  </div>
+                  ) : null}
                 </div>
               </div>
             ))}
@@ -303,25 +334,36 @@ export default function EventGalleryPage() {
 
         {/* Full-screen Image View */}
         {selectedImage && (
-          <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
             <button
-              className="absolute top-4 right-4 text-white text-4xl font-bold"
+              className="absolute top-4 right-4 text-white text-4xl font-bold hover:text-gray-300 transition-colors z-10"
               onClick={() => setSelectedImage(null)}
             >
               ×
             </button>
-            <Image
-              src={selectedImage.image_url}
-              alt={selectedImage.title}
-              width={1000}
-              height={700}
-              className="object-contain max-h-full max-w-full"
-            />
+            <div className="relative max-w-full max-h-full">
+              <Image
+                src={selectedImage.image_url}
+                alt={selectedImage.title}
+                width={1000}
+                height={700}
+                className="object-contain max-h-full max-w-full"
+                style={{ maxWidth: '90vw', maxHeight: '90vh' }}
+              />
+            </div>
             <button
-              className="absolute bottom-4 right-4 bg-blue-600 text-white rounded-full p-3"
+              className="absolute bottom-4 right-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg transition-colors duration-200"
               onClick={() => handleDownload(selectedImage.image_url, selectedImage.title)}
+              title="Download"
             >
-              ⬇
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
             </button>
           </div>
         )}

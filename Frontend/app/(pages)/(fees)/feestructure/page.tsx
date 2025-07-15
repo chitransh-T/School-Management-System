@@ -72,29 +72,37 @@ export default function FeeStructurePage() {
   // ✅ FIXED: Fetch and parse class list
   const fetchClasses = async (tk: string) => {
     try {
-      setIsLoading(true);
       const res = await fetch(`${baseUrl}/api/classes`, {
+        method: 'GET',
         headers: {
-          Accept: 'application/json',
           Authorization: `Bearer ${tk}`,
         },
       });
-      if (res.ok) {
-        const data = await res.json();
-        const parsed = data.map((item: any) => ({
-          id: item.id?.toString() ?? item._id?.toString() ?? '',
-          className: item.class_name?.toString().trim() ?? 'Unnamed Class',
-        }));
-        setClasses(parsed);
-      } else {
-        console.error('Failed to fetch classes: HTTP', res.status);
+
+      if (!res.ok) throw new Error('Failed to load classes');
+      const data = await res.json();
+
+      const uniqueClasses: { [coreName: string]: ClassItem } = {};
+      for (const item of data) {
+        const id = item.id?.toString() ?? item._id?.toString() ?? '';
+        const fullName = item.class_name?.toString() ?? '';
+        
+        // Extract core class name (e.g., "Class 1" from "Class 1 Section A")
+        // Adjust this regex based on your class name format
+        const coreNameMatch = fullName.match(/^Class\s*\d+/i);
+        const coreName = coreNameMatch ? coreNameMatch[0] : fullName;
+
+        if (!uniqueClasses[coreName]) {
+          uniqueClasses[coreName] = { id, className: coreName }; // Store core name for display
+        }
       }
-    } catch (e) {
-      console.error('Error fetching classes:', e);
-    } finally {
-      setIsLoading(false);
+
+      setClasses(Object.values(uniqueClasses));
+    } catch (err) {
+      console.error('❌ Error fetching classes:', err);
     }
   };
+
 
   const fetchFeeMasterFields = async (tk: string) => {
     try {
@@ -178,7 +186,7 @@ export default function FeeStructurePage() {
             onChange={(e) => setSelectedClassId(e.target.value)}
             className="w-full border text-gray-700 border-gray-300 rounded px-3 py-2"
           >
-            <option value="">Select Class</option>
+            <option value="">-- Select Class --</option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.className}

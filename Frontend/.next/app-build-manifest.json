@@ -21,46 +21,6 @@
       "static/chunks/main-app.js",
       "static/chunks/app/principledashboard/page.js"
     ],
-    "/(pages)/(studentsData)/studentdetails/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/(studentsData)/studentdetails/page.js"
-    ],
-    "/(pages)/(TeacherData)/TeacherDetails/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/(TeacherData)/TeacherDetails/page.js"
-    ],
-    "/(pages)/(TeacherData)/editTeacher/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/(TeacherData)/editTeacher/page.js"
-    ],
-    "/(pages)/(TeacherData)/jobletter/t_jobletter/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/(TeacherData)/jobletter/t_jobletter/page.js"
-    ],
-    "/(pages)/(TeacherData)/jobletter/printletter/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/(TeacherData)/jobletter/printletter/page.js"
-    ],
-    "/(pages)/(classes)/addclass/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/(classes)/addclass/page.js"
-    ],
-    "/(pages)/(fees)/feemaster/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/(fees)/feemaster/page.js"
-    ],
-    "/(pages)/(fees)/feestructure/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/(fees)/feestructure/page.js"
-    ],
     "/(pages)/(fees)/collectfees/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -77,10 +37,61 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(pages)/(fees)/receiptgenerate/page.js"
     ],
-    "/(pages)/(classes)/allclasses/page": [
+    "/(pages)/(fees)/Viewfeestructure/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(pages)/(classes)/allclasses/page.js"
+      "static/chunks/app/(pages)/(fees)/Viewfeestructure/page.js"
+    ],
+    "/(pages)/(fees)/feemaster/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(fees)/feemaster/page.js"
+    ],
+    "/(pages)/(fees)/feestructure/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(fees)/feestructure/page.js"
+    ],
+    "/(pages)/(TeacherData)/TeacherDetails/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(TeacherData)/TeacherDetails/page.js"
+    ],
+    "/(pages)/(studentsData)/studentdetails/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(studentsData)/studentdetails/page.js"
+    ],
+    "/(pages)/(studentsData)/editstudent/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(studentsData)/editstudent/page.js"
+    ],
+    "/(parentdashboard)/parentdashboard/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(parentdashboard)/parentdashboard/page.js"
+    ],
+    "/(parentdashboard)/(parentpages)/feedata/viewfeeshistory/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(parentdashboard)/(parentpages)/feedata/viewfeeshistory/page.js"
+    ],
+    "/(pages)/principaleventimage/vieweventimages/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/principaleventimage/vieweventimages/page.js"
+    ],
+    "/(pages)/(teacherassign)/assignteacher/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(teacherassign)/assignteacher/page.js"
+    ],
+    "/(pages)/(teacherassign)/viewassignteacher/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/(pages)/(teacherassign)/viewassignteacher/page.css",
+      "static/chunks/app/(pages)/(teacherassign)/viewassignteacher/page.js"
     ],
     "/(pages)/(subjects)/assignSubject/page": [
       "static/chunks/webpack.js",
@@ -97,11 +108,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(pages)/(subjects)/editsubject/page.js"
     ],
-    "/(pages)/(teacherassign)/viewassignteacher/page": [
+    "/(pages)/notice/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/(pages)/(teacherassign)/viewassignteacher/page.css",
-      "static/chunks/app/(pages)/(teacherassign)/viewassignteacher/page.js"
+      "static/chunks/app/(pages)/notice/page.js"
     ]
   }
 }

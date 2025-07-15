@@ -1,6 +1,5 @@
 
 
-
 "use client";
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/app/dashboardComponents/DashboardLayout';
@@ -68,6 +67,64 @@ const AllClassesPage: React.FC = () => {
   const [error, setError] = useState('');
   const [deleteLoading, setDeleteLoading] = useState('');
 
+  // Class hierarchy for sorting
+  const classHierarchy = [
+    'Nursery',
+    'Lkg',
+    'Ukg',
+    'class 1',
+    'class 2',
+    'class 3',
+    'class 4',
+    'class 5',
+    'class 6',
+    'class 7',
+    'class 8',
+    'class 9',
+    'class 10',
+    'class 11',
+    'class 12'
+  ];
+
+  // Section hierarchy for sorting
+  const sectionHierarchy = [
+    'Section A',
+    'Section B',
+    'Section C',
+    'Section D'
+  ];
+
+  // Function to get class order
+  const getClassOrder = (className: string): number => {
+    const index = classHierarchy.findIndex(cls => cls.toLowerCase() === className.toLowerCase());
+    return index !== -1 ? index : 999; // Put unknown classes at the end
+  };
+
+  // Function to get section order
+  const getSectionOrder = (sectionName: string): number => {
+    const index = sectionHierarchy.findIndex(sec => sec.toLowerCase() === sectionName.toLowerCase());
+    return index !== -1 ? index : 999; // Put unknown sections at the end
+  };
+
+  // Function to sort classes
+  const sortClasses = (classesToSort: Class[]): Class[] => {
+    return [...classesToSort].sort((a, b) => {
+      // First sort by class hierarchy
+      const classOrderA = getClassOrder(a.class_name);
+      const classOrderB = getClassOrder(b.class_name);
+      
+      if (classOrderA !== classOrderB) {
+        return classOrderA - classOrderB;
+      }
+      
+      // If same class, sort by section
+      const sectionOrderA = getSectionOrder(a.section);
+      const sectionOrderB = getSectionOrder(b.section);
+      
+      return sectionOrderA - sectionOrderB;
+    });
+  };
+
   const fetchTeachers = async () => {
     try {
       setFetchingTeachers(true);
@@ -131,7 +188,9 @@ const AllClassesPage: React.FC = () => {
           })
         : [];
 
-      setClasses(formattedClasses);
+      // Sort classes using the sorting function
+      const sortedClasses = sortClasses(formattedClasses);
+      setClasses(sortedClasses);
     } catch (err: any) {
       console.error('Fetch error:', err);
       setError(err.message || 'Failed to load class data.');
@@ -162,7 +221,8 @@ const AllClassesPage: React.FC = () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Delete failed');
-      setClasses(prev => prev.filter(c => c.id !== id));
+      // Update classes and maintain sorting
+      setClasses(prev => sortClasses(prev.filter(c => c.id !== id)));
       alert('Class deleted successfully');
     } catch (err: any) {
       setError(err.message || 'Delete failed.');

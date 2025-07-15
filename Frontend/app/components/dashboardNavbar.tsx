@@ -90,9 +90,13 @@ const DashboardNavbar: React.FC = () => {
     router.push('/profilepage');
   };
 
+  const handleSettings = () => {
+    router.push('/principalsetting');
+  };
+
   const profileOptions: ProfileOption[] = [
     { label: 'Profile', onClick: handleProfile, icon: User },
-    { label: 'Settings', href: '/settings', icon: Settings },
+    { label: 'Settings', onClick: handleSettings, icon: Settings },
     { label: 'Logout', icon: LogOut, onClick: handleLogout },
   ];
 
@@ -103,7 +107,7 @@ const DashboardNavbar: React.FC = () => {
           {/* Logo */}
           <Link href="/principledashboard" className="flex-shrink-0">
             <img
-              src="/logo.jpg"
+              src="/Almanet-logo.png"
               alt="Logo"
               className="h-6 sm:h-7 md:h-8 w-auto"
             />

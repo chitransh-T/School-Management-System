@@ -173,21 +173,22 @@ const AddHomeworkPage = () => {
 
             <div>
               <label className="block font-semibold mb-1 text-gray-600">
-                Start Date
+              Start Date
               </label>
-              <DatePicker
-                selected={startDate}
-                onChange={(date) => setStartDate(date as Date)}
-                dateFormat="dd/MM/yyyy"
-                className="w-full border rounded px-3 py-2 text-gray-500"
-              />
+             <DatePicker
+             selected={startDate}
+             onChange={(date) => setStartDate(date as Date)}
+             dateFormat="dd/MM/yyyy"
+             className="w-full border rounded px-3 py-2 text-gray-500"
+             minDate={new Date()} // Restrict to current date or future dates
+             />
             </div>
 
             <div>
               <label className="block font-semibold mb-1 text-gray-600">
                 End Date
               </label>
-              <DatePicker
+             <DatePicker
                 selected={endDate}
                 onChange={(date) => setEndDate(date)}
                 dateFormat="dd/MM/yyyy"

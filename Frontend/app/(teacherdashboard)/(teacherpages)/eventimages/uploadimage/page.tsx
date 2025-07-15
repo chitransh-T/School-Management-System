@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -13,10 +14,21 @@ interface PreviewImage {
   previewUrl: string;
 }
 
+interface UploadedImage {
+  id: number;
+  title: string;
+  image_url: string;
+  created_at: string;
+  class_id: number | null;
+  class_name?: string;
+  section?: string;
+  teacher_name?: string;
+}
+
 export default function EventImageUploadPage() {
   const { user } = useAuth();
   const [images, setImages] = useState<PreviewImage[]>([]);
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [title, setTitle] = useState('');
@@ -28,14 +40,14 @@ export default function EventImageUploadPage() {
 
   const fetchAssignedClass = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       const res = await fetch(`${baseUrl}/api/assigned-class`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed to fetch class');
       await res.json();
     } catch (err: any) {
-      setError('Could not fetch assigned class.');
+      setError('Could not fetch assigned class: ' + err.message);
     }
   };
 
@@ -50,7 +62,6 @@ export default function EventImageUploadPage() {
 
   const handleRemoveImage = (index: number) => {
     setImages((prev) => {
-      // Revoke the object URL to avoid memory leak
       URL.revokeObjectURL(prev[index].previewUrl);
       return prev.filter((_, i) => i !== index);
     });
@@ -82,14 +93,13 @@ export default function EventImageUploadPage() {
       });
 
       const data = await response.json();
-      if (!response.ok || !data.success) throw new Error(data.message);
+      if (!response.ok || !data.success) throw new Error(data.message || 'Upload failed');
 
-      const newImageUrls = data.data.map((img: any) => `${baseUrl}${img.image_url}`);
-      setUploadedImages((prev) => [...prev, ...newImageUrls]);
+      setUploadedImages((prev) => [...prev, ...data.data]);
       setImages([]);
       setTitle('');
     } catch (err: any) {
-      setError(err.message || 'Upload failed');
+      setError(err.message || 'Failed to upload images');
     } finally {
       setLoading(false);
     }
@@ -113,7 +123,7 @@ export default function EventImageUploadPage() {
           <button
             onClick={handleUpload}
             disabled={loading || images.length === 0}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded disabled:opacity-50"
           >
             {loading ? 'Uploading...' : 'Submit'}
           </button>
@@ -139,7 +149,7 @@ export default function EventImageUploadPage() {
                     onClick={() => handleRemoveImage(index)}
                     className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 text-sm flex items-center justify-center hover:bg-red-700"
                   >
-                    &times;
+                    ×
                   </button>
                 </div>
               ))}
@@ -156,15 +166,16 @@ export default function EventImageUploadPage() {
                 <div
                   key={index}
                   className="cursor-pointer hover:opacity-90"
-                  onClick={() => setSelectedImage(img)}
+                  onClick={() => setSelectedImage(img.image_url)}
                 >
                   <Image
-                    src={img}
-                    alt={`Event ${index}`}
+                    src={img.image_url}
+                    alt={img.title}
                     width={300}
                     height={200}
                     className="rounded-md object-cover"
                   />
+                  <p className="text-center text-gray-600 text-sm mt-1">{img.title}</p>
                 </div>
               ))}
             </div>
@@ -178,7 +189,7 @@ export default function EventImageUploadPage() {
               className="absolute top-4 right-4 text-white text-3xl font-bold"
               onClick={() => setSelectedImage(null)}
             >
-              &times;
+              ×
             </button>
             <Image
               src={selectedImage}

@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -90,9 +88,9 @@ const TeacherAdmissionLetterPage: React.FC = () => {
       setFilteredTeachers(
         teachers.filter(
           (t) =>
-            t.name.toLowerCase().includes(lower) ||
-            t.email.toLowerCase().includes(lower) ||
-            t.qualification.toLowerCase().includes(lower)
+            (t.name && t.name.toLowerCase().includes(lower)) ||
+            (t.username && t.username.toLowerCase().includes(lower)) ||
+            (t.qualification && t.qualification.toLowerCase().includes(lower))
         )
       );
     }
@@ -104,9 +102,7 @@ const TeacherAdmissionLetterPage: React.FC = () => {
   };
 
   const handleViewLetter = (teacher: Teacher) => {
-    // Store teacher data in localStorage
     localStorage.setItem('selectedTeacher', JSON.stringify(teacher));
-    // Navigate to the job letter print page
     router.push('/jobletter/printletter');
   };
 
@@ -145,7 +141,7 @@ const TeacherAdmissionLetterPage: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              placeholder="Search by name, email, or qualification"
+              placeholder="Search by name, username, or qualification"
               className="w-full p-2 rounded-md border border-blue-300 focus:outline-none focus:ring focus:ring-blue-200"
             />
             {searchQuery && (
@@ -177,7 +173,7 @@ const TeacherAdmissionLetterPage: React.FC = () => {
                   {renderTeacherImage(teacher.teacherPhoto)}
                   <div>
                     <p className="font-semibold text-blue-900">{teacher.name}</p>
-                    <p className="text-sm text-blue-700">Email: {teacher.username}</p>
+                    <p className="text-sm text-blue-700">Username: {teacher.username}</p>
                     <p className="text-sm text-blue-700">Qualification: {teacher.qualification}</p>
                     <p className="text-sm text-blue-700">Joined: {new Date(teacher.dateOfJoining).toLocaleDateString()}</p>
                   </div>

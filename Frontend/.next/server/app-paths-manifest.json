@@ -1,8 +1,7 @@
 {
-  "/(pages)/(TeacherData)/TeacherDetails/page": "app/(pages)/(TeacherData)/TeacherDetails/page.js",
-  "/(pages)/(subjects)/assignSubject/page": "app/(pages)/(subjects)/assignSubject/page.js",
-  "/(pages)/(subjects)/classeswithsubject/page": "app/(pages)/(subjects)/classeswithsubject/page.js",
-  "/(pages)/(subjects)/editsubject/page": "app/(pages)/(subjects)/editsubject/page.js",
-  "/(pages)/(classes)/allclasses/page": "app/(pages)/(classes)/allclasses/page.js",
-  "/(pages)/(teacherassign)/viewassignteacher/page": "app/(pages)/(teacherassign)/viewassignteacher/page.js"
+  "/principledashboard/page": "app/principledashboard/page.js",
+  "/(pages)/(studentsData)/studentdetails/page": "app/(pages)/(studentsData)/studentdetails/page.js",
+  "/auth/signin/page": "app/auth/signin/page.js",
+  "/(parentdashboard)/parentdashboard/page": "app/(parentdashboard)/parentdashboard/page.js",
+  "/(parentdashboard)/(parentpages)/feedata/viewfeeshistory/page": "app/(parentdashboard)/(parentpages)/feedata/viewfeeshistory/page.js"
 }

@@ -98,7 +98,7 @@ const ViewMessagesPage: React.FC = () => {
     <DashboardLayout>
       <div className="min-h-screen bg-gradient-to-b from-white to-white p-6">
         <h1 className="text-2xl font-bold text-blue-900 mb-6 text-center">
-          Messages Sent to Parents
+          Messages Send to Parents
         </h1>
 
         {errorMessage && (
@@ -120,7 +120,7 @@ const ViewMessagesPage: React.FC = () => {
               >
                 <div>
                   <div className="text-white text-sm">
-                    Message sent to parents of {msg.student_name || "Unknown Student"}
+                    Message send to parents of {msg.student_name || "Unknown Student"}
                   </div>
                   <div className="text-white text-lg">{msg.message}</div>
                 </div>

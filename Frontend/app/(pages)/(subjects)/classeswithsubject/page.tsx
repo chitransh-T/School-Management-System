@@ -256,7 +256,7 @@ export default function ClassesWithSubjectsPage() {
                     <span className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs font-medium inline-block">
                       {classItem.total_subjects}
                     </span>
-                    <p className="text-xs text-gray-600 uppercase">
+                    <p className="pt-1 text-xs text-gray-600 uppercase">
                       Subjects
                     </p>
                   </div>

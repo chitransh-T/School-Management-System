@@ -31,13 +31,31 @@ export const deleteFeeStructureForClass = async ({ class_id, signup_id, session_
     throw err;
   }
 };
+
 // ✅ Get fee structure for class from DB
 export const getFeeStructureByClassFromDB = async ({ signup_id, session_id, class_id }) => {
   const query = `
-    SELECT fs.*, fm.fee_field_name 
+    SELECT 
+      fs.id,
+      fs.signup_id,
+      fs.session_id,
+      fs.class_id,
+      fs.fee_master_id,
+      fs.amount,
+      fs.is_collectable,
+      fs.installments_allowed as is_mandatory,
+      fs.frequency,
+      fs.created_at,
+      fm.fee_field_name,
+      fm.is_one_time,
+      CASE 
+        WHEN fm.is_one_time = true THEN false
+        ELSE true 
+      END as is_monthly
     FROM fee_structure fs
     JOIN fee_master fm ON fs.fee_master_id = fm.id
     WHERE fs.signup_id = $1 AND fs.session_id = $2 AND fs.class_id = $3
+    ORDER BY fm.id
   `;
 
   const values = [signup_id, session_id, class_id];

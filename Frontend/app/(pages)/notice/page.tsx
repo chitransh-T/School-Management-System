@@ -29,13 +29,11 @@ const formatDate = (dateString: string) => {
       return dateString; // Return original string if invalid date
     }
     
-    // Format as: "Jan 1, 2023 at 2:30 PM"
+    // Format as: "Jan 1, 2023"
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     }).format(date);
   } catch (error) {
     console.error('Error formatting date:', error);

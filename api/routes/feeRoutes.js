@@ -8,7 +8,7 @@ import {
   getAllPaymentStatusController,
   getYearlyFeeSummary,
   getPaidFees, // Add this import
-  getFeeStructure
+  getFeeStructure,
 } from '../controllers/feeController.js';
 
 import { verifyToken } from '../middlewares/auth.js';
@@ -58,5 +58,4 @@ router.get('/payment-status/:studentId', verifyToken, getAllPaymentStatusControl
 router.get('/yearly-summary/:studentId', verifyToken, getYearlyFeeSummary);
 router.get('/fees/paid', verifyToken, getPaidFees); // Add this new route
 router.get('/structure', verifyToken, getFeeStructure);
-
 export default router;

@@ -1,16 +1,32 @@
-import pool from '../config/db.js';
-import { createClass, getClassesBySchoolId, updateClass, deleteClass , getClassByTeacherId, getClassCountBySchoolId } from '../models/classModel.js';
 
-// Register class
+
+import pool from '../config/db.js';
+import { createClass, getClassesBySchoolId, updateClass, deleteClass , getClassByTeacherId,getClassCountBySchoolId } from '../models/classModel.js';
+
+
+
+
+//---
 export const registerClass = async (req, res) => {
   try {
     const { class_name, section, teacher_id } = req.body;
-    const signup_id = req.signup_id; // ✅ Extract from token/session
+    const signup_id = req.signup_id;
 
     if (!class_name || !section || !teacher_id || !signup_id) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
+    // ✅ Check if the teacher is already assigned to any class
+    const existingClass = await getClassByTeacherId(teacher_id);
+
+    if (existingClass) {
+      return res.status(400).json({
+        success: false,
+        message: 'This teacher is already assigned as a class teacher. Please select another teacher.',
+      });
+    }
+
+    // ✅ Proceed with class creation
     const result = await createClass({ class_name, section, teacher_id, signup_id });
 
     res.status(201).json({
@@ -40,7 +56,7 @@ export const getAllClasses = async (req, res) => {
   }
 };
 
-// Update class details
+
 export const updateClassDetails = async (req, res) => {
   try {
     const classId = req.params.id;
@@ -50,15 +66,25 @@ export const updateClassDetails = async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
+    // ✅ Check if the teacher is already assigned to a different class
+    const existingClass = await getClassByTeacherId(teacher_id);
+    if (existingClass && existingClass.id !== classId) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'This teacher is already assigned as a class teacher. Please select another teacher.',
+      });
+    }
+
     const results = await updateClass(classId, { class_name, teacher_id });
-    
+
     if (results.rowCount === 0) {
       return res.status(404).json({ message: 'Class not found' });
     }
-    
-    res.status(200).json({ 
+
+    res.status(200).json({
       success: true,
-      message: 'Class updated successfully'
+      message: 'Class updated successfully',
     });
   } catch (err) {
     console.error('Error updating class:', err);
@@ -122,9 +148,7 @@ export const getAssignedClass = async (req, res) => {
     res.status(500).json({ message: 'Error fetching assigned class' });
   }
 };
-
-
-
+// Add this to your classController.js
 export const getClassCount = async (req, res) => {
   try {
     const signup_id = req.signup_id;

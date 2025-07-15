@@ -101,7 +101,7 @@ const ParentNavbar: React.FC = () => {
           {/* Admin Logo */}
           <Link href="/parentdashboard" className="flex-shrink-0">
             <img
-              src="/logo.jpg"
+              src="/Almanet-logo.png"
               alt="Logo"
               className="h-6 sm:h-7 md:h-8 w-auto"
             />

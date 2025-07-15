@@ -1,3 +1,5 @@
+
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -58,6 +60,26 @@ export default function TeacherEventImagesPage() {
     }
   };
 
+  const handleDeleteImage = async (imageId: number) => {
+    if (!confirm('Are you sure you want to delete this image?')) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${baseUrl}/api/delete-event-image/${imageId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message);
+
+      setImages(images.filter((img) => img.id !== imageId));
+      alert('Image deleted successfully');
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete image');
+    }
+  };
+
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = e.target.value ? new Date(e.target.value) : null;
     setSelectedDate(newDate);
@@ -102,10 +124,8 @@ export default function TeacherEventImagesPage() {
       <div className="p-6 max-w-6xl mx-auto">
         <h1 className="text-2xl font-semibold mb-6 text-blue-900">Uploaded Event Images</h1>
 
-        {/* Filters with matching design */}
         <div className="mb-6 flex items-end gap-4">
           <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-            {/* Title Filter */}
             <div>
               <label htmlFor="event-filter" className="block text-sm font-medium text-gray-700 mb-1">
                 Filter by Event
@@ -124,7 +144,6 @@ export default function TeacherEventImagesPage() {
               </select>
             </div>
 
-            {/* Date Filter */}
             <div>
               <label htmlFor="date-filter" className="block text-sm font-medium text-gray-700 mb-1">
                 Filter by Date
@@ -156,7 +175,6 @@ export default function TeacherEventImagesPage() {
           </div>
         </div>
 
-        {/* Image grid */}
         {loading ? (
           <div className="text-gray-600">Loading images...</div>
         ) : error ? (
@@ -179,44 +197,75 @@ export default function TeacherEventImagesPage() {
             <p className="mt-4 text-gray-600 text-lg">No images found for selected filter</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {getFilteredImages().map((img) => (
-              <div
-                key={img.id}
-                className="relative group cursor-pointer"
-                onClick={() => setSelectedImage(img.image_url)}
-              >
-                <p className="text-center text-blue-800 font-medium mb-2">{img.title}</p>
-                <div className="relative">
-                  <Image
-                    src={img.image_url}
-                    alt={img.title}
-                    width={400}
-                    height={250}
-                    className="rounded-md object-cover shadow"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+         // Replace this section in your JSX:
+
+<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+  {getFilteredImages().map((img) => (
+    <div
+      key={img.id}
+      className="relative group cursor-pointer"
+    >
+      <p className="text-center text-blue-800 font-medium mb-2 truncate">{img.title}</p>
+      <div 
+        className="relative w-full h-48 bg-gray-100 rounded-md overflow-hidden shadow hover:shadow-lg transition-shadow duration-200"
+        onClick={() => setSelectedImage(img.image_url)} // Move click handler here
+      >
+        <Image
+          src={img.image_url}
+          alt={img.title}
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          // Remove onClick from here
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200" />
+        <button
+          className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-700"
+          onClick={(e) => {
+            e.stopPropagation(); // This prevents the modal from opening when delete is clicked
+            handleDeleteImage(img.id);
+          }}
+          title="Delete image"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  ))}
+</div>
         )}
 
-        {/* Fullscreen View */}
         {selectedImage && (
-          <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
             <button
-              className="absolute top-4 right-4 text-white text-4xl font-bold"
+              className="absolute top-4 right-4 text-white text-4xl font-bold hover:text-gray-300 transition-colors z-10"
               onClick={() => setSelectedImage(null)}
             >
               ×
             </button>
-            <Image
-              src={selectedImage}
-              alt="Full View"
-              width={1000}
-              height={700}
-              className="object-contain max-h-full max-w-full"
-            />
+            <div className="relative max-w-full max-h-full">
+              <Image
+                src={selectedImage}
+                alt="Full View"
+                width={1000}
+                height={700}
+                className="object-contain max-h-full max-w-full"
+                style={{ maxWidth: '90vw', maxHeight: '90vh' }}
+              />
+            </div>
           </div>
         )}
       </div>

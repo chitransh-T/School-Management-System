@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -17,7 +18,7 @@ interface Subject {
 interface ClassData {
   id: number;
   class_id: number;
-  subject_id?: number; // The subject record ID for updating
+  subject_id?: number;
   class_name: string;
   section: string;
   subjects: Subject[];
@@ -128,11 +129,50 @@ export default function EditClassSubjectsPage() {
     setSubjects([...subjects, { name: '', marks: 0 }]);
   };
 
-  // Remove subject row
-  const removeSubject = (index: number) => {
-    if (subjects.length > 1) {
-      const newSubjects = subjects.filter((_, i) => i !== index);
-      setSubjects(newSubjects);
+  // Remove subject with confirmation
+  const removeSubject = async (index: number) => {
+    if (subjects.length <= 1) {
+      setError('At least one subject is required');
+      return;
+    }
+
+    const subject = subjects[index];
+    const confirmDelete = window.confirm(`Are you sure you want to delete the subject "${subject.name}"?`);
+    
+    if (confirmDelete) {
+      try {
+        // If subject has an ID, call delete API
+        if (subject.id) {
+          const token = localStorage.getItem('token');
+          if (!token) {
+            setError('Authentication token not found');
+            return;
+          }
+
+          const response = await fetch(`${baseUrl}/api/deletesubject/${subject.id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to delete subject');
+          }
+        }
+
+        // Update local state
+        const newSubjects = subjects.filter((_, i) => i !== index);
+        setSubjects(newSubjects);
+        setSuccess('Subject deleted successfully');
+        setError('');
+      } catch (err: any) {
+        console.error('Delete error:', err);
+        setError(err.message || 'Failed to delete subject');
+        setSuccess('');
+      }
     }
   };
 
@@ -173,14 +213,14 @@ export default function EditClassSubjectsPage() {
 
       // Prepare the data for update
       const formattedSubjects = validSubjects.map(subject => ({
-        id: subject.id, // Include the subject ID if available
+        id: subject.id,
         subject_name: subject.name,
         marks: subject.marks
       }));
   
       const payload = {
         class_id: classData?.class_id || classData?.id,
-        subject_id: classData?.subject_id, // The subject record ID for updating
+        subject_id: classData?.subject_id,
         subjects: formattedSubjects
       };
   
@@ -207,9 +247,9 @@ export default function EditClassSubjectsPage() {
       setSuccess('Subjects updated successfully!');
       setError('');
       
-      // Optionally redirect after successful update
+      // Redirect after successful update
       setTimeout(() => {
-        router.push('/classeswithsubject'); // Navigate back to classes page
+        router.push('/classeswithsubject');
       }, 2000);
       
     } catch (err: any) {
@@ -295,8 +335,6 @@ export default function EditClassSubjectsPage() {
                 </div>
                 <input type="hidden" value={selectedClass} name="class" />
               </div>
-
-              
             </div>
 
             {/* Subjects */}
@@ -368,7 +406,7 @@ export default function EditClassSubjectsPage() {
                 className="inline-flex items-center px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FaPlus className="w-4 h-4 mr-2" />
-                {saving ? 'Updating...' : 'Update Subjects'}
+                {saving ? ' Updating...' : 'Update Subjects'}
               </button>
             </div>
           </form>

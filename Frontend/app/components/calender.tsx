@@ -88,7 +88,7 @@ const Calendar = () => {
           {month.toUpperCase()} , {year}
         </div>
         <div className="text-xs text-gray-500">
-          SUN {month.toUpperCase()} {currentDate.getDate()} {year}
+          {month.toUpperCase()} {currentDate.getDate()} {year}
         </div>
       </div>
       
