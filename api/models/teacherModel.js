@@ -93,6 +93,104 @@ export const getTeachersBySchoolId = async (signup_id) => {
   }
 };
 
+// export const getTeacherBySignupId = async (signup_id) => {
+//   const query = `
+//     WITH SubjectAggregates AS (
+//       SELECT 
+//         ta.teacher_id,
+//         ta.class_id,
+//         ta.section,
+//         array_agg(s.subject_name ORDER BY s.subject_name) FILTER (WHERE s.subject_name IS NOT NULL) AS subjects
+//       FROM teacher_assignments ta
+//       LEFT JOIN subjects s ON ta.subject_id = s.id
+//       GROUP BY ta.teacher_id, ta.class_id, ta.section
+//     ),
+//     StudentAggregates AS (
+//       SELECT 
+//         c.id AS class_id,
+//         c.class_name,
+//         st.assigned_section,
+//         json_agg(
+//           json_build_object(
+//             'student_name', st.student_name,
+//             'assigned_class', c.class_name,
+//             'assigned_section', st.assigned_section
+//           ) ORDER BY st.student_name
+//         ) FILTER (WHERE st.id IS NOT NULL) AS students
+//       FROM classes c
+//       LEFT JOIN students st 
+//         ON st.assigned_class = c.class_name 
+//         AND st.assigned_section = c.section
+//       GROUP BY c.id, c.class_name, st.assigned_section
+//     )
+//     SELECT 
+//       t.id,
+//       t.signup_id,
+//       t.teacher_name,
+//       t.date_of_birth,
+//       t.date_of_joining,
+//       t.gender,
+//       t.guardian_name,
+//       t.qualification,
+//       t.experience,
+//       t.salary,
+//       t.address,
+//       t.qualification_certificate,
+//       t.teacher_photo,
+//       t.created_at,
+//       t.session_id,
+//       COALESCE(
+//         json_agg(
+//           json_build_object(
+//             'class_name', c.class_name,
+//             'section', sa.section,
+//             'subjects', sa.subjects
+//           ) ORDER BY c.class_name, sa.section
+//         ) FILTER (WHERE c.id IS NOT NULL),
+//         '[]'::json
+//       ) AS assigned_classes,
+//       COALESCE(
+//         json_agg(
+//           sta.students
+//         ) FILTER (WHERE sta.students IS NOT NULL),
+//         '[]'::json
+//       ) AS students
+//     FROM teacher t
+//     LEFT JOIN SubjectAggregates sa ON t.id = sa.teacher_id
+//     LEFT JOIN classes c ON sa.class_id = c.id
+//     LEFT JOIN StudentAggregates sta 
+//       ON sta.class_id = c.id 
+//       AND sta.assigned_section = sa.section
+//     WHERE t.signup_id = $1
+//     GROUP BY 
+//       t.id,
+//       t.signup_id,
+//       t.teacher_name,
+//       t.date_of_birth,
+//       t.date_of_joining,
+//       t.gender,
+//       t.guardian_name,
+//       t.qualification,
+//       t.experience,
+//       t.salary,
+//       t.address,
+
+//       t.qualification_certificate,
+//       t.teacher_photo,
+//       t.created_at,
+//       t.session_id
+//     ORDER BY t.id;
+//   `;
+//   try {
+//     const result = await pool.query(query, [signup_id]);
+//     console.log('Database teacher result:', JSON.stringify(result.rows[0], null, 2));
+//     return result.rows[0];
+//   } catch (err) {
+//     console.error('Error fetching teacher by signup_id:', err);
+//     throw err;
+//   }
+// };
+
 export const getTeacherBySignupId = async (signup_id) => {
   const query = `
     WITH SubjectAggregates AS (
@@ -139,6 +237,7 @@ export const getTeacherBySignupId = async (signup_id) => {
       t.teacher_photo,
       t.created_at,
       t.session_id,
+      ip.institute_name,
       COALESCE(
         json_agg(
           json_build_object(
@@ -156,6 +255,9 @@ export const getTeacherBySignupId = async (signup_id) => {
         '[]'::json
       ) AS students
     FROM teacher t
+    JOIN signup teacher_signup ON teacher_signup.id = t.signup_id
+    JOIN signup school_signup ON school_signup.school_id = teacher_signup.school_id
+    JOIN institute_profiles ip ON ip.signup_id = school_signup.id
     LEFT JOIN SubjectAggregates sa ON t.id = sa.teacher_id
     LEFT JOIN classes c ON sa.class_id = c.id
     LEFT JOIN StudentAggregates sta 
@@ -174,11 +276,11 @@ export const getTeacherBySignupId = async (signup_id) => {
       t.experience,
       t.salary,
       t.address,
-
       t.qualification_certificate,
       t.teacher_photo,
       t.created_at,
-      t.session_id
+      t.session_id,
+      ip.institute_name
     ORDER BY t.id;
   `;
   try {

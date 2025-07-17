@@ -700,7 +700,7 @@ const StudentFeeRecord: React.FC = () => {
                                     ))}
                                   </div>
                                 </div>
-                              </div>
+                              </div> 
                               <button
                                 onClick={() => generatePDF(payment, student)}
                                 className="ml-4 p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"

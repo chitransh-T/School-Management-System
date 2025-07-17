@@ -1,7 +1,4 @@
 {
-  "/principledashboard/page": "app/principledashboard/page.js",
-  "/(pages)/(studentsData)/studentdetails/page": "app/(pages)/(studentsData)/studentdetails/page.js",
-  "/auth/signin/page": "app/auth/signin/page.js",
-  "/(parentdashboard)/parentdashboard/page": "app/(parentdashboard)/parentdashboard/page.js",
-  "/(parentdashboard)/(parentpages)/feedata/viewfeeshistory/page": "app/(parentdashboard)/(parentpages)/feedata/viewfeeshistory/page.js"
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/page": "app/page.js"
 }

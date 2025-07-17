@@ -107,7 +107,7 @@ const AddHomeworkPage = () => {
 
       if (res.ok) {
         setSuccess("Homework assigned successfully!");
-        setTimeout(() => router.back(), 2000);
+        setTimeout(() => router.push('viewhomework'), 2000);
       } else {
         setError(data.message || "Failed to assign homework.");
       }

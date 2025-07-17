@@ -1,3 +1,6 @@
+
+
+
 'use client';
 
 import React, { useEffect, useState } from "react";
@@ -9,6 +12,7 @@ import Calendar from '@/app/components/calender';
 const TeacherDashboardPage = () => {
   const router = useRouter();
   const [teacherName, setTeacherName] = useState("Teacher");
+  const [instituteName, setInstituteName] = useState("School");
   const [assignedClasses, setAssignedClasses] = useState<any[]>([]);
   const [assignedClass, setAssignedClass] = useState<string | null>(null);
   const [assignedSection, setAssignedSection] = useState<string | null>(null);
@@ -33,6 +37,7 @@ const TeacherDashboardPage = () => {
 
       const data = res.data?.data;
       setTeacherName(data?.teacher_name || "Teacher");
+      setInstituteName(data?.institute_name || "School");
       setAssignedClasses(data?.assigned_classes || []);
       setLoading(false);
     } catch (err) {
@@ -83,7 +88,8 @@ const TeacherDashboardPage = () => {
       <div className="min-h-screen p-6 bg-gray-50">
         {/* Header Section */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Welcome, {teacherName}</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Welcome to {instituteName}</h1>
+          <p className="text-lg text-gray-600 mt-1">Hello, {teacherName}</p>
           {assignedClass && assignedSection && (
             <p className="text-sm text-gray-600 mt-1">
               Class Teacher of {assignedClass} - {assignedSection}
@@ -168,5 +174,3 @@ const TeacherDashboardPage = () => {
 };
 
 export default TeacherDashboardPage;
-
-

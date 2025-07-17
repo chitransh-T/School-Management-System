@@ -226,7 +226,7 @@ const FeesCollectionPage: React.FC<{ params: Promise<{ studentId: string }> }> =
     if (!token || !classId) return;
     
     try {
-      const response = await axios.get(`${baseUrl}/api/structure?classId=${classId}&studentId=${studentId}`, {
+      const response = await axios.get(`${baseUrl}/api/feestructure/${classId}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       

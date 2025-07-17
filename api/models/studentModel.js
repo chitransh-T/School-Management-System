@@ -331,28 +331,92 @@ export const getStudentsBySessionId = async (sessionId) => {
 
 
 
+// export const getStudentsByParentId = async (parentSignupId) => {
+//   console.log('📥 Querying students with class teacher for parentSignupId:', parentSignupId);
+
+//   const query = `
+//     SELECT 
+//       s.id AS student_id,
+//       s.student_name,
+//       s.assigned_class,
+//       s.assigned_section,
+//       s.student_photo,
+//       s.birth_certificate,
+//       t.teacher_name
+//     FROM parent_student_link psl
+//     JOIN students s ON psl.student_id = s.id
+//     JOIN classes c ON 
+//       LOWER(TRIM(c.class_name)) = LOWER(TRIM(s.assigned_class)) AND 
+//       LOWER(TRIM(c.section)) = LOWER(TRIM(s.assigned_section))
+//     JOIN teacher t ON c.teacher_id = t.id
+//     WHERE psl.parent_signup_id = $1
+//   `;
+
+//   const { rows } = await pool.query(query, [parentSignupId]);
+//   console.log('📤 Students + Teacher returned from DB:', rows);
+//   return rows;
+// };  
+
+// export const getStudentsByParentId = async (parentSignupId) => {
+//   console.log('📥 Querying students for parentSignupId:', parentSignupId); // ADD THIS
+
+// const query = `
+//   SELECT DISTINCT ON (s.id)
+//     s.*,
+//     ip.institute_name,
+//     t.teacher_name AS teacher_name
+//   FROM students s
+//   JOIN parent_student_link psl ON s.id = psl.student_id
+//   JOIN signup stu_signup ON stu_signup.id = s.signup_id
+//   JOIN signup school_signup ON school_signup.school_id = stu_signup.school_id
+//   JOIN institute_profiles ip ON ip.signup_id = school_signup.id
+//   JOIN classes c ON c.class_name = s.assigned_class AND c.section = s.assigned_section
+//   JOIN teacher t ON t.id = c.teacher_id
+//   JOIN signup teacher_signup ON teacher_signup.id = t.signup_id
+//   WHERE psl.parent_signup_id = $1
+//     AND teacher_signup.school_id = stu_signup.school_id
+//   ORDER BY s.id;
+// `;
+
+// // Use this query with parameter [parentSignupId]
+
+//   const { rows } = await pool.query(query, [parentSignupId]);
+
+//   console.log('📤 Students returned from DB:', rows); // ADD THIS
+//   return rows;
+// };
+
+
 export const getStudentsByParentId = async (parentSignupId) => {
-  console.log('📥 Querying students with class teacher for parentSignupId:', parentSignupId);
+  console.log('📥 Querying students for parentSignupId:', parentSignupId);
 
   const query = `
-    SELECT 
-      s.id AS student_id,
+    SELECT DISTINCT ON (s.id)
+      s.id AS student_id, -- Explicitly select student_id
       s.student_name,
       s.assigned_class,
       s.assigned_section,
       s.student_photo,
       s.birth_certificate,
+      ip.institute_name,
       t.teacher_name
-    FROM parent_student_link psl
-    JOIN students s ON psl.student_id = s.id
+    FROM students s
+    JOIN parent_student_link psl ON s.id = psl.student_id
+    JOIN signup stu_signup ON stu_signup.id = s.signup_id
+    JOIN signup school_signup ON school_signup.school_id = stu_signup.school_id
+    JOIN institute_profiles ip ON ip.signup_id = school_signup.id
     JOIN classes c ON 
       LOWER(TRIM(c.class_name)) = LOWER(TRIM(s.assigned_class)) AND 
       LOWER(TRIM(c.section)) = LOWER(TRIM(s.assigned_section))
-    JOIN teacher t ON c.teacher_id = t.id
+    JOIN teacher t ON t.id = c.teacher_id
+    JOIN signup teacher_signup ON teacher_signup.id = t.signup_id
     WHERE psl.parent_signup_id = $1
+      AND teacher_signup.school_id = stu_signup.school_id
+    ORDER BY s.id;
   `;
 
   const { rows } = await pool.query(query, [parentSignupId]);
-  console.log('📤 Students + Teacher returned from DB:', rows);
+
+  console.log('📤 Students returned from DB:', rows);
   return rows;
-};  
+};
