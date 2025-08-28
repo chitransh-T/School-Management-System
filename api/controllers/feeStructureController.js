@@ -1,4 +1,4 @@
-import { createFeeStructure, deleteFeeStructureForClass,getFeeStructureByClassFromDB } from '../models/feeStructureModel.js';
+import { createFeeStructure,getFeeStructureByClassFromDB,deleteFeeStructureForClass } from '../models/feeStructureModel.js';
 import { getActiveSessionFromDB } from '../models/sessionModel.js';
 
 // ✅ Register Fee Structure
@@ -88,6 +88,33 @@ export const getFeeStructureByClass = async (req, res) => {
     });
   } catch (err) {
     console.error('Error getting fee structure:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+//--
+
+export const deleteFeeStructureByClass = async (req, res) => {
+  try {
+    const { class_id } = req.params;
+    const signup_id = req.signup_id;
+
+    if (!class_id) {
+      return res.status(400).json({ success: false, message: 'Class ID is required' });
+    }
+
+    const activeSession = await getActiveSessionFromDB(signup_id);
+    if (!activeSession) {
+      return res.status(400).json({ message: 'No active session found' });
+    }
+
+    const session_id = activeSession.id;
+
+    await deleteFeeStructureForClass({ class_id, signup_id, session_id });
+
+    res.status(200).json({ success: true, message: 'Fee structure deleted for selected class' });
+  } catch (err) {
+    console.error('Error deleting fee structure:', err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };

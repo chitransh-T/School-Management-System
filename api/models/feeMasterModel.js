@@ -54,3 +54,23 @@ export const getFeeFieldsFromDB = async (signup_id, session_id) => {
   }
 };
 
+//---
+export const deleteAllFeeFieldsInDB = async (signup_id, session_id) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `DELETE FROM fee_master
+       WHERE signup_id = $1 AND session_id = $2`,
+      [signup_id, session_id]
+    );
+    await client.query('COMMIT');
+    return { success: true };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error deleting all fee fields:', err);
+    throw err;
+  } finally {
+    client.release();
+  }
+};

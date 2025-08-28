@@ -1,4 +1,4 @@
-import { createFeeFieldsInDB, getFeeFieldsFromDB } from '../models/feeMasterModel.js';
+import { createFeeFieldsInDB, getFeeFieldsFromDB, deleteAllFeeFieldsInDB } from '../models/feeMasterModel.js';
 import { getActiveSessionFromDB } from '../models/sessionModel.js';
 
 // export const createFeeFields = async (req, res) => {
@@ -124,6 +124,47 @@ export const getFeeFields = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching fee fields:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+};
+
+
+//---
+
+export const deleteAllFeeFields = async (req, res) => {
+  try {
+    const signup_id = req.signup_id;
+
+    // ✅ Get Active Session
+    const session = await getActiveSessionFromDB(signup_id);
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        message: 'No active session found.',
+      });
+    }
+
+    // ✅ Check if there are fee fields to delete
+    const existingFeeFields = await getFeeFieldsFromDB(signup_id, session.id);
+    if (existingFeeFields.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No fee fields found to delete.',
+      });
+    }
+
+    // ✅ Delete all fee fields
+    await deleteAllFeeFieldsInDB(signup_id, session.id);
+
+    return res.status(200).json({
+      success: true,
+      message: 'All fee fields deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting all fee fields:', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',

@@ -172,7 +172,7 @@ const TakeAttendancePage: React.FC = () => {
       } else if (response.status === 401) {
         handleUnauthorized();
       } else {
-        showError("Attendance already marke");
+        showError("Attendance already marked");
       }
     } catch (error) {
       showError(`Error saving attendance: ${error}`);

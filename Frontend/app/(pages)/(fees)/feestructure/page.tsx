@@ -179,7 +179,9 @@ export default function FeeStructurePage() {
     <DashboardLayout>
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-4 text-blue-900">Fee Structure</h1>
-
+        <p className="text-red-700 bg-red-100 border border-red-300 rounded p-3 text-sm mb-4">
+          ⚠️ You can create the fee structure for a class only once per session. Please proceed carefully.
+        </p>
         <div className="space-y-4">
           <select
             value={selectedClassId}

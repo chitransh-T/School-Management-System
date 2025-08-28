@@ -31,7 +31,6 @@ export const deleteFeeStructureForClass = async ({ class_id, signup_id, session_
     throw err;
   }
 };
-
 // ✅ Get fee structure for class from DB
 export const getFeeStructureByClassFromDB = async ({ signup_id, session_id, class_id }) => {
   const query = `
@@ -68,3 +67,5 @@ export const getFeeStructureByClassFromDB = async ({ signup_id, session_id, clas
     throw err;
   }
 };
+
+//---

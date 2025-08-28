@@ -144,7 +144,7 @@ const FeesCollectionPage: React.FC<{ params: Promise<{ studentId: string }> }> =
       if (!token || !classId || !studentId) return;
       setIsLoading(true);
       try {
-        await Promise.all([loadPaymentStatus(), loadYearlySummary()]);
+        await Promise.all([loadYearlySummary(),loadPaymentStatus()]);
       } catch (err) {
         setError(`Error fetching data: ${err instanceof Error ? err.message : String(err)}`);
       } finally {
@@ -222,40 +222,7 @@ const FeesCollectionPage: React.FC<{ params: Promise<{ studentId: string }> }> =
     }
   };
 
-  const loadFeeData = async () => {
-    if (!token || !classId) return;
-    
-    try {
-      const response = await axios.get(`${baseUrl}/api/feestructure/${classId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      
-      if (response.data.success) {
-        const parsedFeeStructure: FeeStructureModel[] = response.data.data.map((item: any) => ({
-          feeFieldName: item.feeFieldName || item.fee_field_name || 'Unknown Fee',
-          amount: item.amount?.toString() || '0.0',
-          isCollectable: item.isCollectable || item.is_collectable || false,
-          isMandatory: item.isMandatory || item.is_mandatory || false,
-          isMonthly: Boolean(item.isMonthly || item.is_monthly || item.feeFieldName?.toLowerCase().includes('tution') || item.feeFieldName?.toLowerCase().includes('monthly')),
-          isOneTime: Boolean(item.isOneTime || item.is_one_time),
-          feeMasterId: item.feeMasterId || item.fee_master_id || 0,
-        }));
-        
-        setFeeStructure(parsedFeeStructure);
-        
-        // Do not recalculate totalYearlyFee here to keep it constant
-        const paidResponse = await axios.get(
-          `${baseUrl}/api/fees/paid?studentId=${studentId}`,
-          { headers: { 'Authorization': `Bearer ${token}` } }
-        );
-        
-        const newPaidFeeMasterIds = paidResponse.data.map((id: any) => id.toString());
-        setPaidFeeMasterIds(newPaidFeeMasterIds);
-      }
-    } catch (error) {
-      setError(`Failed to load fee data: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  };
+  
 
   const loadPaymentStatus = async () => {
     if (!token) return;
@@ -306,6 +273,7 @@ const FeesCollectionPage: React.FC<{ params: Promise<{ studentId: string }> }> =
       
       const data = response.data.data;
       // Only set totalPaid and totalDue, keep totalYearlyFee constant
+    
       setTotalPaid(data.total_paid || 0);
       setTotalDue(Math.max(0, totalYearlyFee - (data.total_paid || 0)));
     } catch (error) {
@@ -467,7 +435,7 @@ const FeesCollectionPage: React.FC<{ params: Promise<{ studentId: string }> }> =
       setSuccess('Fee payment recorded successfully');
       setTimeout(() => router.push(`/receiptgenerate?data=${encodedData}`), 2000);
   
-      await Promise.all([loadYearlySummary(), loadPaymentStatus()]);
+      await Promise.all([loadYearlySummary(), loadPaymentStatus()]); 
     } catch (error) {
       setError(`Error submitting fees: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
