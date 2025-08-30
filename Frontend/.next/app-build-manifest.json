@@ -21,10 +21,46 @@
       "static/chunks/main-app.js",
       "static/chunks/app/principledashboard/page.js"
     ],
-    "/_not-found/page": [
+    "/(pages)/(fees)/feemaster/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
+      "static/chunks/app/(pages)/(fees)/feemaster/page.js"
+    ],
+    "/(pages)/(fees)/feestructure/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(fees)/feestructure/page.js"
+    ],
+    "/(pages)/(fees)/Viewfeestructure/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(fees)/Viewfeestructure/page.js"
+    ],
+    "/(pages)/(fees)/collectfees/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(fees)/collectfees/page.js"
+    ],
+    "/(pages)/(fees)/feesdetailsofstudent/[studentId]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/(pages)/(fees)/feesdetailsofstudent/[studentId]/page.css",
+      "static/chunks/app/(pages)/(fees)/feesdetailsofstudent/[studentId]/page.js"
+    ],
+    "/(pages)/principaleventimage/vieweventimages/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/principaleventimage/vieweventimages/page.js"
+    ],
+    "/(pages)/principalsetting/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/principalsetting/page.js"
+    ],
+    "/(pages)/(TeacherData)/TeacherDetails/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/(TeacherData)/TeacherDetails/page.js"
     ]
   }
 }
