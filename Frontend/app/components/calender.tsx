@@ -7,7 +7,7 @@ const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [displayedMonth, setDisplayedMonth] = useState(new Date());
 
-  // Update current date every minute to ensure it stays current
+  // Update current date every minute to ensure it stays current properly
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentDate(new Date());
