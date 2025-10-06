@@ -11,7 +11,7 @@ const Calendar = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentDate(new Date());
-    }, 60000); // Update every minute
+    }, 60000); // Update in every minute
     
     return () => clearInterval(timer);
   }, []);
